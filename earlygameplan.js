@@ -28,7 +28,8 @@ export async function main(ns) {
 	await crimeWhileUpgradingLoop(ns);
 	// TODO figure out how to do more hacking based on increased RAM amounts
 	// 7. Start a gang
-	ns.exec('gangs.js', HOME);
+	startAGang(ns);
+
 }
 
 /** 
@@ -57,5 +58,29 @@ async function crimeWhileUpgradingLoop(ns) {
 		}
 		// Otherwise, commit crime!
 		commitKarmaFocusedCrime(ns);
+		// If we have lots of money, buy darkweb programs too
+		ns.exec('obtainPrograms.js', HOME);
 	}
+}
+
+/** 
+ * Check factions to see if I can join one and start a gang
+ * @param {NS} ns 
+**/
+function startAGang(ns) {
+	let invitations = ns.checkFactionInvitations();
+	const gangList = [
+		"Slum Snakes",
+		"Tetrads",
+		"Silhouette",
+		"Speakers for the Dead",
+		"The Dark Army",
+		"The Syndicate",
+	];
+	let ready_gang = invitations.find(gang => gangList.includes(gang));
+	if (ready_gang) {
+		let joined = ns.joinFaction(ready_gang);
+		if (joined) ns.print(`Joined ${ready_gang} faction`)
+	}
+	ns.exec('gangs.js', HOME);
 }
