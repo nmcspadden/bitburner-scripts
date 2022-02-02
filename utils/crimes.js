@@ -10,6 +10,8 @@ let crimes = [
 	"shoplift",
 ];
 
+export const GANG_KARMA = 54000;
+
 /** 
  * Work out all stats until they hit a certain level
  * @param {NS} ns 
@@ -63,9 +65,7 @@ export async function crimeUntilGang(ns) {
 	 * Fastest stat growth is mugging, so start there
 	 * Switch to homicide once it's >70% success chance
 	**/
-	const GANG_KARMA = 54000;
-	// Disable the log
-	ns.disableLog("ALL");
+	ns.disableLog("ALL"); // Disable the log
 	ns.tail(); // Open a window to view the status of the script
 	let timeout = 250; // In ms - too low of a time will result in a lockout/hang
 	while (Math.abs(ns.heart.break()) <= GANG_KARMA) {

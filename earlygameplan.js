@@ -1,5 +1,4 @@
-import { locateServer } from "utils/networkmap.js";
-import { workoutAllUntil, crimeUntilGang } from "utils/crimes.js";
+import { workoutAllUntil, commitKarmaFocusedCrime, GANG_KARMA } from "utils/crimes.js";
 
 /**
  * Early Gameplan w/ Gangs (32 GB RAM)
@@ -21,12 +20,42 @@ export async function main(ns) {
 	// 2-3 Run hacking programs
 	//TODO figure out optimal thread counts here
 	ns.exec('findOptimal.js', HOME);
-	ns.exec('easy-hack.script', HOME, 2);
+	// not enough RAM to do this script + findOptimal + easy-hack
+	// ns.exec('easy-hack.script', HOME, 2);
 	// 4. Hit the gym until minimum stats
 	await workoutAllUntil(ns, MIN_STAT);
-	// 5-6 Start mugging until we can do homicides to get to the gang karma
-	await crimeUntilGang(ns);
-	// TODO figure out how to intersperse RAM upgrades in here
+	// 5-6 Start crimes until we can do homicides to get to the gang karma, also upgrade home
+	await crimeWhileUpgradingLoop(ns);
+	// TODO figure out how to do more hacking based on increased RAM amounts
 	// 7. Start a gang
 	ns.exec('gangs.js', HOME);
+}
+
+/** 
+ * Commit crimes, but if we have enough money, buy more home upgrades
+ * @param {NS} ns 
+**/
+async function crimeWhileUpgradingLoop(ns) {
+	ns.disableLog("ALL"); // Disable the log
+	ns.tail(); // Open a window to view the status of the script
+	let timeout = 250; // In ms - too low of a time will result in a lockout/hang
+	while (Math.abs(ns.heart.break()) <= GANG_KARMA) {
+		await ns.sleep(timeout); // Wait it out first
+		if (ns.isBusy()) continue;
+		// Do I have enough money to buy a RAM or core upgrade?
+		let ram_cost = ns.getUpgradeHomeRamCost();
+		let core_cost = ns.getUpgradeHomeCoresCost();
+		let money = ns.getPlayer().money;
+		let did_upgrade = false;
+		if (money > ram_cost) {
+			did_upgrade = ns.upgradeHomeRam();
+			if (did_upgrade) ns.print(`Bought RAM upgrade for ${ns.nFormat(ram_cost, '0.00a')}`)
+		}
+		if (money > core_cost) {
+			did_upgrade = ns.upgradeHomeCores();
+			if (did_upgrade) ns.print(`Bought Cores upgrade for ${ns.nFormat(core_cost, '0.00a')}`)
+		}
+		// Otherwise, commit crime!
+		commitKarmaFocusedCrime(ns);
+	}
 }
