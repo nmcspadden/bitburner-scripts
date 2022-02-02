@@ -19,7 +19,7 @@ export async function main(ns) {
 	let player = ns.getPlayer();
 	ns.tprint("Current money: " + player.money);
 	// my_factions_w_nf is a list of factions selling NF sorted descending by highest rep
-	let my_factions_w_nf = findMyFactionsWithAug(ns, aug, player);
+	let my_factions_w_nf = findMyFactionsWithAug(ns, NF, player);
 	if (my_factions_w_nf.length == 0) {
 		ns.tprint("You don't currently belong to any factions that sell the NeuroFlux Governor.");
 		return
