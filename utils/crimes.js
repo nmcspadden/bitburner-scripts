@@ -37,6 +37,24 @@ export async function workoutAllUntil(ns, level) {
 }
 
 /** 
+ * Commit a single crime to get us closer to Gang Karma levels
+ * @param {NS} ns 
+**/
+export function commitKarmaFocusedCrime(ns) {
+	const HOMICIDE = "homicide";
+	const MUG = "mug someone";
+	// Calculate crime success chance of homicide
+	let homicide_chance = ns.getCrimeChance(HOMICIDE);
+	if (homicide_chance <= 0.7) {
+		ns.commitCrime(MUG);
+		ns.print(`Homicide chance: ${ns.nFormat(homicide_chance, '0.00%')}, mugging people instead.`)
+	} else {
+		ns.commitCrime(HOMICIDE);
+		ns.print(`Committing homicide at ${ns.nFormat(homicide_chance, '0.00%')}; Current karma: ${ns.heart.break()}`);
+	}
+}
+
+/** 
  * Commit crimes until we have enough negative karma to start a gang
  * @param {NS} ns 
 **/
@@ -45,30 +63,15 @@ export async function crimeUntilGang(ns) {
 	 * Fastest stat growth is mugging, so start there
 	 * Switch to homicide once it's >70% success chance
 	**/
-	const HOMICIDE = "homicide";
-	const MUG = "mug someone";
 	const GANG_KARMA = 54000;
-
 	// Disable the log
 	ns.disableLog("ALL");
-
 	ns.tail(); // Open a window to view the status of the script
 	let timeout = 250; // In ms - too low of a time will result in a lockout/hang
-	let homicide_chance;
-	let karma = ns.heart.break();
-	while (Math.abs(karma) <= GANG_KARMA) {
+	while (Math.abs(ns.heart.break()) <= GANG_KARMA) {
 		await ns.sleep(timeout); // Wait it out first
 		if (ns.isBusy()) continue;
-		// Calculate crime success chance of homicide
-		homicide_chance = ns.getCrimeChance(HOMICIDE);
-		if (homicide_chance <= 0.7) {
-			ns.commitCrime(MUG);
-			ns.print(`Homicide chance: ${homicide_chance}, mugging people instead.`)
-		} else {
-			ns.commitCrime(HOMICIDE);
-			ns.print(`Committing homicide at ${homicide_chance}; Current karma: ${karma}`);
-		}
-		karma = ns.heart.break();
+		commitKarmaFocusedCrime(ns);
 	}
 }
 
