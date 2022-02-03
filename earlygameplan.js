@@ -17,7 +17,6 @@ const MIN_STAT = 30;
 
 /** @param {NS} ns **/
 export async function main(ns) {
-	ns.exec('obtainPrograms.js', HOME);
 	// 2-3 Run hacking programs
 	//TODO figure out optimal thread counts here
 	ns.exec('findOptimal.js', HOME);
