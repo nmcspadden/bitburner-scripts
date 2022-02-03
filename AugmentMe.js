@@ -123,11 +123,11 @@ export async function main(ns) {
 	} else {
 		let sorted_exp_augs = Object.keys(exp_augs).sort((a, b) => a["cost"] - b["cost"]).reverse();
 		ns.tprint("Augs with +exp stats sorted by cost: " + sorted_exp_augs.join(", "));
-		let sorted_desired_augs = Object.keys(Object.fromEntries(desired_augs)).sort((a, b) => a["cost"] - b["cost"]).reverse();
+		let sorted_desired_augs = Object.entries(Object.fromEntries(desired_augs)).sort(([,a], [,b]) => a["cost"] - b["cost"]).reverse()[0];
 		ns.tprint("Augs to aim for with your desired stats: " + sorted_desired_augs.join(", "));
 		ns.tprint(`Most expensive aug is ${sorted_desired_augs[0]} at ${ns.nFormat(Object.fromEntries(desired_augs)[sorted_desired_augs[0]]["cost"], '$0.00a')}`);
-		let most_rep_aug = Object.keys(Object.fromEntries(desired_augs)).sort((a, b) => a["repreq"] - b["repreq"]).reverse()[0];
-		ns.tprint(`Most rep-required aug is ${most_rep_aug} at ${ns.nFormat(Object.fromEntries(desired_augs)[most_rep_aug]["repreq"], '0.000a')}`);
+		let most_rep_aug = Object.entries(Object.fromEntries(desired_augs)).sort(([,a], [,b]) => a["repreq"] - b["repreq"]).reverse()[0][0];
+		ns.tprint(`Most rep-required aug is ${most_rep_aug} at ${ns.nFormat(aug_map[most_rep_aug]["repreq"], '0.000a')}`);
 	}
 }
 
