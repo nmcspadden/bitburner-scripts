@@ -17,10 +17,11 @@ const MIN_STAT = 30;
 
 /** @param {NS} ns **/
 export async function main(ns) {
+	ns.exec('obtainPrograms.js', HOME);
 	// 2-3 Run hacking programs
 	//TODO figure out optimal thread counts here
 	ns.exec('findOptimal.js', HOME);
-	// not enough RAM to do this script + findOptimal + easy-hack
+	// not enough RAM to do this script + findOptimal + easy-hack in 32 GB
 	// ns.exec('easy-hack.script', HOME, 2);
 	// 4. Hit the gym until minimum stats
 	await workoutAllUntil(ns, MIN_STAT);
@@ -29,7 +30,6 @@ export async function main(ns) {
 	// TODO figure out how to do more hacking based on increased RAM amounts
 	// 7. Start a gang
 	startAGang(ns);
-
 }
 
 /** 
