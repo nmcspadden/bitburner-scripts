@@ -1,6 +1,6 @@
 import { findMyFactionsWithAug } from "utils/augs.js";
 import { donationAmountForRep, workUntilDonate } from "utils/repNeededForFavor.js";
-import { locateServer } from "utils/readNetworkMap.js";
+import { locateServer } from "utils/networkmap.js";
 
 /**
  * End-Gameplan
@@ -86,7 +86,7 @@ async function grindForRedPill(ns) {
  * @param {NS} ns 
 **/
 async function hackThePlanet(ns) {
-	let daemon_path = locateServer(ns, WORLD);
+	let daemon_path = await locateServer(ns, WORLD);
 	ns.tprint(`Path to ${WORLD}: ${daemon_path.join(" -> ")}`);
 	for (const step of daemon_path) {
 		// ns.tprint("Connecting to: " + step)
