@@ -67,9 +67,26 @@ export async function main(ns) {
 * Return an Object of the network map from JSON
 * @param {NS} ns
 */
-export function readNetworkMap(ns) {
+export async function readNetworkMap(ns) {
 	const NETWORK_MAP = 'network_map.json.txt';
+	// If we don't have a network map yet, make one
+	if (!ns.ls('home', NETWORK_MAP)) {
+		await createNetworkMap(ns);
+	}
 	return JSON.parse(ns.read(NETWORK_MAP));
+}
+
+/**
+* Search for a path to specific server
+* @param {NS} ns
+* @param {string} server A server to generate a path for
+* @returns Ordered list of servers from home to target server
+*/
+export async function locateServer(ns, server) {
+	let network_map = await readNetworkMap(ns);
+	let premap_to_server = locateServerPrimitive(server, network_map, []);
+	premap_to_server.push('home');
+	return premap_to_server.reverse();  // this will be a reverse-ordered list from home to target
 }
 
 /**
@@ -88,21 +105,4 @@ function locateServerPrimitive(server, network_map, connection_list) {
 		locateServerPrimitive(network_map[server].parent, network_map, connection_list);
 	}
 	return connection_list;
-}
-
-/**
-* Search for a path to specific server
-* @param {NS} ns
-* @param {string} server A server to generate a path for
-* @returns Ordered list of servers from home to target server
-*/
-export async function locateServer(ns, server) {
-	// If we don't have a network map yet, make one
-	if (!ns.ls('home', 'network_map.json.txt')) {
-		await createNetworkMap(ns);
-	}
-	let network_map = readNetworkMap(ns);
-	let premap_to_server = locateServerPrimitive(server, network_map, []);
-	premap_to_server.push('home');
-	return premap_to_server.reverse();  // this will be a reverse-ordered list from home to target
 }

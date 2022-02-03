@@ -1,4 +1,4 @@
-import { readNetworkMap, locateServer } from "utils/readNetworkMap.js";
+import { locateServer } from "utils/networkmap.js";
 
 
 const factionMap = new Map([
@@ -40,34 +40,29 @@ export async function main(ns) {
 		if (!ns.hasRootAccess(server)) {
 			ns.tprint("Cracking into " + server);
 			if (ns.fileExists("BruteSSH.exe")) {
-				await ns.brutessh(server);
+				ns.brutessh(server);
 			}
 			if (ns.fileExists("FTPCrack.exe")) {
-				await ns.ftpcrack(server);
+				ns.ftpcrack(server);
 			}
 			if (ns.fileExists("RelaySMTP.exe")) {
-				await ns.relaysmtp(server);
+				ns.relaysmtp(server);
 			}
 			if (ns.fileExists("HTTPWorm.exe")) {
-				await ns.httpworm(server);
+				ns.httpworm(server);
 			}
 			if (ns.fileExists("SQLInject.exe")) {
-				await ns.sqlinject(server);
+				ns.sqlinject(server);
 			}
 			try {
-				await ns.nuke(server);
+				ns.nuke(server);
 			} catch (error) {
 				ns.tprint("Still need to open ports!");
 				continue
 			}
 
 		}
-		// network map acts sorta like a linked list; each server contains the parents and children
-		let network_map = readNetworkMap(ns);
-		let connection_list = [];
-		let premap_to_server = locateServer(ns, server, network_map, connection_list);
-		premap_to_server.push('home');
-		let map_to_server = premap_to_server.reverse();  // this will be a reverse-ordered list from home to target
+		let map_to_server = await locateServer(ns, server);  // this will be a reverse-ordered list from home to target
 		ns.tprint(map_to_server.join(" -> "));
 		if (!this_server.backdoorInstalled) {
 			for (const step of map_to_server) {
@@ -75,7 +70,7 @@ export async function main(ns) {
 				ns.connect(step);
 			}
 			ns.tprint(`Installing backdoor on ${server}`);
-			await ns.installBackdoor(server);
+			await ns.installBackdoor();
 		}
 	}
 	ns.connect('home');
