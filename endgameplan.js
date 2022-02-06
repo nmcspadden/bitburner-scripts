@@ -82,7 +82,6 @@ async function grindForRedPill(ns) {
 				let did_buy = ns.purchaseAugmentation(factions_w_red_pill[0], TheRedPill);
 				if (did_buy) ns.tprint(`Purchased ${TheRedPill}!`)
 			}
-			return
 			// Do we have enough favor to to donate rep?
 		} else if (ns.getFactionFavor(factions_w_red_pill[0]) >= FAVOR_TO_DONATE) {
 			let money_needed = donationAmountForRep(ns, factions_w_red_pill[0], red_pill_req);
@@ -106,6 +105,7 @@ async function grindForRedPill(ns) {
 		let total_future_faction = ns.getFactionFavor(factions_w_red_pill[0]) + ns.getFactionFavorGain(factions_w_red_pill[0]);
 		if (total_future_faction >= FAVOR_TO_DONATE) {
 			ns.tprint("Next reset will let you donate favor for " + TheRedPill);
+			ns.exit();
 		}
 	}
 	// Is the Red Pill pending install?
