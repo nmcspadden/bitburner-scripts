@@ -56,11 +56,3 @@ function upgradeHome(ns) {
 		if (did_upgrade) ns.print(`Bought Cores upgrade for ${ns.nFormat(core_cost, '0.00a')}`)
 	}
 }
-
-/** 
- * Spin up hacking scripts to grow hacking XP
- * @param {NS} ns
-**/
-function growHackingXP(ns) {
-	
-}
