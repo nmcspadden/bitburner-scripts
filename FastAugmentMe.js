@@ -61,15 +61,7 @@ const AUGMAP = "augmap.json.txt";
 /** @param {NS} ns **/
 export async function main(ns) {
 	const flagdata = ns.flags([
-		["factions", false],
-		["locations", false],
-		["gangs", false],
-		["endgame", false],
-		["corps", false],
-		["all", false],
-		["faction", ""],
 		["help", false],
-		["type", []],
 		["ask", false],
 		["auto", false],
 	])
@@ -77,50 +69,19 @@ export async function main(ns) {
 	let types_to_consider = [];
 	if (flagdata.help) {
 		ns.tprint(
-			`Pass in any of: --factions, --locations, --gangs, --corps, --endgame; or --all for factions. Use --faction X for a specific faction.
-			   --type can be: ${Object.keys(aug_bonus_types).join(", ")} or all.
-			   --ask prompts to buy; --auto autobuys any augs. If neither are specified, no purchasing will happen.`
+			`--ask prompts to buy; --auto autobuys any augs. If neither are specified, no purchasing will happen.`
 		);
 		return
-	}
-	// If they didn't pass in a valid type, yell
-	if (!flagdata.type == "all" && !Object.keys(aug_bonus_types).some(items => flagdata.type.includes(items))) {
-		ns.tprint("you dun goofed");
-		return
-	}
-	const pattern = [
-		[data => { return data.factions || data.all }, () => factions_to_consider.push(...factionList)],
-		[data => { return data.locations || data.all }, () => factions_to_consider.push(...locationFactionList)],
-		[data => { return data.gangs || data.all }, () => factions_to_consider.push(...gangList)],
-		[data => { return data.corps || data.all }, () => factions_to_consider.push(...corpList)],
-		[data => { return data.endgame || data.all }, () => factions_to_consider.push(...endgameFactionList)],
-		[data => { return data.faction }, (data) => { factions_to_consider.push(data.faction) }],
-		[data => { return data.type }, (data) => { (data.type == "all" ? types_to_consider.push(Object.keys(aug_bonus_types)) : types_to_consider.push(data.type)) }],
-
-	]
-	for (const [condition, action] of pattern) {
-		if (condition(flagdata)) action(flagdata)
 	}
 	// Build the aug map first
 	let aug_map = await buildAugMap(ns);
 	// Look for preferred augs based on the exp+, faction+, then hack+ stats
 	let preferred = await listPreferredAugs(ns);
-	ns.tprint(preferred);
+	ns.tprint(`Augs to buy: ${preferred.join(", ")}`);
 	// Now check to see if we should buy
 	if (preferred.length > 0) {
-		if (!flagdata.ask && !flagdata.buy) return
-		// Basically, we need to filter this down to the ones we can afford
-		// then we should attempt to buy them
-		// TODO: FINISH THIS
+		if (!flagdata.ask && !flagdata.auto) return
 		await promptForAugs(ns, aug_map, preferred, flagdata.ask)
-		// } else {
-		// let sorted_exp_augs = Object.keys(exp_augs).sort((a, b) => a["cost"] - b["cost"]).reverse();
-		// ns.tprint("Augs with +exp stats sorted by cost: " + sorted_exp_augs.join(", "));
-		// let sorted_desired_augs = Object.entries(Object.fromEntries(desired_augs)).sort(([, a], [, b]) => a["cost"] - b["cost"]).reverse()[0];
-		// ns.tprint("Augs to aim for with your desired stats: " + sorted_desired_augs.join(", "));
-		// ns.tprint(`Most expensive aug is ${sorted_desired_augs[0]} at ${ns.nFormat(Object.fromEntries(desired_augs)[sorted_desired_augs[0]]["cost"], '$0.00a')}`);
-		// let most_rep_aug = Object.entries(Object.fromEntries(desired_augs)).sort(([, a], [, b]) => a["repreq"] - b["repreq"]).reverse()[0][0];
-		// ns.tprint(`Most rep-required aug is ${most_rep_aug} at ${ns.nFormat(aug_map[most_rep_aug]["repreq"], '0.000a')}`);
 	}
 }
 
@@ -153,41 +114,35 @@ export async function buildAugMap(ns) {
 	 * "owned": false,
 	*/
 	let factions_to_consider = factionList.concat(locationFactionList, gangList, endgameFactionList, corpList);
+	// ns.tprint(`Factions to consider: ${factions_to_consider}`);
 	let my_augs = ns.getOwnedAugmentations();
 	for (const faction of factions_to_consider) {
 		let avail_augs = ns.getAugmentationsFromFaction(faction);
 		for (const aug of avail_augs) {
-			// ns.tprint(`Considering ${aug} from ${faction}`)
+			// ns.tprint(`Considering ${aug} from ${faction}`);
 			// Get basic aug data
-			aug_map[aug] = getAugData(ns, aug);
+			if (!(aug in aug_map)) {
+				aug_map[aug] = getAugData(ns, aug);
+				aug_map[aug]["factions"] = [];
+			}
 			// Add to the list of factions already found for a given aug
 			let augs_factions = [];
-			if (aug in aug_map) augs_factions = aug_map[aug]["factions"]
+			// are there already factions?
+			// ns.tprint(`Existing factions: ${aug_map[aug]["factions"]}`);
+			if (aug in aug_map && "factions" in aug_map[aug]) {
+				augs_factions = aug_map[aug]["factions"];
+				// ns.tprint(`Pre factions: ${augs_factions}`);
+			}
 			augs_factions.push(faction);
+			// ns.tprint(`Mid factions: ${augs_factions}`);
 			aug_map[aug]["factions"] = augs_factions;
+			// ns.tprint(`Post factions: ${augs_factions}`);
 			// Check if I own any of them
 			aug_map[aug]["owned"] = my_augs.includes(aug);
 		}
 	}
 	await ns.write("augmap.json", JSON.stringify(aug_map, null, 2), 'w');
 	return aug_map;
-}
-
-/**
- * Fetch all data about an aug
- * @param {NS} ns
- * @param {string} aug Name of an aug to fetch data about
- * @returns An object of data about an aug
- */
-function getAugData(ns, aug) {
-	return {
-		"stats": ns.getAugmentationStats(aug),
-		"repreq": ns.getAugmentationRepReq(aug),
-		"cost": ns.getAugmentationPrice(aug),
-		"prereqs": ns.getAugmentationPrereq(aug),
-		"factions": [],
-		"owned": false,
-	}
 }
 
 /**
@@ -216,6 +171,21 @@ export async function listPreferredAugs(ns) {
 	if (hacking_augs.length > 0) return hacking_augs
 	// If nothing left to buy, return an empty list
 	return []
+}
+
+/**
+ * Fetch all data about an aug
+ * @param {NS} ns
+ * @param {string} aug Name of an aug to fetch data about
+ * @returns An object of data about an aug
+ */
+function getAugData(ns, aug) {
+	return {
+		"stats": ns.getAugmentationStats(aug),
+		"repreq": ns.getAugmentationRepReq(aug),
+		"cost": ns.getAugmentationPrice(aug),
+		"prereqs": ns.getAugmentationPrereq(aug),
+	}
 }
 
 /**
@@ -318,30 +288,30 @@ function sortAugsByRepThenCost(aug_list, aug_map) {
 
 /**
  * Prompt to buy a list of augs
- * TODO: FINISH THIS - VALIDATE WE CAN BUY
  * @param aug_map Map of augs from readAugMap()
  * @param {array} desired_augs List of strings to buy
  * @param {boolean} should_prompt True if we should prompt to buy; false means we buy silently
  * @returns Same list of aug names sorted by rep, then by cost
  */
-async function promptForAugs(ns, desired_augs, should_prompt) {
+async function promptForAugs(ns, aug_map, desired_augs, should_prompt) {
 	for (const aug of desired_augs) {
-		ns.tprint(`Considering ${aug}`);
-		// Do I have the rep?
-		let repAvail = augRepAvailable(ns, aug_map[aug]["repreq"], aug_map[aug]["factions"]);
-		// ns.tprint("Rep: " + repAvail);
+		// ns.tprint(`Considering ${aug}`);
+		// Do I have a faction for whom satisifes the rep cost?
+		let satisfy_rep = augRepAvailable(ns, aug_map[aug]["repreq"], aug_map[aug]["factions"]);
+		// ns.tprint("Rep: " + satisfy_rep);
 		// Do I have the money?
-		let costAvail = augCostAvailable(ns, aug_map[aug]["cost"]);
-		// ns.tprint("Cost: " + costAvail);
+		let rich_af = augCostAvailable(ns, aug_map[aug]["cost"]);
+		// ns.tprint("Cost: " + rich_af);
 		// Do I satisfy pre-reqs?
-		let prereqsAvail = augPreReqsAvailable(ns, aug_map[aug]["prereq"])
-		// ns.tprint("PreReqs: " + prereqsAvail);
-		if (prereqsAvail) {
-			for (const pre of prereqsAvail) await purchaseAug(ns, pre, aug_map, should_prompt, should_autobuy)
+		let needed_prereqs = augPreReqsAvailable(ns, aug_map[aug]["prereqs"]);
+		// ns.tprint("PreReqs: " + needed_prereqs);
+		if (needed_prereqs.length > 0) {
+			// Calculate our pre-reqs first
+			await promptForAugs(ns, aug_map, needed_prereqs, should_prompt);
 		}
 		// If all of those are true, let's do it
-		if (repAvail && costAvail && (prereqsAvail.length == 0)) {
-			await purchaseAug(ns, aug, should_prompt);
+		if (satisfy_rep && rich_af && (needed_prereqs.length == 0)) {
+			await purchaseAug(ns, aug, satisfy_rep, should_prompt);
 		}
 	}
 }
@@ -350,9 +320,10 @@ async function promptForAugs(ns, desired_augs, should_prompt) {
  * Purchase an aug. Return true if succeeded, otherwise false.
  * @param {NS} ns 
  * @param {string} aug Name of augmentation 
+ * @param {string} faction Which faction to buy from
  * @param {boolean} should_prompt True if we should prompt to buy; false means we buy silently
 **/
-async function purchaseAug(ns, aug, should_prompt = true) {
+async function purchaseAug(ns, aug, faction, should_prompt = true) {
 	let should_buy = true;
 	let did_buy = false;
 	if (should_prompt) {
@@ -360,124 +331,11 @@ async function purchaseAug(ns, aug, should_prompt = true) {
 	}
 	if (should_buy) {
 		await ns.sleep(5);
-		did_buy = ns.purchaseAugmentation(repAvail, aug);
+		did_buy = ns.purchaseAugmentation(faction, aug);
 		if (did_buy) {
 			ns.tprint(`Purchased ${aug}!`);
 		}
-	}
-}
-
-
-// EVERYTHING BELOW THIS SUCKS
-/**
- * Build a list of preferred augs
- * @param {NS} ns
- * @param {array} factions_to_consider A list of factions to search through 
- * @param {array} types_to_consider A list of types to search through 
- * @returns List of args to buy (list of strings)
- */
-export async function listSomePreferredAugs(ns, aug_map, types_to_consider, exp = false) {
-	// Ultimately, we want all augs to buy, regardless of rep/cost
-	// The list should be ordered so:
-	// 1. Exp+ augs sorted by rep, then cost
-	// 2. All type-based augs sorted by rep, then cost
-	// So first, determine exp augs, sorted by rep, then cost; 
-	// Build the map of possible augs
-	// Map the shorthand type arguments to actual aug stats we want
-	let aug_stat_types = getStatsFromTypes(types_to_consider.flat());
-	// Now let's take a look at the rep requirements, and costs...
-	let desired_augs = filterAugsByStats(ns, aug_map, aug_stat_types);
-	if (exp) {
-		// Narrow it down to +exp first...
-		desired_augs = filterByExp(desired_augs);
-	}
-	// Then determine type augs, by rep, then cost
-	let sorted_desired_augs = sortAugsByRepThenCost(desired_augs);
-	return sorted_desired_augs;
-}
-
-/** 
- * Return a list of aug names filtered by stats
- * @param {NS} ns
- * @param {map} aug_map Map of augmentations generated by buildAugMap()
- * @param {array} desired_stats A list of stats to search for 
- */
-function filterAugsByStats(ns, aug_map, desired_stats) {
-	let desired_augs = {};
-	// Brute force it:
-	for (let [aug, model] of Object.entries(aug_map)) {
-		/**
-		 * Basic filtering code:
-		 * desired_stats = ["hacking_exp_mult", "hacking_money_mult"]
-		 * Object.keys(item["stats"]) = ["hacking_mult", "hacking_exp_mult", "hacking_speed_mult"]
-		 * let matches = desired_stats.filter( items => actual_stats.includes(items) );
-		 */
-		// Look for matching stats
-		if (desired_stats.some(item => Object.keys(model["stats"]).includes(item))) {
-			desired_augs[aug] = model;
-			// ns.tprint(`${aug} from [${model["factions"].join(", ")}]: ${matching_stats.join(", ")}`);
-		}
-	}
-	return desired_augs;
-}
-
-/**
- * Return a dictionary of augs containing +exp bonuses
- * @param aug_map Object of augmentations
- */
-function filterByExp(aug_map) {
-	// Prioritize exp gain first
-	let exp_augs = {};
-	for (const [aug, aug_model] of Object.entries(aug_map)) {
-		for (const stat of Object.keys(aug_model["stats"])) {
-			if (stat.includes("exp")) {
-				exp_augs[aug] = aug_model
-			}
-		}
-	}
-	return exp_augs
-}
-
-function getCommonFaction(player_factions, faction_list) {
-	return faction_list.filter(faction => player_factions.includes(faction))
-}
-
-/** 
- * Purchase an aug. Return true if succeeded, otherwise false.
- * @param {NS} ns 
- * @param {string} aug Name of augmentation 
- * @param aug_model Model of stats about augmentation
-**/
-async function purchaseAugOld(ns, aug, aug_map, should_prompt, should_autobuy) {
-	// So, you want to buy an augmentation.
-	// ns.tprint(`Considering ${aug}`);
-	// Do I have the rep?
-	let repAvail = augRepAvailable(ns, aug_map[aug]["repreq"], aug_map[aug]["factions"]);
-	// ns.tprint("Rep: " + repAvail);
-	// Do I have the money?
-	let costAvail = augCostAvailable(ns, aug_map[aug]["cost"]);
-	// ns.tprint("Cost: " + costAvail);
-	// Do I satisfy pre-reqs?
-	let prereqsAvail = augPreReqsAvailable(ns, aug_map[aug]["prereq"])
-	// ns.tprint("PreReqs: " + prereqsAvail);
-	if (prereqsAvail) {
-		for (const pre of prereqsAvail) await purchaseAug(ns, pre, aug_map, should_prompt, should_autobuy)
-	}
-	// If all of those are true, let's do it
-	if (repAvail && costAvail && (prereqsAvail.length == 0)) {
-		let should_buy = false;
-		let did_buy = false;
-		if (should_prompt) {
-			should_buy = await ns.prompt(`Buy ${aug}?`);
-		}
-		if (should_autobuy || should_buy) {
-			did_buy = ns.purchaseAugmentation(repAvail, aug);
-			if (did_buy) ns.tprint(`Purchased ${aug}!`)
-			await ns.sleep(5);
-		} else {
-			ns.exit();
-		}
-	}
+	} else ns.exit();
 }
 
 /** 
@@ -491,8 +349,8 @@ function augRepAvailable(ns, repreq, factions) {
 	// Is this aug available to purchase right now?
 	let player = ns.getPlayer();
 	let myfactions = player.factions;
-	let commonFaction = getCommonFaction(myfactions, factions);
-	return commonFaction.find(faction => repreq <= ns.getFactionRep(faction))
+	let common_factions = factions.filter(faction => myfactions.includes(faction));
+	return common_factions.find(faction => repreq <= ns.getFactionRep(faction))
 }
 
 /** 
@@ -516,11 +374,5 @@ function augCostAvailable(ns, price) {
 function augPreReqsAvailable(ns, prereqs) {
 	// Do I meet all the pre-reqs?
 	let my_augs = ns.getOwnedAugmentations(true);
-	let unsatisfied = prereqs.filter(item => !my_augs.includes(item));
-	return unsatisfied
+	return prereqs.filter(item => !my_augs.includes(item))
 }
-
-
-// function printCheckbox(condition, label) {
-//   return `[${!!condition ? 'x' : ' '}] ${label}`
-// }
