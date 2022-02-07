@@ -39,10 +39,8 @@ export async function createNetworkMap(ns) {
 		return newData;
 	};
 
-	const run = async () => {
-		const data = scanHost(HOME, HOME);
-		await ns.write(NETWORK_MAP, JSON.stringify(data, null, 2), 'w');
-	};
+	const data = scanHost(HOME, HOME);
+	await ns.write(NETWORK_MAP, JSON.stringify(data, null, 2), 'w');
 }
 
 /** @param {NS} ns **/
@@ -50,16 +48,13 @@ export async function main(ns) {
 	const argData = ns.flags([
 		['daemon', false]
 	]);
-
-	await createNetworkMap(ns);
-
 	if (argData.daemon) {
 		while (true) {
-			await run();
+			await createNetworkMap(ns);
 			await ns.sleep(30000);
 		}
 	} else {
-		await run();
+		await createNetworkMap(ns);
 	}
 }
 
