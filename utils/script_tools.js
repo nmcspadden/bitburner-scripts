@@ -1,9 +1,9 @@
 /** Run a script on a host with the maximum possible threads
  * @param {NS} ns 
- * @param {string} script Script to run on a host 
- * @param {NS} host Host to check against
+ * @param {string} script Name of script to evaluate and run
+ * @param {string} host Name of server to execute on
 */
-export async function maximizeScriptUse(ns, script, host) {
+export function maximizeScriptUse(ns, script, host) {
 	let current_ram = ns.getServerMaxRam(host) - ns.getServerUsedRam(host);
 	let script_cost = ns.getScriptRam(script);
 	let threads = Math.floor(current_ram / script_cost); 
