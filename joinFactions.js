@@ -1,12 +1,13 @@
-import { locateServer } from "utils/networkmap.js";
+import { locateServer, crackServer } from "utils/networkmap.js";
 
 
-const factionMap = new Map([
-	["CyberSec", "CSEC"],
-	["NiteSec", "avmnite-02h"],
-	["The Black Hand", "I.I.I.I"],
-	["BitRunners", "run4theh111z"]
-])
+const factionMap = {
+	"CyberSec": "CSEC",
+	"NiteSec": "avmnite-02h",
+	"The Black Hand": "I.I.I.I",
+	"BitRunners": "run4theh111z",
+	"Fulcrum Secret Technologies": "fulcrumassets",
+}
 
 /**
  * Finds the faction servers and hacks them
@@ -24,7 +25,7 @@ export async function main(ns) {
 	ns.tprint("Current factions: " + my_factions.join(", "));
 	let my_level = player.hacking
 
-	for (const [faction, server] of factionMap) {
+	for (const [faction, server] of Object.entries(factionMap)) {
 		// Skip ones we've already joined
 		if (my_factions.includes(faction)) { continue }
 		ns.tprint("Considering " + faction);
@@ -36,31 +37,10 @@ export async function main(ns) {
 			ns.tprint(`Oh noez, we're ${my_level} but need ${req_hacking}`);
 			continue
 		}
-		// Check to see if we've already cracked it
-		if (!ns.hasRootAccess(server)) {
-			ns.tprint("Cracking into " + server);
-			if (ns.fileExists("BruteSSH.exe")) {
-				ns.brutessh(server);
-			}
-			if (ns.fileExists("FTPCrack.exe")) {
-				ns.ftpcrack(server);
-			}
-			if (ns.fileExists("RelaySMTP.exe")) {
-				ns.relaysmtp(server);
-			}
-			if (ns.fileExists("HTTPWorm.exe")) {
-				ns.httpworm(server);
-			}
-			if (ns.fileExists("SQLInject.exe")) {
-				ns.sqlinject(server);
-			}
-			try {
-				ns.nuke(server);
-			} catch (error) {
-				ns.tprint("Still need to open ports!");
-				continue
-			}
-
+		let nuked = crackServer(ns, server);
+		if (!nuked) {
+			ns.tprint(`Still need to open ports on ${server}!`);
+			continue
 		}
 		let map_to_server = await locateServer(ns, server);  // this will be a reverse-ordered list from home to target
 		ns.tprint(map_to_server.join(" -> "));
