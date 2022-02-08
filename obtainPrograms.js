@@ -26,7 +26,5 @@ export async function main(ns) {
 		if (purchased) {
 			ns.tprint("Purchased " + program)
 		}
-
 	}
-
 }
