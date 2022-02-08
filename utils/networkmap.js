@@ -108,7 +108,7 @@ export async function locateServer(ns, server) {
 * @param server_data Server data from BuildAugMap()
 * @returns True if we nuked it
 */
-function crackServer(ns, server) {
+export function crackServer(ns, server) {
 	// If we don't have root access, open ports and nuke it
 	if (!ns.hasRootAccess(server)) {
 		if (ns.fileExists("BruteSSH.exe")) {
