@@ -28,14 +28,15 @@ export async function createNetworkMap(ns) {
 				hackLevel: ns.getServerRequiredHackingLevel(host),
 				hackTime,
 				ports: ns.getServerNumPortsRequired(host),
-				moneyPerSec: currentMoney / hackTime
+				moneyPerSec: currentMoney / hackTime,
+				maxRAM: ns.getServerMaxRam(host)
 			}
 		};
 
 		// Attempt to crack the server, record the result if we rooted it
 		// Obviously, skip home...
-		if (host != HOME) {
-			newData[host][root] = crackServer(ns, host, newData[host]);
+		if (host != HOME && !newData[host]["root"]) {
+			newData[host]["root"] = crackServer(ns, host);
 		}
 
 		// Recursively build the map of nodes
@@ -50,6 +51,12 @@ export async function createNetworkMap(ns) {
 
 	// Recursively build the map
 	const data = scanHost(HOME, HOME);
+	// Now make 'em all grow
+	const SERVERGROWER = "serverGrower.js";
+	for (const node of Object.keys(data)) {
+		await ns.scp(SERVERGROWER, node);
+		maximizeScriptUse(ns, SERVERGROWER, node);
+	}
 	await ns.write(NETWORK_MAP, JSON.stringify(data, null, 2), 'w');
 }
 
@@ -101,7 +108,7 @@ export async function locateServer(ns, server) {
 * @param server_data Server data from BuildAugMap()
 * @returns True if we nuked it
 */
-function crackServer(ns, server, server_data) {
+function crackServer(ns, server) {
 	// If we don't have root access, open ports and nuke it
 	if (!ns.hasRootAccess(server)) {
 		if (ns.fileExists("BruteSSH.exe")) {
