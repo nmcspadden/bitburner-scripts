@@ -56,11 +56,11 @@ export async function main(ns) {
 		}
 		// Buy while we have enough money
 		// If 'auto' mode set, do not prompt
-		if (!flagdata.auto) {
+		if (!flagdata.auto && !flagdata.simulate) {
 			shouldBuy = await ns.prompt(`Buy from ${closest_faction} for ${ns.nFormat(price, '$0.00a')}`);
 		}
 		// If prompted yes, or 'auto' is set, proceed
-		if (shouldBuy) {
+		if (shouldBuy || flagdata.simulate) {
 			// If not simulating, do the purchase and re-evaluate our metrics
 			if (!flagdata.simulate) {
 				bought_price = price;
