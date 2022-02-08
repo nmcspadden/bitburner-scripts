@@ -5,7 +5,8 @@
 
 /** @param {NS} ns **/
 export async function main(ns) {
-    const tgt = ns.getHostname();
+    let tgt= ns.getHostname();
+    if (ns.args[0]) tgt = ns.args[0]
     // Infinite loop, go!
     while (true) {
         // Make sure we're not fighting unneeded security.
