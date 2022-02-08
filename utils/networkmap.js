@@ -1,3 +1,5 @@
+import { maximizeScriptUse } from "utils/script_tools.js";
+
 const HOME = 'home';
 const NETWORK_MAP = 'network_map.json';
 
@@ -30,6 +32,13 @@ export async function createNetworkMap(ns) {
 			}
 		};
 
+		// Attempt to crack the server, record the result if we rooted it
+		// Obviously, skip home...
+		if (host != HOME) {
+			newData[host][root] = crackServer(ns, host, newData[host]);
+		}
+
+		// Recursively build the map of nodes
 		myConnections
 			.filter((node) => !newData[node]) // prevent infinite looping...
 			.forEach((node) => {
@@ -39,6 +48,7 @@ export async function createNetworkMap(ns) {
 		return newData;
 	};
 
+	// Recursively build the map
 	const data = scanHost(HOME, HOME);
 	await ns.write(NETWORK_MAP, JSON.stringify(data, null, 2), 'w');
 }
@@ -82,6 +92,36 @@ export async function locateServer(ns, server) {
 	let premap_to_server = locateServerPrimitive(server, network_map, []);
 	premap_to_server.push('home');
 	return premap_to_server.reverse();  // this will be a reverse-ordered list from home to target
+}
+
+/**
+* Crack a server
+* @param {NS} ns
+* @param {string} server A server to crack
+* @param server_data Server data from BuildAugMap()
+* @returns True if we nuked it
+*/
+function crackServer(ns, server, server_data) {
+	// If we don't have root access, open ports and nuke it
+	if (!ns.hasRootAccess(server)) {
+		if (ns.fileExists("BruteSSH.exe")) {
+			ns.brutessh(server);
+		}
+		if (ns.fileExists("FTPCrack.exe")) {
+			ns.ftpcrack(server);
+		}
+		if (ns.fileExists("RelaySMTP.exe")) {
+			ns.relaysmtp(server);
+		}
+		if (ns.fileExists("HTTPWorm.exe")) {
+			ns.httpworm(server);
+		}
+		if (ns.fileExists("SQLInject.exe")) {
+			ns.sqlinject(server);
+		}
+		ns.nuke(server);
+	}
+	return ns.hasRootAccess(server)
 }
 
 /**
