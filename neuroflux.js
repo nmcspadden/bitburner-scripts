@@ -49,14 +49,10 @@ export async function main(ns) {
 			started_working = ns.workForFaction(closest_faction, "Hacking Contracts");
 			await ns.sleep(30000);
 		}
+		// We have enough rep to buy now, stop working
 		if (started_working) {
 			ns.stopAction();
 			started_working = false;
-		}
-		// Do we have enough rep to buy now? If not, we probably said nowork
-		if (ns.getFactionRep(closest_faction) < ns.getAugmentationRepReq(NF)) {
-			ns.tprint("Not enough rep to buy more.");
-			ns.exit();
 		}
 		// Buy while we have enough money
 		// If 'auto' mode set, do not prompt
