@@ -139,13 +139,13 @@ export function crackServer(ns, server) {
 * @returns A reverse list of paths leading up a server
 */
 function locateServerPrimitive(ns, server, network_map, connection_list) {
-	if (!(server in Object.keys(network_map))) return []
+	if (!Object.keys(network_map).includes(server)) return []
 	if (network_map[server].parent != '') {
 		// ns.tprint(`Current server: ${server}`)
 		// ns.tprint(`Parent: ${network_map[server].parent}`)
 		connection_list.push(server);
 		// ns.tprint(`Current connection list: ${connection_list.join(", ")}`)
-		locateServerPrimitive(network_map[server].parent, network_map, connection_list);
+		locateServerPrimitive(ns, network_map[server].parent, network_map, connection_list);
 	}
 	return connection_list;
 }
