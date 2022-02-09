@@ -1,32 +1,21 @@
 import { workoutAllUntil, commitKarmaFocusedCrime, GANG_KARMA } from "utils/crimes.js";
-import { obtainPrograms } from "obtainPrograms.js";
+import { maximizeScriptUse } from "utils/script_tools.js";
 
 /**
  * Early Gameplan w/ Gangs (32 GB RAM)
- * 1. Buy programs from darkweb
- * 2. Run findOptimal with 1 thread
- * 3. Run easy-hack with 2 threads
- * 4. Gym until 30 of each stat
- * 5. Start mugging until >70% chance of homicide
- * 6. Homicide until -54k karma
- * 7. Start gang
- * 8. Along the way, evaluate if we have enough money for the next RAM upgrade
- */
+**/
 
 const HOME = 'home';
 const MIN_STAT = 30;
 
 /** @param {NS} ns **/
 export async function main(ns) {
-	// 2-3 Run hacking programs
-	//TODO figure out optimal thread counts here
-	// not enough RAM to do this script + findOptimal + easy-hack in 32 GB
-	// ns.exec('easy-hack.script', HOME, 2);
-	// 4. Hit the gym until minimum stats
+	// Create network map
+	ns.exec("utils/networkmap.js", HOME);
+	// Hit the gym until minimum stats
 	await workoutAllUntil(ns, MIN_STAT);
 	// 5-6 Start crimes until we can do homicides to get to the gang karma, also upgrade home
 	await crimeWhileUpgradingLoop(ns);
-	// TODO figure out how to do more hacking based on increased RAM amounts
 	// 7. Start a gang
 	startAGang(ns);
 }
@@ -45,7 +34,8 @@ async function crimeWhileUpgradingLoop(ns) {
 		// See if we can upgrade our home
 		upgradeHome(ns);
 		// If we have lots of money, see if we can buy darkweb programs
-		obtainPrograms(ns);
+		// obtainPrograms(ns);
+		ns.exec('obtainPrograms.js', HOME);
 		// Spin up hacking XP tools
 		growHackingXP(ns);
 		// Otherwise, commit crime!
@@ -74,28 +64,19 @@ function upgradeHome(ns) {
 	}
 }
 
-// TODO: When building a network map, we should attempt to root each server
-// Also, should backdoor the specific Faction-ones that matter
-// Need a function to determine optimal server
 /** 
  * Spin up hacking scripts to grow hacking XP
  * @param {NS} ns
 **/
 function growHackingXP(ns) {
 	let HACKSCRIPT;
-	let server_to_hack;
 	if (ns.getHackingLevel <= 300) {
 		HACKSCRIPT =  "growHackingXP.js";
 	} else {
-		// TODO: Figure out which server to hack optimally
+		// TODO: Figure out which server to hack
 		HACKSCRIPT = "basicHack.js";
-		server_to_hack = "foodnstuff";
 	}
-	let current_ram = ns.getServerMaxRam(HOME);
-	let script_cost = ns.getScriptRam(HACKSCRIPT);
-	let threads = Math.floor(current_ram / script_cost); 
-	// the server to hack argument is ignored by basicHack.js
-	ns.exec(HACKSCRIPT, HOME, threads, server_to_hack);
+	maximizeScriptUse(ns,HACKSCRIPT, HOME);
 }
 
 /** 
