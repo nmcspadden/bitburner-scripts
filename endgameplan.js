@@ -46,6 +46,7 @@ export async function main(ns) {
 		ns.tprint("Waiting for hacking level to hit 2500...");
 		await ns.sleep(5000);
 	}
+	ns.enableLog("ALL");
 	// Create network map
 	await createNetworkMap(ns);
 	// Join Daedalus if it's currently waiting
