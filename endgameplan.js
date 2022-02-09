@@ -27,6 +27,8 @@ const WORLD = "w0r1d_d43m0n";
 
 /** @param {NS} ns **/
 export async function main(ns) {
+	// Join Daedalus if it's currently waiting
+	joinDaedalus(ns);
 	await grindForRedPill(ns);
 	// hack the world daemon!
 	await hackThePlanet(ns);
@@ -87,6 +89,7 @@ async function grindForRedPill(ns) {
 **/
 async function hackThePlanet(ns) {
 	let daemon_path = await locateServer(ns, WORLD);
+	if (daemon_path.length < 5) return
 	ns.tprint(`Path to ${WORLD}: ${daemon_path.join(" -> ")}`);
 	for (const step of daemon_path) {
 		// ns.tprint("Connecting to: " + step)
@@ -96,4 +99,15 @@ async function hackThePlanet(ns) {
 	if (should_end_bitnode) {
 		await ns.installBackdoor();
 	} else ns.connect('home');
+}
+
+function joinDaedalus(ns) {
+	const DAEDALUS = "Daedalus";
+	if (DAEDALUS in ns.getPlayer().factions) return
+	// Check our faction invites
+	let invited_factions = ns.checkFactionInvitations();
+	if (invited_factions.includes(DAEDALUS)) {
+		let did_join = ns.joinFaction(DAEDALUS);
+		if (did_join) ns.tprint("Joined " + DAEDALUS)
+	}
 }

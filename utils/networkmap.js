@@ -96,7 +96,7 @@ export async function readNetworkMap(ns) {
 */
 export async function locateServer(ns, server) {
 	let network_map = await readNetworkMap(ns);
-	let premap_to_server = locateServerPrimitive(server, network_map, []);
+	let premap_to_server = locateServerPrimitive(ns, server, network_map, []);
 	premap_to_server.push('home');
 	return premap_to_server.reverse();  // this will be a reverse-ordered list from home to target
 }
@@ -138,7 +138,8 @@ export function crackServer(ns, server) {
 * @param {array} connection_list An array of paths leading up to a server (in reverse order)
 * @returns A reverse list of paths leading up a server
 */
-function locateServerPrimitive(server, network_map, connection_list) {
+function locateServerPrimitive(ns, server, network_map, connection_list) {
+	if (!(server in Object.keys(network_map))) return []
 	if (network_map[server].parent != '') {
 		// ns.tprint(`Current server: ${server}`)
 		// ns.tprint(`Parent: ${network_map[server].parent}`)
