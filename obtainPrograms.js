@@ -1,5 +1,10 @@
 /** @param {NS} ns **/
 export async function main(ns) {
+	obtainPrograms(ns);
+}
+
+/** @param {NS} ns **/
+export function obtainPrograms(ns) {
 	const programs = [
 		"BruteSSH.exe",
 		"AutoLink.exe",
@@ -16,15 +21,15 @@ export async function main(ns) {
 	ns.tprint("Checking for TOR...")
 	let gotTor = ns.purchaseTor();
 	if (gotTor) {
-		ns.tprint("Purchased TOR access")
+		ns.tprint("Purchased TOR access");
 	}
-	ns.tprint("Going shopping!")
 	// Go buy shit
 	for (let program of programs) {
-		ns.tprint("Considering " + program)
+		if (ns.ls('home', program).length > 0) continue
+		ns.tprint("Considering " + program);
 		let purchased = ns.purchaseProgram(program);
 		if (purchased) {
-			ns.tprint("Purchased " + program)
+			ns.tprint("Purchased " + program);
 		}
 	}
 }
