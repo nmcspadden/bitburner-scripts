@@ -1,14 +1,14 @@
 import { workoutAllUntil, commitKarmaFocusedCrime } from "utils/crimes.js";
 
 /**
- * Starting game plan
- * 1. Gym until 30 of each stat
+ * Starting game plan (32 GB only)
+ * 1. Gym until 100 of each stat
  * 2. Start mugging until we have enough money for the next RAM upgrade
  * 3. Spin up the earlygameplan.js
  */
 
 const HOME = 'home';
-const MIN_STAT = 30;
+const MIN_STAT = 100;
 
 /** @param {NS} ns **/
 export async function main(ns) {

@@ -6,7 +6,7 @@ import { maximizeScriptUse } from "utils/script_tools.js";
 **/
 
 const HOME = 'home';
-const MIN_STAT = 30;
+const MIN_STAT = 100;
 
 /** @param {NS} ns **/
 export async function main(ns) {
