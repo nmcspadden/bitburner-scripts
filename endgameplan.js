@@ -40,6 +40,8 @@ export async function main(ns) {
 	// Build a new map to re-root everything
 	ns.tprint("Generating new network map...");
 	await createNetworkMap(ns);
+	// Avoid a race condition
+	await ns.sleep(500);
 	maximizeScriptUse(ns, "growHackingXP.js", HOME);
 	while (ns.getPlayer().hacking <= 2500) {
 		ns.disableLog("ALL");
@@ -136,7 +138,11 @@ async function hackThePlanet(ns) {
 		// ns.tprint("Connecting to: " + step)
 		ns.connect(step);
 	}
-	// TODO: Add in logic to wait for required hacking level
+	ns.tprint("Checking to see if we have the required hacking level...");
+	while (ns.getPlayer().hacking < ns.getServerRequiredHackingLevel(WORLD)) {
+		// Wait for our hacking level to increase more
+		await ns.sleep(1000);
+	}
 	let should_end_bitnode = await ns.prompt(`Backdoor the ${WORLD} and end the bitnode?`);
 	if (should_end_bitnode) {
 		await ns.installBackdoor();
