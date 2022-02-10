@@ -1,22 +1,20 @@
-import { workoutAllUntil, commitKarmaFocusedCrime, GANG_KARMA } from "utils/crimes.js";
+import { commitKarmaFocusedCrime, GANG_KARMA } from "utils/crimes.js";
 import { maximizeScriptUse } from "utils/script_tools.js";
+import { upgradeHome } from "utils/gameplan.js";
 
 /**
  * Early Gameplan w/ Gangs (32 GB RAM)
 **/
 
 const HOME = 'home';
-const MIN_STAT = 100;
 
 /** @param {NS} ns **/
 export async function main(ns) {
 	// Create network map
 	ns.exec("utils/networkmap.js", HOME);
-	// Hit the gym until minimum stats
-	await workoutAllUntil(ns, MIN_STAT);
-	// 5-6 Start crimes until we can do homicides to get to the gang karma, also upgrade home
+	// Start crimes until we can do homicides to get to the gang karma, also upgrade home
 	await crimeWhileUpgradingLoop(ns);
-	// 7. Start a gang
+	// Start a gang!
 	startAGang(ns);
 }
 
@@ -34,7 +32,6 @@ async function crimeWhileUpgradingLoop(ns) {
 		// See if we can upgrade our home
 		upgradeHome(ns);
 		// If we have lots of money, see if we can buy darkweb programs
-		// obtainPrograms(ns);
 		ns.exec('obtainPrograms.js', HOME);
 		// Spin up hacking XP tools
 		growHackingXP(ns);
@@ -43,26 +40,6 @@ async function crimeWhileUpgradingLoop(ns) {
 	}
 }
 
-
-/** 
- * Upgrade the home
- * @param {NS} ns 
-**/
-function upgradeHome(ns) {
-	// Do I have enough money to buy a RAM or core upgrade?
-	let ram_cost = ns.getUpgradeHomeRamCost();
-	let core_cost = ns.getUpgradeHomeCoresCost();
-	let money = ns.getPlayer().money;
-	let did_upgrade = false;
-	if (money > ram_cost) {
-		did_upgrade = ns.upgradeHomeRam();
-		if (did_upgrade) ns.print(`Bought RAM upgrade for ${ns.nFormat(ram_cost, '0.00a')}`)
-	}
-	if (money > core_cost) {
-		did_upgrade = ns.upgradeHomeCores();
-		if (did_upgrade) ns.print(`Bought Cores upgrade for ${ns.nFormat(core_cost, '0.00a')}`)
-	}
-}
 
 /** 
  * Spin up hacking scripts to grow hacking XP
