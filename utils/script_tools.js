@@ -5,15 +5,15 @@
  * @param {number} threshold Max percent of RAM to consume (default 100)
 */
 export function maximizeScriptUse(ns, script, host, threshold=100) {
-	let threads = maxThreads(ns, script, host);
+	let threads = maxThreads(ns, script, host, threshold);
 	// ns.tprint(`${host} threads: ${threads}`);
 	if (threads > 0) {
 		// Kill it first before recalculating usage
 		ns.kill(script, host);
-		ns.exec(script, host, threads, threshold);
+		ns.exec(script, host, threads);
 	} else {
 		ns.kill(script, 'home', host);
-		ns.exec(script, 'home', 1, host, threshold);
+		ns.exec(script, 'home', 1, host);
 	}
 }
 
