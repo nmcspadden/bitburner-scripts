@@ -42,7 +42,7 @@ export async function main(ns) {
 	await createNetworkMap(ns);
 	// Avoid a race condition
 	await ns.sleep(500);
-	maximizeScriptUse(ns, "growHackingXP.js", HOME);
+	maximizeScriptUse(ns, "growHackingXP.js", HOME, 75);
 	while (ns.getPlayer().hacking <= 2500) {
 		ns.disableLog("ALL");
 		ns.tprint("Waiting for hacking level to hit 2500...");
