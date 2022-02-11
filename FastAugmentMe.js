@@ -46,6 +46,10 @@ export const corpList = [
 	"Fulcrum Secret Technologies",
 ];
 
+export const bladeburners = [
+    "Bladeburners"
+];
+
 export const aug_bonus_types = {
 	hack: ["hacking_mult", "hacking_exp_mult", "hacking_speed_mult", "hacking_chance_mult", "hacking_grow_mult", "hacking_money_mult"],
 	faction: ["faction_rep_mult"],
@@ -65,8 +69,6 @@ export async function main(ns) {
 		["ask", false],
 		["auto", false],
 	])
-	let factions_to_consider = [];
-	let types_to_consider = [];
 	if (flagdata.help) {
 		ns.tprint(
 			`--ask prompts to buy; --auto autobuys any augs. If neither are specified, no purchasing will happen.`
@@ -113,7 +115,7 @@ export async function buildAugMap(ns) {
 	 * "prereqs": [list of strings],
 	 * "owned": false,
 	*/
-	let factions_to_consider = factionList.concat(locationFactionList, gangList, endgameFactionList, corpList);
+	let factions_to_consider = factionList.concat(locationFactionList, gangList, endgameFactionList, corpList, bladeburners);
 	// ns.tprint(`Factions to consider: ${factions_to_consider}`);
 	let my_augs = ns.getOwnedAugmentations();
 	for (const faction of factions_to_consider) {

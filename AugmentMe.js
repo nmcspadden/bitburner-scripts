@@ -46,13 +46,18 @@ const corpList = [
 	"Fulcrum Secret Technologies",
 ];
 
+const bladeburners = [
+    "Bladeburners"
+];
+
 const aug_bonus_types = {
 	hack: ["hacking_mult", "hacking_exp_mult", "hacking_speed_mult", "hacking_chance_mult", "hacking_grow_mult", "hacking_money_mult"],
 	faction: ["faction_rep_mult"],
 	company: ["company_rep_mult", "work_money_mult"],
 	crime: ["crime_success_mult", "crime_money_mult"],
 	combat: ["agility_exp_mult", "agility_mult", "defense_exp_mult", "defense_mult", "dexterity_exp_mult", "dexterity_mult", "strength_exp_mult", "strength_mult"],
-	charisma: ["charisma_exp_mult", "charisma_mult"]
+	charisma: ["charisma_exp_mult", "charisma_mult"],
+    bladeburners: ["bladeburner_success_chance_mult", "bladeburner_max_stamina_mult", "bladeburner_stamina_gain_mult", "bladeburner_analysis_mult"]
 };
 
 const augs_to_ignore = [
@@ -69,6 +74,7 @@ export async function main(ns) {
 		["gangs", false],
 		["endgame", false],
 		["corps", false],
+        ["bladeburners", false],
 		["all", false],
 		["faction", ""],
 		["help", false],
@@ -96,6 +102,7 @@ export async function main(ns) {
 		[data => { return data.locations || data.all }, () => factions_to_consider.push(...locationFactionList)],
 		[data => { return data.gangs || data.all }, () => factions_to_consider.push(...gangList)],
 		[data => { return data.corps || data.all }, () => factions_to_consider.push(...corpList)],
+		[data => { return data.bladeburners || data.all }, () => factions_to_consider.push(...bladeburners)],
 		[data => { return data.endgame || data.all }, () => factions_to_consider.push(...endgameFactionList)],
 		[data => { return data.faction }, (data) => { factions_to_consider.push(data.faction) }],
 		[data => { return data.type }, (data) => { (data.type == "all" ? types_to_consider.push(Object.keys(aug_bonus_types)) : types_to_consider.push(data.type)) }],
