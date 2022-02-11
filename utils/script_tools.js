@@ -30,3 +30,19 @@ export function maxThreads(ns, script, host, threshold=100) {
 	// ns.tprint(`${host} script cost: ${script_cost}`);
 	return Math.floor((current_ram * (threshold/100)) / script_cost);
 }
+
+/** Look for a matching script on any host's process list
+ * @param {NS} ns 
+ * @param {string} host Name of server to execute on
+ * @param {string} script Name of script to search for
+ * @returns True if we found the script running, false otherwise
+*/
+export function lookForProcess(ns, host, script) {
+	let process_list = ns.ps(host);
+	for (let process of process_list) {
+		if (process["filename"].includes(script)) {
+			return true
+		}
+	}
+	return false
+}
