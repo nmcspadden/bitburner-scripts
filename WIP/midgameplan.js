@@ -2,14 +2,13 @@ import { listPreferredAugs, gangList, aug_bonus_types } from "WIP/AugmentMe2.js"
 
 /**
  * Mid Gameplan w/ Gangs (1+ TB RAM)
- * 1. Buy programs from darkweb
- * 2. Run findOptimal with 60% RAM
- * 3. Run easy-hack with 30% RAM
- * 4. Start gang
- * 5. Buy all the +hacking exp augs
- * 6. Buy all the NFs
- * 7. If gangs are making enough money that saving up for Qlink (25t) isn't bananas, do that
- * 8. Loop back until no more augs to buy
+ * Buy all the +faction augs
+ * Buy all the +exp augs
+ * Buy all the hacking augs
+ * If bladeburners are in use, buy all the combat augs too
+ * Buy all the NFs
+ * If gangs are making enough money that saving up for Qlink (25t) isn't bananas, do that
+ * Loop back until no more augs to buy
  */
 
 const HOME = 'home';
