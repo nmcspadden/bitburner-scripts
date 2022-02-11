@@ -14,6 +14,8 @@ const MIN_STAT = 100;
 /** @param {NS} ns **/
 export async function main(ns) {
 	ns.toast("Starting beginning game plan!", "info", null);
+	ns.disableLog("ALL"); // Disable the log
+	ns.tail(); // Open a window to view the status of the script
 	await workoutAllUntil(ns, MIN_STAT);
 	await crimeWhileUpgradingLoop(ns);
 	ns.spawn('earlygameplan.js');
@@ -24,8 +26,6 @@ export async function main(ns) {
  * @param {NS} ns 
 **/
 async function crimeWhileUpgradingLoop(ns) {
-	ns.disableLog("ALL"); // Disable the log
-	ns.tail(); // Open a window to view the status of the script
 	let timeout = 250; // In ms - too low of a time will result in a lockout/hang
 	while (ns.getServerMaxRam(HOME) <= 32) {
 		await ns.sleep(timeout); // Wait it out first
