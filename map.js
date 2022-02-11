@@ -1,3 +1,6 @@
+// This code is largely stolen from someone else
+// TODO: go find the github or reddit post I got this from
+
 /** @param {NS} ns **/
 export async function main(ns) {
 	let seenList = [];
