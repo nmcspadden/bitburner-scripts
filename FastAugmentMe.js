@@ -2,6 +2,8 @@ import { buildAugMap, readAugMap, aug_bonus_types } from "utils/augs.js";
 
 /** @param {NS} ns **/
 export async function main(ns) {
+	// TODO: Add a simple --combat, --hacking, --bladeburners, or --factions type to this
+	// so we can remove AugmentMe.js
 	const flagdata = ns.flags([
 		["help", false],
 		["ask", false],
@@ -21,6 +23,8 @@ export async function main(ns) {
 	if (ns.getPlayer().factions.includes("Bladeburners")) {
 		preferred = await listBladeburnerAugs(ns);
 	}
+	// If we don't have any BB specific ones to buy, then we're good
+	if (preferred.length == 0) preferred = await listPreferredHackingAugs(ns);
 	// Look for preferred augs based on the exp+, faction+, then hack+ stats
 	ns.tprint(`Augs to buy: ${preferred.join(", ")}`);
 	// Now check to see if we should buy
@@ -31,15 +35,30 @@ export async function main(ns) {
 }
 
 /**
- * Get a list of names of priority augs for hacking
+ * Get a list of names of priority augs for bladeburners stats
  * @param {NS} ns
  * @returns List of aug names (strings) to purchase
  */
 export async function listBladeburnerAugs(ns) {
 	let aug_map = await readAugMap(ns);
+	// First, check if I want success augs
+	let desired_augs = await listBladeburnerAugsPrimitive(ns, "success", false);
+	// If those are all done, get the rest
+	if (desired_augs.length > 0) desired_augs =  await listBladeburnerAugsPrimitive(ns, "bladeburners", false);	
+	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
+}
+ 
+/**
+ * Get a list of names of priority augs for bladeburners success
+ * @param {NS} ns
+ * @param {string} substring Substring of stats to search for
+ * @returns List of aug names (strings) to purchase
+ */
+export async function listBladeburnerAugsPrimitive(ns, substring, owned = false) {
+	let aug_map = await readAugMap(ns);
 	let desired_augs = {};
-	// Map the shorthand type arguments to actual aug stats we want, filtered to only include success
-	let aug_stat_types = getStatsFromTypes(["bladeburners"]).filter(stat => stat.includes("success"));
+	// Map the shorthand type arguments to actual aug stats we want, filtered to only include substring
+	let aug_stat_types = getStatsFromTypes(["bladeburners"]).filter(stat => stat.includes("substring"));
 	// Now let's take a look at the rep requirements, and costs...
 	for (let [aug, model] of Object.entries(aug_map)) {
 		// Look for matching stats
