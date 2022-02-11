@@ -54,6 +54,8 @@ export async function createNetworkMap(ns) {
 	// Now make 'em all grow
 	const SERVERGROWER = "serverGrower.js";
 	for (const node of Object.keys(data)) {
+		// skip home, and don't try to grow servers we haven't rooted
+		if (node == HOME || !node["root"]) continue
 		await ns.scp(SERVERGROWER, node);
 		maximizeScriptUse(ns, SERVERGROWER, node);
 	}
@@ -126,7 +128,11 @@ export function crackServer(ns, server) {
 		if (ns.fileExists("SQLInject.exe")) {
 			ns.sqlinject(server);
 		}
-		ns.nuke(server);
+		try {
+			ns.nuke(server);
+		} catch (e) {
+			// do nothing
+		}
 	}
 	return ns.hasRootAccess(server)
 }
