@@ -10,8 +10,6 @@ const HOME = 'home';
 
 /** @param {NS} ns **/
 export async function main(ns) {
-	// Create network map
-	ns.exec("utils/networkmap.js", HOME);
 	// Start crimes until we can do homicides to get to the gang karma, also upgrade home
 	await crimeWhileUpgradingLoop(ns);
 	// Start a gang!
