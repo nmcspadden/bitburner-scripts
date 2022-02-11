@@ -53,11 +53,18 @@ export async function createNetworkMap(ns) {
 	const data = scanHost(HOME, HOME);
 	// Now make 'em all grow
 	const SERVERGROWER = "serverGrower.js";
+	// TODO: add a hack based on level
+	// const BASICHACK = "basicHack.js";
 	for (const node of Object.keys(data)) {
-		// skip home, and don't try to grow servers we haven't rooted
-		if (node == HOME || !node["root"]) continue
-		await ns.scp(SERVERGROWER, node);
-		maximizeScriptUse(ns, SERVERGROWER, node);
+		let script = SERVERGROWER;
+		// skip home, and don't try to hack servers we haven't rooted
+		if (node == HOME) continue
+		if (data[node]["root"]) {
+			await ns.scp(script, node);
+			ns.killall(node);
+			maximizeScriptUse(ns, script, node);
+		}
+		// TODO: backdoor the faction servers to replace joinFactions.js
 	}
 	await ns.write(NETWORK_MAP, JSON.stringify(data, null, 2), 'w');
 }
