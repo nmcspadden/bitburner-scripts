@@ -8,23 +8,23 @@ export function autocomplete(data, args) {
 
 /** @param {NS} ns **/
 export async function main(ns) {
+    let tgt = ns.getHostname();
+    if (ns.args[0]) tgt = ns.args[0]
     ns.disableLog('getServerSecurityLevel');
     ns.disableLog('getServerMaxMoney');
-
-    let srv = ns.getHostname();
 
     // Infinite loop, go!
     while (true) {
         // Make sure we're not fighting unneeded security.
-        while (ns.getServerSecurityLevel(srv) > ns.getServerMinSecurityLevel(srv)) {
-            await ns.weaken(srv);
+        while (ns.getServerSecurityLevel(tgt) > ns.getServerMinSecurityLevel(tgt)) {
+            await ns.weaken(tgt);
         }
 
         // Make sure the server has max money available.
-        if (ns.getServerMoneyAvailable(srv) < ns.getServerMaxMoney(srv)) {
-            await ns.grow(srv);
+        if (ns.getServerMoneyAvailable(tgt) < ns.getServerMaxMoney(tgt)) {
+            await ns.grow(tgt);
             continue;
         }
-        await ns.hack(srv);
+        await ns.hack(tgt);
     }
 }
