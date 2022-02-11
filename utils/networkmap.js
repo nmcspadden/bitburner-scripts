@@ -1,13 +1,15 @@
 import { maximizeScriptUse } from "utils/script_tools.js";
+import { SERVER_GROWN_FILE } from "serverGrower.js";
 
 const HOME = 'home';
 const NETWORK_MAP = 'network_map.json';
 
 /** 
  * Create a network map in JSON format
- * @param {NS} ns 
+ * @param {import("../.").NS} ns 
 **/
 export async function createNetworkMap(ns) {
+	const my_hack_level = ns.getHackingLevel();
 	const scanHost = (host, myParent, currentData = {}) => {
 		const myConnections = ns.scan(host);
 		const currentMoney = ns.getServerMoneyAvailable(host);
@@ -53,12 +55,17 @@ export async function createNetworkMap(ns) {
 	const data = scanHost(HOME, HOME);
 	// Now make 'em all grow
 	const SERVERGROWER = "serverGrower.js";
-	// TODO: add a hack based on level
-	// const BASICHACK = "basicHack.js";
+	const BASICHACK = "basicHack.js";
 	for (const node of Object.keys(data)) {
 		let script = SERVERGROWER;
 		// skip home, and don't try to hack servers we haven't rooted
 		if (node == HOME) continue
+		// If we've grown the server completely, do a hacking script instead
+		if (
+			ns.ls(node, SERVER_GROWN_FILE) &&
+			(data[node]["hackLevel"] <= my_hack_level)
+		) script = BASICHACK
+		// If we have root access, copy the script the run it
 		if (data[node]["root"]) {
 			await ns.scp(script, node);
 			ns.killall(node);
