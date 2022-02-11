@@ -17,6 +17,7 @@ export async function main(ns) {
 	let aug_map = await buildAugMap(ns);
 	// Am I in bladeburners?
 	let preferred = await listPreferredHackingAugs(ns);
+	// TODO: Change this to check for SF7 and use a rank check?
 	if (ns.getPlayer().factions.includes("Bladeburners")) {
 		preferred = await listBladeburnerAugs(ns);
 	}
