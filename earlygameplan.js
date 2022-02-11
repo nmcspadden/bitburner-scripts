@@ -3,7 +3,7 @@ import { maximizeScriptUse } from "utils/script_tools.js";
 import { upgradeHome } from "utils/gameplan.js";
 
 /**
- * Early Gameplan w/ Gangs (32 GB RAM)
+ * Early Gameplan w/ Gangs (64 GB RAM)
 **/
 
 const HOME = 'home';
@@ -14,7 +14,8 @@ export async function main(ns) {
 	// Start crimes until we can do homicides to get to the gang karma, also upgrade home
 	await crimeWhileUpgradingLoop(ns);
 	// Start a gang!
-	startAGang(ns);
+	await startAGang(ns);
+	// TODO: Join bladeburners if possible
 }
 
 /** 
@@ -59,8 +60,7 @@ function growHackingXP(ns) {
  * Check factions to see if I can join one and start a gang
  * @param {NS} ns 
 **/
-function startAGang(ns) {
-	let invitations = ns.checkFactionInvitations();
+async function startAGang(ns) {
 	const gangList = [
 		"Slum Snakes",
 		"Tetrads",
@@ -69,10 +69,14 @@ function startAGang(ns) {
 		"The Dark Army",
 		"The Syndicate",
 	];
-	let ready_gang = invitations.find(gang => gangList.includes(gang));
-	if (ready_gang) {
-		let joined = ns.joinFaction(ready_gang);
-		if (joined) ns.print(`Joined ${ready_gang} faction`)
+	let ready_gang = ns.checkFactionInvitations().find(invite => gangList.includes(invite));
+	while (!ready_gang) {
+		// Wait 30 seconds until the invitations show up
+		ns.print("Waiting for gang invitations...")
+		await ns.sleep(30000);
+		ready_gang = ns.checkFactionInvitations().find(invite => gangList.includes(invite));
 	}
+	let joined = ns.joinFaction(ready_gang);
+	if (joined) ns.print(`Joined ${ready_gang} faction`)
 	ns.exec('gangs.js', HOME);
 }

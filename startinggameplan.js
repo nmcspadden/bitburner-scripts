@@ -13,6 +13,7 @@ const MIN_STAT = 100;
 
 /** @param {NS} ns **/
 export async function main(ns) {
+	ns.toast("Starting beginning game plan!", "info", null);
 	await workoutAllUntil(ns, MIN_STAT);
 	await crimeWhileUpgradingLoop(ns);
 	ns.spawn('earlygameplan.js');
