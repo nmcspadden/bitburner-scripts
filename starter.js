@@ -11,5 +11,5 @@ export async function main(ns) {
 	// // Grow hacking XP on joesguns
 	// ns.exec("growHackingXP.js", HOME);
 	// Start early game plan
-	ns.spawn("earlygameplan.js", HOME);
+	ns.spawn("earlygameplan.js", 1);
 }
