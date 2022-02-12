@@ -6,15 +6,7 @@ export async function main(ns) {
 	// TODO: Add a simple --combat, --hacking, --bladeburners, or --factions type to this
 	// so we can remove AugmentMe.js
 	const flagdata = ns.flags([
-		["factions", false],
-		["locations", false],
-		["gangs", false],
-		["endgame", false],
-		["corps", false],
-        ["bladeburners", false],
-		["all", false],
 		["help", false],
-		["type", []],
 		["ask", false],
 		["auto", false],
 	])
@@ -24,42 +16,11 @@ export async function main(ns) {
 		);
 		return
 	}
-	let factions_to_consider = [];
-	let types_to_consider = [];
-	if (flagdata.help) {
-		ns.tprint(
-			`Pass in any of: --factions, --locations, --gangs, --corps, --endgame, --bladeburners; or --all for factions.
-			   --type can be: ${Object.keys(aug_bonus_types).join(", ")} or all.
-			   --ask prompts to buy; --auto autobuys any augs. If neither are specified, no purchasing will happen.`
-		);
-		return
-	}
-	// If they didn't pass in a valid type, yell
-	if (!flagdata.type == "all" && !Object.keys(aug_bonus_types).some(items => flagdata.type.includes(items))) {
-		ns.tprint("you dun goofed");
-		return
-	}
-	const pattern = [
-		[data => { return data.factions || data.all }, () => factions_to_consider.push(...factionList)],
-		[data => { return data.locations || data.all }, () => factions_to_consider.push(...locationFactionList)],
-		[data => { return data.gangs || data.all }, () => factions_to_consider.push(...gangList)],
-		[data => { return data.corps || data.all }, () => factions_to_consider.push(...corpList)],
-		[data => { return data.bladeburners || data.all }, () => factions_to_consider.push(...bladeburners)],
-		[data => { return data.endgame || data.all }, () => factions_to_consider.push(...endgameFactionList)],
-		[data => { return data.type }, (data) => { (data.type == "all" ? types_to_consider.push(Object.keys(aug_bonus_types)) : types_to_consider.push(data.type)) }],
-
-	]
-	for (const [condition, action] of pattern) {
-		if (condition(flagdata)) action(flagdata)
-	}
-	// TODO: Add in a type check to figure out what functions we call; it's going to be an ugly
-	// if/else statement, but it works
 	// Build the aug map first
 	let aug_map = await buildAugMap(ns);
-	// Prefer hacking augs first
-	let preferred = await listPreferredHackingAugs(ns);
 	// Am I in bladeburners?
-	if (checkSForBN(7)) {
+	let preferred = await listPreferredHackingAugs(ns);
+	if (await checkSForBN(ns, 7)) {
 		preferred = await listBladeburnerAugs(ns);
 	}
 	// If we don't have any BB specific ones to buy, then we're good
@@ -74,17 +35,6 @@ export async function main(ns) {
 }
 
 /**
- * Get a list of names of priority augs for combat stats
- * @param {NS} ns
- * @returns List of aug names (strings) to purchase
- */
- export async function listCombatAugs(ns) {
-	let aug_map = await readAugMap(ns);
-	let desired_augs = await listAugsPrimitive(ns, ["combat"], "mult", false);
-	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
-} 
-
-/**
  * Get a list of names of priority augs for bladeburners stats
  * @param {NS} ns
  * @returns List of aug names (strings) to purchase
@@ -92,12 +42,35 @@ export async function main(ns) {
 export async function listBladeburnerAugs(ns) {
 	let aug_map = await readAugMap(ns);
 	// First, check if I want success augs
-	let desired_augs = await listAugsPrimitive(ns, ["bladeburners"], "success", false);
+	let desired_augs = await listBladeburnerAugsPrimitive(ns, "success", false);
 	// If those are all done, get the rest
-	if (desired_augs.length > 0) desired_augs =  await listAugsPrimitive(ns, ["bladeburners"], "bladeburners", false);	
+	if (desired_augs.length > 0) desired_augs =  await listBladeburnerAugsPrimitive(ns, "bladeburners", false);	
 	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
 }
  
+/**
+ * Get a list of names of priority augs for bladeburners success
+ * @param {NS} ns
+ * @param {string} substring Substring of stats to search for
+ * @returns List of aug names (strings) to purchase
+ */
+export async function listBladeburnerAugsPrimitive(ns, substring, owned = false) {
+	let aug_map = await readAugMap(ns);
+	let desired_augs = {};
+	// Map the shorthand type arguments to actual aug stats we want, filtered to only include substring
+	let aug_stat_types = getStatsFromTypes(["bladeburners"]).filter(stat => stat.includes("substring"));
+	// Now let's take a look at the rep requirements, and costs...
+	for (let [aug, model] of Object.entries(aug_map)) {
+		// Look for matching stats
+		if (aug_stat_types.some(item => Object.keys(model["stats"]).includes(item))) {
+			// Skip items we own unless specifically told to include them
+			if (aug_map[aug]["owned"] && !owned) continue
+			desired_augs[aug] = model;
+		}
+	}
+	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
+}
+
 /**
  * Get a list of names of priority augs for hacking
  * @param {NS} ns
@@ -124,30 +97,6 @@ export async function listPreferredHackingAugs(ns) {
 	if (hacking_augs.length > 0) return hacking_augs
 	// If nothing left to buy, return an empty list
 	return []
-}
-
-/**
- * Get a list of names of priority augs for a given type and substat
- * @param {NS} ns
- * @param {array} types List of types to search for (from aug_stats_map)
- * @param {string} substring Substring of stats to search for
- * @returns List of aug names (strings) to purchase
- */
- async function listAugsPrimitive(ns, types, substring, owned = false) {
-	let aug_map = await readAugMap(ns);
-	let desired_augs = {};
-	// Map the shorthand type arguments to actual aug stats we want, filtered to only include substring
-	let aug_stat_types = getStatsFromTypes(types).filter(stat => stat.includes(substring));
-	// Now let's take a look at the rep requirements, and costs...
-	for (let [aug, model] of Object.entries(aug_map)) {
-		// Look for matching stats
-		if (aug_stat_types.some(item => Object.keys(model["stats"]).includes(item))) {
-			// Skip items we own unless specifically told to include them
-			if (aug_map[aug]["owned"] && !owned) continue
-			desired_augs[aug] = model;
-		}
-	}
-	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
 }
 
 /**
