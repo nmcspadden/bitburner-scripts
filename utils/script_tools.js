@@ -64,7 +64,7 @@ export async function checkSourceFile(ns, source) {
 /** Check all source files and write to disk
  * @param {NS} ns 
 */
-async function mapSourceFiles(ns) {
+export async function mapSourceFiles(ns) {
 	await ns.write(SF_MAP, JSON.stringify(ns.getOwnedSourceFiles(), null, 2), "w");
 }
 
@@ -72,7 +72,7 @@ async function mapSourceFiles(ns) {
  * @param {NS} ns 
  * @returns Object equivalent to ns.getOwnedSourceFiles() output
 */
-async function readSourceFilesMap(ns) {
+export async function readSourceFilesMap(ns) {
 	const SF_MAP_LOCAL = SF_MAP + ".txt";
 	// If we don't have a source file map yet, make one
 	if (ns.ls('home', SF_MAP_LOCAL).length == 0) {
