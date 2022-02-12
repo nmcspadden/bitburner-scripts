@@ -1,5 +1,5 @@
 import { commitKarmaFocusedCrime, GANG_KARMA } from "utils/crimes.js";
-import { maximizeScriptUse, lookForProcess } from "utils/script_tools.js";
+import { maximizeScriptUse, lookForProcess, checkSForBN } from "utils/script_tools.js";
 import { upgradeHome } from "utils/gameplan.js";
 
 /**
@@ -7,22 +7,30 @@ import { upgradeHome } from "utils/gameplan.js";
 **/
 
 const HOME = "home";
+const EARLY_LOG = "earlygameplan.log.txt";
 
 /** @param {NS} ns **/
 export async function main(ns) {
+	await ns.write(EARLY_LOG, "Starting early game plan", "w");
 	ns.toast("Starting early game plan!", "info", null);
 	ns.disableLog("ALL"); // Disable the log
 	ns.tail(); // Open a window to view the status of the script
 	// Start crimes until we can do homicides to get to the gang karma, also upgrade home
+	await ns.write(EARLY_LOG, "Crime while upgrading loop", "a");
 	await crimeWhileUpgradingLoop(ns);
 	// Start a gang!
+	await ns.write(EARLY_LOG, "Starting a gang", "a");
 	await startAGang(ns);
-	// TODO: Join bladeburners if possible
+	// Join bladeburners, if possible
+	joinBladeburners(ns);
+	await ns.write(EARLY_LOG, "Re-evaluating hacking XP scripts", "a");
 	ns.print("Kicking off hacking XP scripts");
 	growHackingXP(ns);
 	// Go into a waiting loop where we upgrade, buy programs, re-evaluate hacking XP
 	// TODO: Long term, figure out the right target to hack
+	await ns.write(EARLY_LOG, "Passive money and upgrade loop while gangs", "a");
 	await upgradingLoop(ns);
+	await ns.write(EARLY_LOG, "Done with early game", "a");
 }
 
 /** 
@@ -37,7 +45,7 @@ async function crimeWhileUpgradingLoop(ns) {
 		// See if we can upgrade our home
 		upgradeHome(ns);
 		// If we have lots of money, see if we can buy darkweb programs
-		ns.exec("obtainPrograms.js", HOME);
+		ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
 		// Spin up hacking XP tools
 		growHackingXP(ns);
 		// Otherwise, commit crime!
@@ -99,7 +107,8 @@ async function startAGang(ns) {
  * @param {NS} ns 
 **/
 async function upgradingLoop(ns) {
-	while (ns.getServerMaxRam(HOME) <= 32) {
+	// Loop until we have 1 TB of RAM
+	while (ns.getServerMaxRam(HOME) <= 1000) {
 		// Make sure gangs is running
 		if (!lookForProcess(ns, HOME, "gangs.js")) ns.exec("gangs.js", HOME)
 		// See if we can upgrade our home
@@ -117,4 +126,15 @@ async function upgradingLoop(ns) {
 		ns.print("Sleeping for 30 seconds");
 		await ns.sleep(30000);
 	}
+}
+
+/** 
+ * Loop through upgrades, hacking, buying programs, etc.
+ * @param {NS} ns 
+**/
+async function joinBladeburners(ns) {
+	if (!checkSForBN(ns, 7)) return
+	ns.print("Joining Bladeburners");
+	ns.bladeburners.joinBladeburners();
+	// What else do I do here?
 }
