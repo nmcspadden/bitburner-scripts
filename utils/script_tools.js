@@ -1,3 +1,5 @@
+export const SF_MAP = "sourcefiles.json";
+
 /** Run a script on a host with the maximum possible threads
  * @param {NS} ns 
  * @param {string} script Name of script to evaluate and run
@@ -45,4 +47,36 @@ export function lookForProcess(ns, host, script) {
 		}
 	}
 	return false
+}
+
+/** Check to see if we're in a BN or own its source file
+ * @param {NS} ns 
+ * @param {number} source Source to file to check for validation of
+ * @returns True if we own a source file or are in that bitnode
+*/
+export async function checkSourceFile(ns, source) {
+	// Output looks sorta like this:
+	// [{"n":1,"lvl":3},{"n":4,"lvl":3},{"n":2,"lvl":1},{"n":5,"lvl":1},{"n":6,"lvl":1}]
+	let sfmap = await readSourceFilesMap(ns);
+	return sfmap.some(file => file["n"] == source)
+}
+
+/** Check all source files and write to disk
+ * @param {NS} ns 
+*/
+async function mapSourceFiles(ns) {
+	await ns.write(SF_MAP, JSON.stringify(ns.getOwnedSourceFiles(), null, 2), "w");
+}
+
+/** Read written source file map
+ * @param {NS} ns 
+ * @returns Object equivalent to ns.getOwnedSourceFiles() output
+*/
+async function readSourceFilesMap(ns) {
+	const SF_MAP_LOCAL = SF_MAP + ".txt";
+	// If we don't have a source file map yet, make one
+	if (ns.ls('home', SF_MAP_LOCAL).length == 0) {
+		await mapSourceFiles(ns);
+	}
+	return JSON.parse(ns.read(SF_MAP_LOCAL));
 }
