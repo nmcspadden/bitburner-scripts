@@ -2,6 +2,9 @@ import { readNetworkMap } from "utils/networkmap.js";
 
 /** @param {NS} ns */
 export async function main(ns) {
+	const flagdata = ns.flags([
+		["quiet", false],
+	])
     let network_map = await readNetworkMap(ns);
     let contractList = [];
     let contracts = [];
@@ -14,11 +17,13 @@ export async function main(ns) {
             const type = ns.codingcontract.getContractType(contract, server);
             const data = ns.codingcontract.getData(contract, server);
             const didSolve = solve(type, data, server, contract, ns);
-            ns.tprint(`${server} - ${contract} - ${type} - ${didSolve || "FAILED!"}`);
+            if (!quiet) ns.tprint(`${server} - ${contract} - ${type} - ${didSolve || "FAILED!"}`);
         }
     }
-    ns.tprint(`Found ${contractList.length} contracts`);
-    contracts.forEach((contract) => void ns.tprint(contract));
+    if (!quiet) {
+        ns.tprint(`Found ${contractList.length} contracts`);
+        contracts.forEach((contract) => void ns.tprint(contract));
+    }
 }
 
 function solve(type, data, server, contract, ns) {

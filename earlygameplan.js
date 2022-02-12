@@ -128,7 +128,7 @@ async function upgradingLoop(ns) {
 			growHackingXP(ns);
 		}
 		// Run contract solver
-		ns.exec('contractSolver.js', HOME);
+		ns.exec('contractSolver.js', HOME, 1, "--quiet");
 		// Sleep for 30 seconds
 		ns.print("Sleeping for 30 seconds");
 		await ns.sleep(30000);
