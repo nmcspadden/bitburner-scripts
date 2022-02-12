@@ -10,14 +10,20 @@ import { upgradeHome } from "utils/gameplan.js";
 
 const HOME = 'home';
 const MIN_STAT = 100;
+const START_LOG = "startinggameplan.log.txt";
 
-/** @param {NS} ns **/
+/** @param {import(".").NS} ns **/
 export async function main(ns) {
+	await ns.write(START_LOG, "Starting beginning game plan", "w")
 	ns.toast("Starting beginning game plan!", "info", null);
 	ns.disableLog("ALL"); // Disable the log
 	ns.tail(); // Open a window to view the status of the script
+	await ns.write(START_LOG, "Beginning workout", "a");
 	await workoutAllUntil(ns, MIN_STAT);
+	await ns.write(START_LOG, "Crime while upgrading loop", "a");
 	await crimeWhileUpgradingLoop(ns);
+	ns.print("Bought enough RAM to move to Early Game");
+	await ns.write(START_LOG, "Finished, spawning early game plan", "a");
 	ns.spawn('earlygameplan.js');
 }
 
@@ -35,5 +41,4 @@ async function crimeWhileUpgradingLoop(ns) {
 		// Otherwise, commit crime!
 		commitKarmaFocusedCrime(ns);
 	}
-	ns.tprint("Bought enough RAM to move to Early Game")
 }
