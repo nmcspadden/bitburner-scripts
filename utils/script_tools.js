@@ -52,13 +52,25 @@ export function lookForProcess(ns, host, script) {
 /** Check to see if we're in a BN or own its source file
  * @param {NS} ns 
  * @param {number} source Source to file to check for validation of
- * @returns True if we own a source file or are in that bitnode
+ * @returns True if we own the source file or are in that bitnode
+*/
+export async function checkSForBN(ns, source) {
+	let current_bn = ns.getPlayer().bitNodeN;
+	let sf = await checkSourceFile(ns, source);
+	return ((source == current_bn) || await checkSourceFile(ns, source));
+}
+
+/** Check to see if we own a source file
+ * @param {NS} ns 
+ * @param {number} source Source to file to check for validation of
+ * @returns True if we own the source file
 */
 export async function checkSourceFile(ns, source) {
 	// Output looks sorta like this:
 	// [{"n":1,"lvl":3},{"n":4,"lvl":3},{"n":2,"lvl":1},{"n":5,"lvl":1},{"n":6,"lvl":1}]
 	let sfmap = await readSourceFilesMap(ns);
-	return sfmap.some(file => file["n"] == source)
+	// ns.tprint(JSON.stringify(sfmap, null, 2));
+	return sfmap.some(file => file["n"] == Number(source))
 }
 
 /** Check all source files and write to disk
