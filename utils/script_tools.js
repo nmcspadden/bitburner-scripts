@@ -37,12 +37,20 @@ export function maxThreads(ns, script, host, threshold=100) {
  * @param {NS} ns 
  * @param {string} host Name of server to execute on
  * @param {string} script Name of script to search for
+ * @param {array} args List of args to also validate
  * @returns True if we found the script running, false otherwise
 */
-export function lookForProcess(ns, host, script) {
+export function lookForProcess(ns, host, script, args=[]) {
+	/* Example ns.ps() output:
+	[
+		{"filename":"gangs.js","threads":1,"args":[],"pid":2},
+		{"filename":"basicHack.js","threads":1,"args":["n00dles"],"pid":3146},
+	]
+	*/
 	let process_list = ns.ps(host);
 	for (let process of process_list) {
-		if (process["filename"].includes(script)) {
+		if (process["filename"].includes(script) && (compareArrays(args, process["args"]))) {
+			// ns.tprint("Found match!");
 			return true
 		}
 	}
@@ -91,4 +99,13 @@ export async function readSourceFilesMap(ns) {
 		await mapSourceFiles(ns);
 	}
 	return JSON.parse(ns.read(SF_MAP_LOCAL));
+}
+
+/**
+ * Compare two arrays for equality
+ * @param {*} array1 
+ * @param {*} array2 
+ */
+export function compareArrays(array1, array2) {
+	return (array1.length === array2.length) && array1.every(function(value, index) { return value === array2[index]})
 }

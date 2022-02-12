@@ -1,4 +1,4 @@
-import { maximizeScriptUse } from "utils/script_tools.js";
+import { maximizeScriptUse, lookForProcess } from "utils/script_tools.js";
 import { SERVER_GROWN_FILE } from "serverGrower.js";
 
 const HOME = 'home';
@@ -65,10 +65,28 @@ export async function createNetworkMap(ns) {
 			ns.ls(node, SERVER_GROWN_FILE) &&
 			(data[node]["hackLevel"] <= my_hack_level)
 		) script = BASICHACK
-		// If we have root access, copy the script the run it
-		if (data[node]["root"]) {
+		// If we have root access, and it's not already running, copy the script then run it
+		// if (data[node]["root"] && (!lookForProcess(ns, node, script) || !lookForProcess(ns, HOME, script, [node]))) {
+		// 	ns.tprint("Kicking off script on " + node);
+		// 	ns.tprint(JSON.stringify(ns.ps(node), null, 2));
+		// 	await ns.scp(script, node);
+		// 	maximizeScriptUse(ns, script, node);
+		// }
+		// TODO: If we have root access, check to see if the server is already running the process
+		// Or check to see if we have the process running on home targeting it
+		if (!data[node]["root"]) continue
+		let already_running = false;
+		if (lookForProcess(ns, node, script)) {
+			ns.tprint(`${node} already running ${script}`);
+			already_running = true;
+		}
+		if (lookForProcess(ns, HOME, script, [node])) {
+			ns.tprint(`${node} already targeted by home with ${script}`);
+			already_running = true;
+		}
+		if (!already_running) {
+			ns.tprint(`Attempting to run ${script} on ${node}`);
 			await ns.scp(script, node);
-			ns.killall(node);
 			maximizeScriptUse(ns, script, node);
 		}
 		// TODO: backdoor the faction servers to replace joinFactions.js
@@ -161,10 +179,7 @@ export function crackServer(ns, server) {
 function locateServerPrimitive(ns, server, network_map, connection_list) {
 	if (!Object.keys(network_map).includes(server)) return []
 	if (network_map[server].parent != '') {
-		// ns.tprint(`Current server: ${server}`)
-		// ns.tprint(`Parent: ${network_map[server].parent}`)
 		connection_list.push(server);
-		// ns.tprint(`Current connection list: ${connection_list.join(", ")}`)
 		locateServerPrimitive(ns, network_map[server].parent, network_map, connection_list);
 	}
 	return connection_list;
