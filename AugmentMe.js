@@ -10,7 +10,6 @@ export async function main(ns) {
 		["corps", false],
         ["bladeburners", false],
 		["all", false],
-		["faction", ""],
 		["help", false],
 		["type", []],
 		["ask", false],
