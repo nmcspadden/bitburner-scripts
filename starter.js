@@ -1,3 +1,5 @@
+import { mapSourceFiles } from "utils/script_tools.js";
+
 /* 
  Starter.js: starting point for launching the gameplans
 */
@@ -6,6 +8,8 @@ const HOME = 'home';
 
 /** @param {NS} ns **/
 export async function main(ns) {
+    // Create the source file map
+    await mapSourceFiles(ns);
     // Determine our current RAM level
     let home_ram = ns.getServerMaxRam(HOME);
     // Create network map
