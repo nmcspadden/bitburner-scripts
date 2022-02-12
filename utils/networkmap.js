@@ -96,12 +96,12 @@ export async function main(ns) {
 * @param {NS} ns
 */
 export async function readNetworkMap(ns) {
-	const NETWORK_MAP = 'network_map.json.txt';
+	const NETWORK_MAP_LOCAL = NETWORK_MAP + ".txt";
 	// If we don't have a network map yet, make one
-	if (!ns.ls('home', NETWORK_MAP)) {
+	if (ns.ls('home', NETWORK_MAP_LOCAL).length == 0) {
 		await createNetworkMap(ns);
 	}
-	return JSON.parse(ns.read(NETWORK_MAP));
+	return JSON.parse(ns.read(NETWORK_MAP_LOCAL));
 }
 
 /**
