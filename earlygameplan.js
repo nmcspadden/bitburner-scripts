@@ -9,7 +9,7 @@ import { upgradeHome } from "utils/gameplan.js";
 const HOME = "home";
 const EARLY_LOG = "earlygameplan.log.txt";
 
-/** @param {NS} ns **/
+/** @param {import(".").NS} ns **/
 export async function main(ns) {
 	await ns.write(EARLY_LOG, "Starting early game plan", "w");
 	ns.toast("Starting early game plan!", "info", null);
@@ -35,7 +35,7 @@ export async function main(ns) {
 
 /** 
  * Commit crimes, but if we have enough money, buy more home upgrades
- * @param {NS} ns 
+ * @param {import(".").NS} ns
 **/
 async function crimeWhileUpgradingLoop(ns) {
 	let timeout = 250; // In ms - too low of a time will result in a lockout/hang
@@ -56,7 +56,7 @@ async function crimeWhileUpgradingLoop(ns) {
 
 /** 
  * Spin up hacking scripts to grow hacking XP
- * @param {NS} ns
+ * @param {import(".").NS} ns
 **/
 function growHackingXP(ns) {
 	let HACKSCRIPT;
@@ -72,7 +72,7 @@ function growHackingXP(ns) {
 
 /** 
  * Check factions to see if I can join one and start a gang
- * @param {NS} ns 
+ * @param {import(".").NS} ns 
 **/
 async function startAGang(ns) {
 	const gangList = [
@@ -104,24 +104,29 @@ async function startAGang(ns) {
 
 /** 
  * Loop through upgrades, hacking, buying programs, etc.
- * @param {NS} ns 
+ * @param {import(".").NS} ns 
 **/
 async function upgradingLoop(ns) {
 	// Loop until we have 1 TB of RAM
-	while (ns.getServerMaxRam(HOME) <= 1000) {
+	let home_ram = ns.getServerMaxRam(HOME);
+	let home_stats = [home_ram, 2]; // RAM, then Cores; the cores are actually irrelevant
+	while (home_stats[0] <= 1000) {
 		// Make sure gangs is running
 		if (!lookForProcess(ns, HOME, "gangs.js")) ns.exec("gangs.js", HOME)
 		// See if we can upgrade our home
 		ns.print("Looking at home upgrades...");
-		upgradeHome(ns);
+		home_stats = upgradeHome(ns);
 		// If we have lots of money, see if we can buy darkweb programs
-		ns.exec("obtainPrograms.js", HOME);
+		ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
 		// Create new network map
 		ns.print("Generating updated network map...");
 		ns.exec("utils/networkmap.js", HOME);
-		// Spin up hacking XP tools
-		ns.print("Re-evalauting hacking XP scripts");
-		growHackingXP(ns);
+		// Spin up hacking XP tools, only if we got more RAM
+		if (home_stats[0] > home_ram) {
+			ns.print("Re-evalauting hacking XP scripts");
+			home_ram = home_stats[0];
+			growHackingXP(ns);
+		}
 		// Sleep for 30 seconds
 		ns.print("Sleeping for 30 seconds");
 		await ns.sleep(30000);
@@ -130,11 +135,11 @@ async function upgradingLoop(ns) {
 
 /** 
  * Loop through upgrades, hacking, buying programs, etc.
- * @param {NS} ns 
+ * @param {import(".").NS} ns
 **/
 async function joinBladeburners(ns) {
 	if (!checkSForBN(ns, 7)) return
 	ns.print("Joining Bladeburners");
-	ns.bladeburners.joinBladeburners();
+	ns.bladeburner.joinBladeburners();
 	// What else do I do here?
 }

@@ -10,6 +10,7 @@ export function upgradeHome(ns) {
 	let money = ns.getPlayer().money;
 	let did_upgrade = false;
 	let home_tuple = [];
+	let home_server_stats;
 	if (money > ram_cost) {
 		did_upgrade = ns.upgradeHomeRam();
 		if (did_upgrade) {
@@ -23,7 +24,7 @@ export function upgradeHome(ns) {
 			ns.print(`Bought Cores upgrade for ${ns.nFormat(core_cost, '0.00a')}`);
 		}
 	}
-	let home_server_stats = ns.getServer("home");
+	home_server_stats = ns.getServer("home");
 	home_tuple.push(home_server_stats.maxRam);
 	home_tuple.push(home_server_stats.cpuCores);
 	return home_tuple;

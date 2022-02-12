@@ -1,7 +1,7 @@
 export const SF_MAP = "sourcefiles.json";
 
 /** Run a script on a host with the maximum possible threads
- * @param {NS} ns 
+ * @param {import("../.").NS} ns 
  * @param {string} script Name of script to evaluate and run
  * @param {string} host Name of server to execute on
  * @param {number} threshold Max percent of RAM to consume (default 100)
