@@ -5,6 +5,9 @@ export async function main(ns) {
 
 /** @param {NS} ns **/
 export function obtainPrograms(ns) {
+	const flagdata = ns.flags([
+		["quiet", false],
+	])
 	const programs = [
 		"BruteSSH.exe",
 		"AutoLink.exe",
@@ -18,18 +21,18 @@ export function obtainPrograms(ns) {
 		"Formulas.exe",
 	];
 	// First, get TOR
-	ns.tprint("Checking for TOR...")
+	if (!flagdata.quiet) ns.tprint("Checking for TOR...")
 	let gotTor = ns.purchaseTor();
 	if (gotTor) {
-		ns.tprint("Purchased TOR access");
+		if (!flagdata.quiet) ns.tprint("Purchased TOR access");
 	}
 	// Go buy shit
 	for (let program of programs) {
 		if (ns.ls('home', program).length > 0) continue
-		ns.tprint("Considering " + program);
+		if (!flagdata.quiet) ns.tprint("Considering " + program);
 		let purchased = ns.purchaseProgram(program);
 		if (purchased) {
-			ns.tprint("Purchased " + program);
+			if (!flagdata.quiet) ns.tprint("Purchased " + program);
 		}
 	}
 }
