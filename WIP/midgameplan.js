@@ -1,7 +1,12 @@
-import { listPreferredAugs, gangList, aug_bonus_types } from "WIP/AugmentMe2.js";
+import { output } from "utils/script_tools.js";
+import { upgradeHome } from "utils/gameplan.js";
+
 
 /**
  * Mid Gameplan w/ Gangs (1+ TB RAM)
+ * At this point, we have started a gang, and have 1 TB of RAM
+ * Continue looping through earning money, upgrading home, buying augs
+ * If we're in BB, run the BB tools
  * Buy all the +faction augs
  * Buy all the +exp augs
  * Buy all the hacking augs
@@ -12,17 +17,26 @@ import { listPreferredAugs, gangList, aug_bonus_types } from "WIP/AugmentMe2.js"
  */
 
 const HOME = 'home';
+const MID_LOG = "midgameplan.log.txt";
 
 /** @param {NS} ns **/
 export async function main(ns) {
-	// If we don't have >1TB RAM, just buy RAM upgrades until we do
-	ns.exec('obtainPrograms.js', HOME);
-	// 2-3 Run hacking programs
-	//TODO figure out optimal thread counts here
-	ns.exec('findOptimal.js', HOME);
-	ns.exec('easy-hack.script', HOME, 2);
-	// 4. Manage existing gang
-	ns.exec('gangs.js', HOME);
+	await ns.write(EARLY_LOG, "Starting mid game plan", "w");
+	ns.toast("Starting mid game plan!", "info", null);
+	ns.disableLog("ALL"); // Disable the log
+	ns.tail(); // Open a window to view the status of the script
+	// Make sure gangs is running
+	if (!lookForProcess(ns, HOME, "gangs.js")) {
+		ns.print("Starting gangs script...")
+		ns.exec("gangs.js", HOME)
+	}
+	// Try to buy more darkweb programs
+	ns.print("")
+	ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
+	// Create new network map
+	ns.print("Generating updated network map...");
+	ns.exec("utils/networkmap.js", HOME);
+
 	// 5. Buy all the hacking exp augs
 	let exp_augs = listPreferredAugs(ns, gangList, aug_bonus_types["hack"], true);
 	do {
