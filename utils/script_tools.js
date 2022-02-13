@@ -109,3 +109,15 @@ export async function readSourceFilesMap(ns) {
 export function compareArrays(array1, array2) {
 	return (array1.length === array2.length) && array1.every(function(value, index) { return value === array2[index]})
 }
+
+
+/** 
+ * Write a message to print + log
+ * @param {import(".").NS} ns 
+ * @param {string} logfile File to append to
+ * @param {string} msg Message to write
+**/
+async function output(ns, logfile, msg) {
+	ns.print(msg);
+	await ns.write(logfile, msg, "a");
+}

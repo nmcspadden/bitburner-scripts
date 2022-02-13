@@ -1,5 +1,5 @@
 import { commitKarmaFocusedCrime, GANG_KARMA } from "utils/crimes.js";
-import { maximizeScriptUse, lookForProcess, checkSForBN } from "utils/script_tools.js";
+import { maximizeScriptUse, lookForProcess, checkSForBN, output } from "utils/script_tools.js";
 import { upgradeHome } from "utils/gameplan.js";
 
 /**
@@ -16,21 +16,20 @@ export async function main(ns) {
 	ns.disableLog("ALL"); // Disable the log
 	ns.tail(); // Open a window to view the status of the script
 	// Start crimes until we can do homicides to get to the gang karma, also upgrade home
-	await ns.write(EARLY_LOG, "Crime while upgrading loop", "a");
+	output(ns, EARLY_LOG, "Starting crime + upgrade loop...");
 	await crimeWhileUpgradingLoop(ns);
 	// Start a gang!
-	await ns.write(EARLY_LOG, "Starting a gang", "a");
+	output(ns, EARLY_LOG, "Starting a gang");
 	await startAGang(ns);
 	// Join bladeburners, if possible
 	joinBladeburners(ns);
-	await ns.write(EARLY_LOG, "Re-evaluating hacking XP scripts", "a");
-	ns.print("Kicking off hacking XP scripts");
+	// Evaluate hacking scripts again
+	output(ns, EARLY_LOG, "Re-evaluating hacking scripts");
 	growHackingXP(ns);
 	// Go into a waiting loop where we upgrade, buy programs, re-evaluate hacking XP
-	// TODO: Long term, figure out the right target to hack
-	await ns.write(EARLY_LOG, "Passive money and upgrade loop while gangs", "a");
+	output(ns, EARLY_LOG, "Passive money and upgrade loop while managing gang");
 	await upgradingLoop(ns);
-	await ns.write(EARLY_LOG, "Done with early game", "a");
+	output(ns, EARLY_LOG, "Done with early game");
 }
 
 /** 
@@ -141,7 +140,7 @@ async function upgradingLoop(ns) {
 **/
 async function joinBladeburners(ns) {
 	if (!checkSForBN(ns, 7)) return
-	ns.print("Joining Bladeburners");
+	output(ns, EARLY_LOG, "Joining the Bladeburners");
 	ns.bladeburner.joinBladeburners();
 	// What else do I do here?
 }
