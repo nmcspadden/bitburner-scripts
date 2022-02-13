@@ -1,10 +1,8 @@
-import { buildAugMap, readAugMap, aug_bonus_types } from "utils/augs.js";
+import { buildAugMap, aug_bonus_types } from "utils/augs.js";
 import { checkSForBN } from "utils/script_tools.js";
 
 /** @param {NS} ns **/
 export async function main(ns) {
-	// TODO: Add a simple --combat, --hacking, --bladeburners, or --factions type to this
-	// so we can remove AugmentMe.js
 	const flagdata = ns.flags([
 		["type", ""],
 		["help", false],
@@ -13,18 +11,37 @@ export async function main(ns) {
 	])
 	if (flagdata.help) {
 		ns.tprint(
-			`--ask prompts to buy; --auto autobuys any augs. If neither are specified, no purchasing will happen.`
+			`--type can be: ${Object.keys(aug_bonus_types).join(", ")}
+			--ask prompts to buy; --auto autobuys any augs. If neither are specified, no purchasing will happen.`
 		);
 		return
 	}
 	// Build the aug map first
 	let aug_map = await buildAugMap(ns);
 	// Handle type
+	let preferred = await listPreferredAugs(ns, aug_map, flagdata.type);
+	ns.tprint(`Augs to buy: ${preferred.join(", ")}`);
+	// Now check to see if we should buy
+	if (preferred.length > 0) {
+		if (!flagdata.ask && !flagdata.auto) return
+		ns.tprint("Shopping?");
+		await promptForAugs(ns, aug_map, preferred, flagdata.ask)
+	}
+}
+
+/**
+ * Get a list of names of priority augs
+ * @param {NS} ns
+ * @param {*} aug_map Map of objects from buildAugMap()
+ * @param {string} type Type of augs to look for
+ * @returns List of aug names (strings) to purchase
+ */
+export async function listPreferredAugs(ns, aug_map, type) {
 	let preferred  = [];
-	if (flagdata.type) {
-		switch (flagdata.type) {
+	if (type) {
+		switch (type) {
 			case "bladeburners":
-				if (await checkSForBN(ns, 7)) preferred = listBladeburnerAugs(ns, aug_map)
+				if (await checkSForBN(ns, 7)) preferred = listBladeburnerAugs(aug_map)
 				break;
 			case "charisma":
 				preferred = listCharismaAugs(aug_map);
@@ -49,13 +66,6 @@ export async function main(ns) {
 				ns.exit();
 		}
 	}
-	ns.tprint(`Augs to buy: ${preferred.join(", ")}`);
-	// Now check to see if we should buy
-	if (preferred.length > 0) {
-		if (!flagdata.ask && !flagdata.auto) return
-		ns.tprint("Shopping?");
-		await promptForAugs(ns, aug_map, preferred, flagdata.ask)
-	}
 }
 
 /**
@@ -63,11 +73,11 @@ export async function main(ns) {
  * @param {NS} ns
  * @returns List of aug names (strings) to purchase
  */
-export function listBladeburnerAugs(ns, aug_map) {
+function listBladeburnerAugs(aug_map) {
 	// First, check if I want success augs
-	let desired_augs = listBladeburnerAugsPrimitive(ns, aug_map, "success", false);
+	let desired_augs = listBladeburnerAugsPrimitive(aug_map, "success", false);
 	// If those are all done, get the rest
-	if (desired_augs.length > 0) desired_augs = listBladeburnerAugsPrimitive(ns, aug_map, "bladeburner", false);	
+	if (desired_augs.length > 0) desired_augs = listBladeburnerAugsPrimitive(aug_map, "bladeburner", false);	
 	return desired_augs
 }
  
@@ -77,7 +87,7 @@ export function listBladeburnerAugs(ns, aug_map) {
  * @param {string} substring Substring of stats to search for
  * @returns List of aug names (strings) to purchase
  */
-export function listBladeburnerAugsPrimitive(ns, aug_map, substring, owned = false) {
+function listBladeburnerAugsPrimitive(aug_map, substring, owned = false) {
 	let desired_augs = {};
 	// Map the shorthand type arguments to actual aug stats we want, filtered to only include substring
 	let aug_stat_types = getStatsFromTypes(["bladeburners"]).filter(stat => stat.includes(substring));
@@ -98,7 +108,7 @@ export function listBladeburnerAugsPrimitive(ns, aug_map, substring, owned = fal
  * @param {NS} ns
  * @returns List of aug names (strings) to purchase
  */
-export function listPreferredHackingAugs(aug_map) {
+function listPreferredHackingAugs(aug_map) {
 	let desired_augs = listExpAugs(aug_map, "hack");
 	if (desired_augs.length > 0) return desired_augs
 	desired_augs = listSuccessAugs(aug_map, "hack");
