@@ -1,65 +1,4 @@
-const factionList = [
-	/* basic factions */
-	"CyberSec",
-	"Tian Di Hui",
-	"Netburners",
-	"NiteSec",
-	"The Black Hand",
-	"BitRunners",
-];
-
-const locationFactionList = [
-	"Sector-12",
-	"Chongqing",
-	"New Tokyo",
-	"Ishima",
-	"Aevum",
-	"Volhaven",
-
-];
-
-const gangList = [
-	"Slum Snakes",
-	"Tetrads",
-	"Silhouette",
-	"Speakers for the Dead",
-	"The Dark Army",
-	"The Syndicate",
-];
-
-const endgameFactionList = [
-	"The Covenant",
-	"Daedalus",
-	"Illuminati",
-];
-
-const corpList = [
-	"ECorp",
-	"MegaCorp",
-	"KuaiGong International",
-	"Four Sigma",
-	"NWO",
-	"Blade Industries",
-	"OmniTek Incorporated",
-	"Bachman & Associates",
-	"Clarke Incorporated",
-	"Fulcrum Secret Technologies",
-];
-
-const aug_bonus_types = {
-	hack: ["hacking_mult", "hacking_exp_mult", "hacking_speed_mult", "hacking_chance_mult", "hacking_grow_mult", "hacking_money_mult"],
-	faction: ["faction_rep_mult"],
-	company: ["company_rep_mult", "work_money_mult"],
-	crime: ["crime_success_mult", "crime_money_mult"],
-	combat: ["agility_exp_mult", "agility_mult", "defense_exp_mult", "defense_mult", "dexterity_exp_mult", "dexterity_mult", "strength_exp_mult", "strength_mult"],
-	charisma: ["charisma_exp_mult", "charisma_mult"]
-};
-
-const augs_to_ignore = [
-	"NeuroFlux Governor",
-	"The Red Pill",
-];
-
+import { buildAugMap, readAugMap, aug_bonus_types } from "utils/augs.js";
 
 /** @param {NS} ns **/
 export async function main(ns) {
@@ -69,8 +8,8 @@ export async function main(ns) {
 		["gangs", false],
 		["endgame", false],
 		["corps", false],
+        ["bladeburners", false],
 		["all", false],
-		["faction", ""],
 		["help", false],
 		["type", []],
 		["ask", false],
@@ -96,6 +35,7 @@ export async function main(ns) {
 		[data => { return data.locations || data.all }, () => factions_to_consider.push(...locationFactionList)],
 		[data => { return data.gangs || data.all }, () => factions_to_consider.push(...gangList)],
 		[data => { return data.corps || data.all }, () => factions_to_consider.push(...corpList)],
+		[data => { return data.bladeburners || data.all }, () => factions_to_consider.push(...bladeburners)],
 		[data => { return data.endgame || data.all }, () => factions_to_consider.push(...endgameFactionList)],
 		[data => { return data.faction }, (data) => { factions_to_consider.push(data.faction) }],
 		[data => { return data.type }, (data) => { (data.type == "all" ? types_to_consider.push(Object.keys(aug_bonus_types)) : types_to_consider.push(data.type)) }],
@@ -104,12 +44,14 @@ export async function main(ns) {
 	for (const [condition, action] of pattern) {
 		if (condition(flagdata)) action(flagdata)
 	}
+    ns.tprint(`Types: ${types_to_consider} Factions: ${factions_to_consider}`);
 	// Build the map of possible augs
 	let aug_map = buildAugMap(ns, factions_to_consider, true);
 	// Map the shorthand type arguments to actual aug stats we want
 	let aug_stat_types = getStatsFromTypes(types_to_consider.flat());
 	// Now let's take a look at the rep requirements, and costs...
 	let desired_aug_names = filterAugsByStats(ns, aug_map, aug_stat_types);
+    ns.tprint(JSON.stringify(desired_aug_names, null, 2));
 	// Narrow it down to +exp first...
 	let desired_augs = Object.entries(aug_map).filter(([key, value]) => desired_aug_names.includes(key));
 	let exp_augs = filterByExp(desired_augs);
@@ -129,40 +71,6 @@ export async function main(ns) {
 		let most_rep_aug = Object.entries(Object.fromEntries(desired_augs)).sort(([,a], [,b]) => a["repreq"] - b["repreq"]).reverse()[0][0];
 		ns.tprint(`Most rep-required aug is ${most_rep_aug} at ${ns.nFormat(aug_map[most_rep_aug]["repreq"], '0.000a')}`);
 	}
-}
-
-/**
- * Build up a map of augmentations available everywhere for future slicing
- * @param {NS} ns
- * @param {array} factions_to_consider A list of factions to search through 
- * @param {boolean} skip_nf Skip NeuroFlux Governor 
- */
-function buildAugMap(ns, factions_to_consider, skip_nf) {
-	// ns.tprint(`Factions to consider: ${factions_to_consider}`);
-	let aug_map = {};
-	// Keys: augmentation name; Values: an object aug_model = {"factions": [], "repreq": 0, "cost": 0};
-	// Now get all augs matching multipliers
-	for (const faction of factions_to_consider) {
-		let avail_augs = ns.getAugmentationsFromFaction(faction).filter(item => !augs_to_ignore.includes(item));
-		for (const aug of avail_augs) {
-			// ns.tprint(`Considering ${aug} from ${faction}`)
-			// Don't care about the infinitely-upgrading Governor
-			if (aug == "NeuroFlux Governor" && skip_nf) continue
-			// Get the stats, and cost
-			let aug_stats = ns.getAugmentationStats(aug);
-			let repreq = ns.getAugmentationRepReq(aug);
-			let cost = ns.getAugmentationPrice(aug);
-			let prereq = ns.getAugmentationPrereq(aug);
-			// Add to the list of factions already found for a given aug
-			let augs_factions = [];
-			if (aug in aug_map) {
-				augs_factions = aug_map[aug]["factions"];
-			}
-			augs_factions.push(faction);
-			aug_map[aug] = { "factions": augs_factions, "repreq": repreq, "prereq": prereq, "cost": cost, "stats": aug_stats };
-		}
-	}
-	return aug_map;
 }
 
 /** 
@@ -318,8 +226,3 @@ function augPreReqsAvailable(ns, prereqs) {
 	let unsatisfied = prereqs.filter(item => !my_augs.includes(item));
 	return unsatisfied
 }
-
-
-// function printCheckbox(condition, label) {
-//   return `[${!!condition ? 'x' : ' '}] ${label}`
-// }
