@@ -88,10 +88,13 @@ export function findMyFactionsWithAug(ns, aug, player) {
 	 * "stats": [list of strings],
 	 * "prereqs": [list of strings],
 	 * "owned": false,
+	 * "pending": false,
 	*/
 	let factions_to_consider = factionList.concat(locationFactionList, gangList, endgameFactionList, corpList, bladeburners);
 	// ns.tprint(`Factions to consider: ${factions_to_consider}`);
-	let my_augs = ns.getOwnedAugmentations(true);
+	let all_my_augs = ns.getOwnedAugmentations(true);
+	let my_augs = ns.getOwnedAugmentations();
+	let pending_augs = all_my_augs.filter(aug => !my_augs.includes(aug));
 	for (const faction of factions_to_consider) {
 		let avail_augs = ns.getAugmentationsFromFaction(faction);
 		for (const aug of avail_augs) {
@@ -115,6 +118,7 @@ export function findMyFactionsWithAug(ns, aug, player) {
 			// ns.tprint(`Post factions: ${augs_factions}`);
 			// Check if I own any of them
 			aug_map[aug]["owned"] = my_augs.includes(aug);
+			aug_map[aug]["pending"] = pending_augs.includes(aug);
 		}
 	}
 	await ns.write("augmap.json", JSON.stringify(aug_map, null, 2), 'w');
