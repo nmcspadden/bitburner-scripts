@@ -11,7 +11,8 @@
         "NiteSec",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Synaptic Enhancement Implant": {
       "stats": {
@@ -25,7 +26,8 @@
         "Aevum",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Cranial Signal Processors - Gen I": {
       "stats": {
@@ -39,7 +41,8 @@
         "CyberSec",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Cranial Signal Processors - Gen II": {
       "stats": {
@@ -57,7 +60,8 @@
         "NiteSec",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "NeuroFlux Governor": {
       "stats": {
@@ -123,7 +127,8 @@
         "Clarke Incorporated",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Neurotrainer I": {
       "stats": {
@@ -142,7 +147,8 @@
         "Aevum",
         "Slum Snakes"
       ],
-      "owned": true
+      "owned": false,
+      "pending": true
     },
     "Nanofiber Weave": {
       "stats": {
@@ -162,7 +168,8 @@
         "OmniTek Incorporated",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Wired Reflexes": {
       "stats": {
@@ -183,7 +190,8 @@
         "The Dark Army",
         "The Syndicate"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Speech Processor Implant": {
       "stats": {
@@ -203,7 +211,8 @@
         "Slum Snakes",
         "Silhouette"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Nuoptimal Nootropic Injector Implant": {
       "stats": {
@@ -222,7 +231,8 @@
         "Bachman & Associates",
         "Clarke Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Speech Enhancement": {
       "stats": {
@@ -241,7 +251,8 @@
         "Bachman & Associates",
         "Clarke Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "ADR-V1 Pheromone Gene": {
       "stats": {
@@ -259,7 +270,8 @@
         "Four Sigma",
         "NWO"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Social Negotiation Assistant (S.N.A)": {
       "stats": {
@@ -274,7 +286,8 @@
         "Tian Di Hui",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Neuroreceptor Management Implant": {
       "stats": {},
@@ -285,7 +298,8 @@
         "Tian Di Hui",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Hacknet Node CPU Architecture Neural-Upload": {
       "stats": {
@@ -299,7 +313,8 @@
         "Netburners",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Hacknet Node Cache Architecture Neural-Upload": {
       "stats": {
@@ -313,7 +328,8 @@
         "Netburners",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Hacknet Node NIC Architecture Neural-Upload": {
       "stats": {
@@ -327,7 +343,8 @@
         "Netburners",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Hacknet Node Kernel Direct-Neural Interface": {
       "stats": {
@@ -340,7 +357,8 @@
         "Netburners",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Hacknet Node Core Direct-Neural Interface": {
       "stats": {
@@ -353,7 +371,8 @@
         "Netburners",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Artificial Synaptic Potentiation": {
       "stats": {
@@ -369,7 +388,8 @@
         "The Black Hand",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Neural-Retention Enhancement": {
       "stats": {
@@ -382,7 +402,8 @@
         "NiteSec",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "DataJack": {
       "stats": {
@@ -399,7 +420,8 @@
         "New Tokyo",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Embedded Netburner Module": {
       "stats": {
@@ -419,7 +441,8 @@
         "Blade Industries",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Cranial Signal Processors - Gen III": {
       "stats": {
@@ -438,7 +461,8 @@
         "BitRunners",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Neurotrainer II": {
       "stats": {
@@ -457,7 +481,8 @@
         "BitRunners",
         "Slum Snakes"
       ],
-      "owned": true
+      "owned": false,
+      "pending": true
     },
     "CRTX42-AA Gene Modification": {
       "stats": {
@@ -471,7 +496,8 @@
         "NiteSec",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Enhanced Myelin Sheathing": {
       "stats": {
@@ -488,7 +514,8 @@
         "Slum Snakes",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Embedded Netburner Module Core Implant": {
       "stats": {
@@ -513,7 +540,8 @@
         "Blade Industries",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Neuralstimulator": {
       "stats": {
@@ -537,7 +565,8 @@
         "Bachman & Associates",
         "Clarke Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Cranial Signal Processors - Gen IV": {
       "stats": {
@@ -555,7 +584,8 @@
         "BitRunners",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "The Black Hand": {
       "stats": {
@@ -572,7 +602,8 @@
         "The Black Hand",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Artificial Bio-neural Network Implant": {
       "stats": {
@@ -588,7 +619,8 @@
         "Slum Snakes",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Embedded Netburner Module Core V2 Upgrade": {
       "stats": {
@@ -614,7 +646,8 @@
         "OmniTek Incorporated",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Neural Accelerator": {
       "stats": {
@@ -629,7 +662,8 @@
         "BitRunners",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Cranial Signal Processors - Gen V": {
       "stats": {
@@ -646,7 +680,8 @@
         "BitRunners",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "BitRunners Neurolink": {
       "stats": {
@@ -662,7 +697,8 @@
         "BitRunners",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Augmented Targeting I": {
       "stats": {
@@ -681,7 +717,8 @@
         "Blade Industries",
         "OmniTek Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Augmented Targeting II": {
       "stats": {
@@ -701,7 +738,8 @@
         "Blade Industries",
         "OmniTek Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "CashRoot Starter Kit": {
       "stats": {},
@@ -712,7 +750,8 @@
         "Sector-12",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Neuregen Gene Modification": {
       "stats": {
@@ -725,7 +764,8 @@
         "Chongqing",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "NutriGen Implant": {
       "stats": {
@@ -741,7 +781,8 @@
         "New Tokyo",
         "Slum Snakes"
       ],
-      "owned": true
+      "owned": false,
+      "pending": true
     },
     "Combat Rib I": {
       "stats": {
@@ -761,7 +802,8 @@
         "Blade Industries",
         "OmniTek Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "INFRARET Enhancement": {
       "stats": {
@@ -776,7 +818,8 @@
         "Ishima",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "PCMatrix": {
       "stats": {
@@ -795,7 +838,8 @@
         "Aevum",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Combat Rib II": {
       "stats": {
@@ -816,7 +860,8 @@
         "Blade Industries",
         "OmniTek Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "DermaForce Particle Barrier": {
       "stats": {
@@ -829,7 +874,8 @@
         "Volhaven",
         "Slum Snakes"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Unstable Circadian Modulator": {
       "stats": {
@@ -849,7 +895,8 @@
         "Slum Snakes",
         "Speakers for the Dead"
       ],
-      "owned": true
+      "owned": false,
+      "pending": true
     },
     "HemoRecirculator": {
       "stats": {
@@ -867,7 +914,8 @@
         "The Dark Army",
         "The Syndicate"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Augmented Targeting III": {
       "stats": {
@@ -887,7 +935,8 @@
         "Blade Industries",
         "OmniTek Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Synthetic Heart": {
       "stats": {
@@ -907,7 +956,8 @@
         "NWO",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Synfibril Muscle": {
       "stats": {
@@ -928,7 +978,8 @@
         "Blade Industries",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Combat Rib III": {
       "stats": {
@@ -949,7 +1000,8 @@
         "Blade Industries",
         "OmniTek Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "NEMEAN Subdermal Weave": {
       "stats": {
@@ -966,7 +1018,8 @@
         "Illuminati",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Graphene Bone Lacings": {
       "stats": {
@@ -981,7 +1034,8 @@
         "The Covenant",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Bionic Spine": {
       "stats": {
@@ -1001,7 +1055,8 @@
         "Blade Industries",
         "OmniTek Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Graphene Bionic Spine Upgrade": {
       "stats": {
@@ -1020,7 +1075,8 @@
         "ECorp",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Bionic Legs": {
       "stats": {
@@ -1037,7 +1093,8 @@
         "Blade Industries",
         "OmniTek Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Graphene Bionic Legs Upgrade": {
       "stats": {
@@ -1054,7 +1111,8 @@
         "MegaCorp",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "TITN-41 Gene-Modification Injection": {
       "stats": {
@@ -1068,7 +1126,8 @@
         "Slum Snakes",
         "Silhouette"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Enhanced Social Interaction Implant": {
       "stats": {
@@ -1086,7 +1145,8 @@
         "Bachman & Associates",
         "Clarke Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Embedded Netburner Module Core V3 Upgrade": {
       "stats": {
@@ -1111,7 +1171,8 @@
         "NWO",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Embedded Netburner Module Analyze Engine": {
       "stats": {
@@ -1132,7 +1193,8 @@
         "NWO",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Embedded Netburner Module Direct Memory Access Upgrade": {
       "stats": {
@@ -1154,7 +1216,8 @@
         "NWO",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Neuronal Densification": {
       "stats": {
@@ -1169,7 +1232,8 @@
         "Slum Snakes",
         "Clarke Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "FocusWire": {
       "stats": {
@@ -1192,7 +1256,8 @@
         "Bachman & Associates",
         "Clarke Incorporated"
       ],
-      "owned": true
+      "owned": false,
+      "pending": true
     },
     "PC Direct-Neural Interface": {
       "stats": {
@@ -1209,7 +1274,8 @@
         "Blade Industries",
         "OmniTek Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "PC Direct-Neural Interface Optimization Submodule": {
       "stats": {
@@ -1227,7 +1293,8 @@
         "Blade Industries",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "PC Direct-Neural Interface NeuroNet Injector": {
       "stats": {
@@ -1244,7 +1311,8 @@
         "Slum Snakes",
         "Fulcrum Secret Technologies"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "ADR-V2 Pheromone Gene": {
       "stats": {
@@ -1261,7 +1329,8 @@
         "Bachman & Associates",
         "Clarke Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "The Shadow's Simulacrum": {
       "stats": {
@@ -1277,7 +1346,8 @@
         "The Dark Army",
         "The Syndicate"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Neurotrainer III": {
       "stats": {
@@ -1296,7 +1366,8 @@
         "Four Sigma",
         "NWO"
       ],
-      "owned": true
+      "owned": false,
+      "pending": true
     },
     "HyperSight Corneal Implant": {
       "stats": {
@@ -1312,7 +1383,8 @@
         "KuaiGong International",
         "Blade Industries"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "LuminCloaking-V1 Skin Implant": {
       "stats": {
@@ -1326,7 +1398,8 @@
         "Slum Snakes",
         "Tetrads"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "LuminCloaking-V2 Skin Implant": {
       "stats": {
@@ -1343,7 +1416,8 @@
         "Slum Snakes",
         "Tetrads"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "SmartSonar Implant": {
       "stats": {
@@ -1357,7 +1431,8 @@
       "factions": [
         "Slum Snakes"
       ],
-      "owned": true
+      "owned": false,
+      "pending": true
     },
     "Power Recirculation Core": {
       "stats": {
@@ -1384,7 +1459,8 @@
         "The Syndicate",
         "NWO"
       ],
-      "owned": true
+      "owned": false,
+      "pending": true
     },
     "QLink": {
       "stats": {
@@ -1400,7 +1476,8 @@
         "Slum Snakes",
         "Illuminati"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "SPTN-97 Gene Modification": {
       "stats": {
@@ -1417,7 +1494,8 @@
         "Slum Snakes",
         "The Covenant"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "ECorp HVMind Implant": {
       "stats": {
@@ -1430,7 +1508,8 @@
         "Slum Snakes",
         "ECorp"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "CordiARC Fusion Reactor": {
       "stats": {
@@ -1450,7 +1529,8 @@
         "Slum Snakes",
         "MegaCorp"
       ],
-      "owned": true
+      "owned": false,
+      "pending": true
     },
     "SmartJaw": {
       "stats": {
@@ -1466,7 +1546,8 @@
         "Slum Snakes",
         "Bachman & Associates"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Neotra": {
       "stats": {
@@ -1480,7 +1561,8 @@
         "Slum Snakes",
         "Blade Industries"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Xanipher": {
       "stats": {
@@ -1504,7 +1586,8 @@
         "Slum Snakes",
         "NWO"
       ],
-      "owned": true
+      "owned": false,
+      "pending": true
     },
     "Hydroflame Left Arm": {
       "stats": {
@@ -1517,7 +1600,8 @@
         "Slum Snakes",
         "NWO"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "nextSENS Gene Modification": {
       "stats": {
@@ -1535,7 +1619,8 @@
         "Slum Snakes",
         "Clarke Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "OmniTek InfoLoad": {
       "stats": {
@@ -1549,7 +1634,8 @@
         "Slum Snakes",
         "OmniTek Incorporated"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Photosynthetic Cells": {
       "stats": {
@@ -1564,7 +1650,8 @@
         "Slum Snakes",
         "KuaiGong International"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Graphene BrachiBlades Upgrade": {
       "stats": {
@@ -1582,7 +1669,8 @@
         "Slum Snakes",
         "Speakers for the Dead"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Graphene Bionic Arms Upgrade": {
       "stats": {
@@ -1598,7 +1686,8 @@
         "Slum Snakes",
         "The Dark Army"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "BrachiBlades": {
       "stats": {
@@ -1614,7 +1703,8 @@
         "Slum Snakes",
         "The Syndicate"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Bionic Arms": {
       "stats": {
@@ -1628,7 +1718,8 @@
         "Slum Snakes",
         "Tetrads"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "The Red Pill": {
       "stats": {},
@@ -1638,7 +1729,8 @@
       "factions": [
         "Daedalus"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "EsperTech Bladeburner Eyewear": {
       "stats": {
@@ -1651,7 +1743,8 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "EMS-4 Recombination": {
       "stats": {
@@ -1665,7 +1758,8 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "ORION-MKIV Shoulder": {
       "stats": {
@@ -1680,7 +1774,8 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Hyperion Plasma Cannon V1": {
       "stats": {
@@ -1692,7 +1787,8 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Hyperion Plasma Cannon V2": {
       "stats": {
@@ -1706,7 +1802,8 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "GOLEM Serum": {
       "stats": {
@@ -1722,7 +1819,8 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Vangelis Virus": {
       "stats": {
@@ -1736,7 +1834,8 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Vangelis Virus 3.0": {
       "stats": {
@@ -1753,7 +1852,8 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "I.N.T.E.R.L.I.N.K.E.D": {
       "stats": {
@@ -1769,7 +1869,8 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "Blade's Runners": {
       "stats": {
@@ -1783,7 +1884,8 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "BLADE-51b Tesla Armor": {
       "stats": {
@@ -1800,7 +1902,8 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "BLADE-51b Tesla Armor: Power Cells Upgrade": {
       "stats": {
@@ -1816,7 +1919,8 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "BLADE-51b Tesla Armor: Energy Shielding Upgrade": {
       "stats": {
@@ -1831,7 +1935,8 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "BLADE-51b Tesla Armor: Unibeam Upgrade": {
       "stats": {
@@ -1845,7 +1950,8 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "BLADE-51b Tesla Armor: Omnibeam Upgrade": {
       "stats": {
@@ -1859,7 +1965,8 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "BLADE-51b Tesla Armor: IPU Upgrade": {
       "stats": {
@@ -1874,7 +1981,8 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     },
     "The Blade's Simulacrum": {
       "stats": {},
@@ -1884,6 +1992,7 @@
       "factions": [
         "Bladeburners"
       ],
-      "owned": false
+      "owned": false,
+      "pending": false
     }
   }
