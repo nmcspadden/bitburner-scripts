@@ -91,7 +91,7 @@ export function findMyFactionsWithAug(ns, aug, player) {
 	*/
 	let factions_to_consider = factionList.concat(locationFactionList, gangList, endgameFactionList, corpList, bladeburners);
 	// ns.tprint(`Factions to consider: ${factions_to_consider}`);
-	let my_augs = ns.getOwnedAugmentations();
+	let my_augs = ns.getOwnedAugmentations(true);
 	for (const faction of factions_to_consider) {
 		let avail_augs = ns.getAugmentationsFromFaction(faction);
 		for (const aug of avail_augs) {

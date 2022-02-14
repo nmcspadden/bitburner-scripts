@@ -20,7 +20,6 @@ export async function main(ns) {
 	let aug_map = await buildAugMap(ns);
 	// Handle type
 	let preferred = await listPreferredAugs(ns, aug_map, flagdata.type);
-	// TODO: this does not correctly filter out owned augs :(
 	ns.tprint(`Augs to buy: ${preferred.join(", ")}`);
 	// Now check to see if we should buy
 	if (preferred.length > 0) {
@@ -47,7 +46,7 @@ export async function listPreferredAugs(ns, aug_map, type) {
 				preferred = listCharismaAugs(aug_map);
 				break;
 			case "combat":
-				preferred = listCombatAugs(ns, aug_map);
+				preferred = listCombatAugs(aug_map);
 				break;
 			case "company":
 				preferred = listCompanyAugs(aug_map);
@@ -196,7 +195,7 @@ function listCharismaAugs(aug_map, owned = false) {
 * @param {boolean} owned True to include augs I own, false to exclude them
 * @returns List of aug names to purchase
 */
-function listCombatAugs(ns, aug_map, owned = false) {
+function listCombatAugs(aug_map, owned = false) {
 	// Prefer exp+ augs
 	let desired_augs = listExpAugs(aug_map, "combat");
 	if (desired_augs.length > 0) return desired_augs
