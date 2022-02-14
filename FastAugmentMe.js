@@ -20,7 +20,8 @@ export async function main(ns) {
 	let aug_map = await buildAugMap(ns);
 	// Handle type
 	let preferred = await listPreferredAugs(ns, aug_map, flagdata.type);
-	ns.tprint(`Augs to buy: ${preferred.join(", ")}`);
+	// ns.tprint(`Augs to buy: ${preferred.join(", ")}`);
+	printPrettyAugList(ns, preferred, aug_map);
 	// Now check to see if we should buy
 	if (preferred.length > 0) {
 		if (!flagdata.ask && !flagdata.auto) return
@@ -41,25 +42,25 @@ export async function listPreferredAugs(ns, aug_map, type, nf = false) {
 	if (type) {
 		switch (type) {
 			case "bladeburners":
-				if (await checkSForBN(ns, 7)) preferred = listBladeburnerAugs(aug_map)
+				if (await checkSForBN(ns, 7)) preferred = listBladeburnerAugs(aug_map, true)
 				break;
 			case "charisma":
-				preferred = listCharismaAugs(aug_map);
+				preferred = listCharismaAugs(aug_map, true);
 				break;
 			case "combat":
-				preferred = listCombatAugs(aug_map);
+				preferred = listCombatAugs(aug_map, true);
 				break;
 			case "company":
-				preferred = listCompanyAugs(aug_map);
+				preferred = listCompanyAugs(aug_map, true);
 				break;
 			case "crime":
-				preferred = listCrimeAugs(aug_map);
+				preferred = listCrimeAugs(aug_map, true);
 				break;
 			case "faction":
-				preferred = listFactionAugs(aug_map);
+				preferred = listFactionAugs(aug_map, true);
 				break;
 			case "hack":
-				preferred = listPreferredHackingAugs(aug_map);
+				preferred = listPreferredHackingAugs(aug_map, true);
 				break;
 			default:
 				ns.tprint("Invalid type!");
@@ -452,3 +453,30 @@ function listSuccessAugs(aug_map, type, owned = false) {
 	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
 }
 
+/**
+ * @param {import("../.").NS} ns 
+ */
+function printPrettyAugList(ns, aug_list, aug_map) {
+	ns.tprint("Augs to purchase: ");
+	aug_list.forEach(aug => printAugCheckbox(ns, aug, aug_map));
+}
+
+function printAugCheckbox(ns, aug, aug_map) {
+	let msg = `${aug}`
+	let condition = false;
+	if (aug_map[aug]["pending"]) {
+		msg = `${aug} (pending install)`;
+		condition = true;
+	} else if (aug_map[aug]["owned"]) {
+		condition = true;
+	} else {
+		let satisfy_rep = augRepAvailable(ns, aug_map[aug]["repreq"], aug_map[aug]["factions"]);
+		let satisfy_cost = augCostAvailable(ns, aug_map[aug]["cost"]);
+		msg += ` -- Factions: ${aug_map[aug]["factions"].join(", ")}, ${printCheckbox(satisfy_rep, `Rep req: ${ns.nFormat(aug_map[aug]["repreq"], '0.000a')}`)}, ${printCheckbox(satisfy_cost, `Cost: ${ns.nFormat(aug_map[aug]["cost"], '$0.00a')}`)}`
+	}
+	ns.tprint(printCheckbox(condition, msg));
+}
+
+function printCheckbox(condition, label) {
+  return `[${!!condition ? 'x' : ' '}] ${label}`
+}
