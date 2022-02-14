@@ -37,7 +37,7 @@ export async function main(ns) {
  * @returns List of aug names (strings) to purchase
  */
 export async function listPreferredAugs(ns, aug_map, type, nf = false) {
-	let preferred  = [];
+	let preferred = [];
 	if (type) {
 		switch (type) {
 			case "bladeburners":
@@ -75,14 +75,14 @@ export async function listPreferredAugs(ns, aug_map, type, nf = false) {
  * @param {NS} ns
  * @returns List of aug names (strings) to purchase
  */
-function listBladeburnerAugs(aug_map) {
+function listBladeburnerAugs(aug_map, owned = false) {
 	// First, check if I want success augs
-	let desired_augs = listBladeburnerAugsPrimitive(aug_map, "success", false);
+	let desired_augs = listBladeburnerAugsPrimitive(aug_map, "success", owned);
 	// If those are all done, get the rest
-	if (desired_augs.length > 0) desired_augs = listBladeburnerAugsPrimitive(aug_map, "bladeburner", false);	
+	if (desired_augs.length > 0) desired_augs = listBladeburnerAugsPrimitive(aug_map, "bladeburner", owned);
 	return desired_augs
 }
- 
+
 /**
  * Get a list of names of priority augs for bladeburners success
  * @param {NS} ns
@@ -110,12 +110,12 @@ function listBladeburnerAugsPrimitive(aug_map, substring, owned = false) {
  * @param {NS} ns
  * @returns List of aug names (strings) to purchase
  */
-function listPreferredHackingAugs(aug_map) {
-	let desired_augs = listExpAugs(aug_map, "hack");
+function listPreferredHackingAugs(aug_map, owned = false) {
+	let desired_augs = listExpAugs(aug_map, "hack", owned);
 	if (desired_augs.length > 0) return desired_augs
-	desired_augs = listSuccessAugs(aug_map, "hack");
+	desired_augs = listSuccessAugs(aug_map, "hack", owned);
 	if (desired_augs.length > 0) return desired_augs
-	desired_augs = listHackingAugs(aug_map);
+	desired_augs = listHackingAugs(aug_map, owned);
 	if (desired_augs.length > 0) return desired_augs
 	// If nothing left to buy, return an empty list
 	return []
@@ -129,7 +129,7 @@ function listPreferredHackingAugs(aug_map) {
 */
 function listFactionAugs(aug_map, owned = false) {
 	// Prefer rep+ augs
-	let desired_augs = listRepAugs(aug_map, "faction");
+	let desired_augs = listRepAugs(aug_map, "faction", owned);
 	if (desired_augs.length > 0) return desired_augs
 	// Map the shorthand type arguments to actual aug stats we want, filtered to only include exp
 	let aug_stat_types = getStatsFromTypes(["faction"]);
@@ -175,7 +175,7 @@ function listHackingAugs(aug_map, owned = false) {
 */
 function listCharismaAugs(aug_map, owned = false) {
 	// Prefer exp+ augs
-	let desired_augs = listExpAugs(aug_map, "charisma");
+	let desired_augs = listExpAugs(aug_map, "charisma", owned);
 	if (desired_augs.length > 0) return desired_augs
 	// Map the shorthand type arguments to actual aug stats we want, filtered to only include exp
 	let aug_stat_types = getStatsFromTypes(["charisma"]);
@@ -199,7 +199,7 @@ function listCharismaAugs(aug_map, owned = false) {
 */
 function listCombatAugs(aug_map, owned = false) {
 	// Prefer exp+ augs
-	let desired_augs = listExpAugs(aug_map, "combat");
+	let desired_augs = listExpAugs(aug_map, "combat", owned);
 	if (desired_augs.length > 0) return desired_augs
 	// Map the shorthand type arguments to actual aug stats we want, filtered to only include exp
 	let aug_stat_types = getStatsFromTypes(["combat"]);
@@ -223,7 +223,7 @@ function listCombatAugs(aug_map, owned = false) {
 */
 function listCompanyAugs(aug_map, owned = false) {
 	// Prefer exp+ augs
-	let desired_augs = listRepAugs(aug_map, "company");
+	let desired_augs = listRepAugs(aug_map, "company", owned);
 	if (desired_augs.length > 0) return desired_augs
 	// Map the shorthand type arguments to actual aug stats we want, filtered to only include exp
 	let aug_stat_types = getStatsFromTypes(["company"]);
@@ -247,7 +247,7 @@ function listCompanyAugs(aug_map, owned = false) {
 */
 function listCrimeAugs(aug_map, owned = false) {
 	// Prefer success+ augs
-	let desired_augs = listSuccessAugs(aug_map, "crime");
+	let desired_augs = listSuccessAugs(aug_map, "crime", owned);
 	if (desired_augs.length > 0) return desired_augs
 	// Map the shorthand type arguments to actual aug stats we want, filtered to only include exp
 	let aug_stat_types = getStatsFromTypes(["crime"]);
