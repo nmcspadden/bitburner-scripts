@@ -33,9 +33,10 @@ export async function main(ns) {
  * @param {NS} ns
  * @param {*} aug_map Map of objects from buildAugMap()
  * @param {string} type Type of augs to look for
+ * @param {boolean} nf True if we should include the Neuroflux Governor (default: false)
  * @returns List of aug names (strings) to purchase
  */
-export async function listPreferredAugs(ns, aug_map, type) {
+export async function listPreferredAugs(ns, aug_map, type, nf = false) {
 	let preferred  = [];
 	if (type) {
 		switch (type) {
@@ -65,6 +66,7 @@ export async function listPreferredAugs(ns, aug_map, type) {
 				ns.exit();
 		}
 	}
+	if (!nf) return preferred.filter(aug => !aug.includes("NeuroFlux"))
 	return preferred
 }
 
