@@ -1,6 +1,6 @@
-import { output, lookForProcess } from "utils/script_tools.js";
+import { outputLog, lookForProcess } from "utils/script_tools.js";
 import { buildAugMap } from "utils/augs.js";
-import { listPreferredAugs, promptForAugs } from "FastAugmentMe.js";
+import { listPreferredAugs, promptForAugs, NF, handleNeuroflux } from "FastAugmentMe.js";
 
 
 /**
@@ -28,13 +28,13 @@ export async function main(ns) {
 	ns.tail(); // Open a window to view the status of the script
 	// Make sure gangs is running
 	if (!lookForProcess(ns, HOME, "gangs.js")) {
-		await output(ns, MID_LOG, "Starting gangs script...")
+		await outputLog(ns, MID_LOG, "Starting gangs script...")
 		ns.exec("gangs.js", HOME)
 	}
 	// Try to buy more darkweb programs
 	ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
 	// Create new network map
-	await output(ns, MID_LOG, "Generating updated network map...");
+	await outputLog(ns, MID_LOG, "Generating updated network map...");
 	ns.exec("utils/networkmap.js", HOME);
 	// Build the aug map first
 	let aug_map = await buildAugMap(ns);
@@ -59,15 +59,15 @@ async function buyAugmentLoop(ns, aug_map) {
 	ns.tprint(await listPreferredAugs(ns, aug_map, "combat"));
 	let original_aug_length = augs_to_buy.length;
 	let purchased_augs = 0;
-	await output(ns, MID_LOG, `There are ${original_aug_length} augs to purchase`);
+	await outputLog(ns, MID_LOG, `There are ${original_aug_length} augs to purchase`);
 	while (augs_to_buy.length > 0) {
 		// Attempt to buy the augs silently
 		ns.tprint("Augs to buy: " + augs_to_buy.join(", "));
-		await output(ns, MID_LOG, "Buying augmentations");
+		await outputLog(ns, MID_LOG, "Buying augmentations");
 		let purchased_aug_list = await promptForAugs(ns, aug_map, augs_to_buy, false);
 		// How many are left?
 		purchased_augs += purchased_aug_list.length;
-		if (purchased_augs < original_aug_length) await output(ns, MID_LOG, `You have ${original_aug_length - purchased_augs} left to buy`)
+		if (purchased_augs < original_aug_length) await outputLog(ns, MID_LOG, `You have ${original_aug_length - purchased_augs} left to buy`)
 		// Recalculate how many augs are left to buy
 		augs_to_buy = [].concat(
 			await listPreferredAugs(ns, aug_map, "combat"),
@@ -76,13 +76,13 @@ async function buyAugmentLoop(ns, aug_map) {
 			await listPreferredAugs(ns, aug_map, "faction"),
 		);
 		// Also buy all available Neurofluxes
-		await output(ns, MID_LOG, "Buying NeuroFlux Governor levels");
-		ns.exec('neuroflux.js', HOME, 1, "--nowork", "--auto");
+		await outputLog(ns, MID_LOG, "Buying NeuroFlux Governor levels");
+		handleNeuroflux(ns);
 		// Create new network map
-		await output(ns, MID_LOG, "Generating updated network map...");
+		await outputLog(ns, MID_LOG, "Generating updated network map...");
 		ns.exec("utils/networkmap.js", HOME);
 		// Run contract solver
-		await output(ns, MID_LOG, "Checking for contracts...");
+		await outputLog(ns, MID_LOG, "Checking for contracts...");
 		ns.exec('contractSolver.js', HOME, 1, "--quiet");
 		// Sleep for 30 seconds
 		ns.print("Sleeping for 30 seconds");
