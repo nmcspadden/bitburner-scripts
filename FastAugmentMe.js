@@ -43,32 +43,33 @@ export async function main(ns) {
  * @param {import(".").NS} ns
  * @param {*} aug_map Map of objects from buildAugMap()
  * @param {string} type Type of augs to look for
+ * @param {boolean} owned Whether we include augs we already own
  * @returns List of aug names (strings) to purchase
  */
-export async function listPreferredAugs(ns, aug_map, type) {
+export async function listPreferredAugs(ns, aug_map, type, owned=true) {
 	let preferred = [];
 	if (type) {
 		switch (type) {
 			case "bladeburners":
-				if (await checkSForBN(ns, 7)) preferred = listBladeburnerAugs(aug_map, true)
+				if (await checkSForBN(ns, 7)) preferred = listBladeburnerAugs(aug_map, owned)
 				break;
 			case "charisma":
-				preferred = listCharismaAugs(aug_map, true);
+				preferred = listCharismaAugs(aug_map, owned);
 				break;
 			case "combat":
-				preferred = listCombatAugs(aug_map, true);
+				preferred = listCombatAugs(aug_map, owned);
 				break;
 			case "company":
-				preferred = listCompanyAugs(aug_map, true);
+				preferred = listCompanyAugs(aug_map, owned);
 				break;
 			case "crime":
-				preferred = listCrimeAugs(aug_map, true);
+				preferred = listCrimeAugs(aug_map, owned);
 				break;
 			case "faction":
-				preferred = listFactionAugs(aug_map, true);
+				preferred = listFactionAugs(aug_map, owned);
 				break;
 			case "hack":
-				preferred = listPreferredHackingAugs(aug_map, true);
+				preferred = listPreferredHackingAugs(aug_map, owned);
 				break;
 			default:
 				output(ns, TERMINAL, "Invalid type!");
@@ -88,16 +89,12 @@ export async function listPreferredAugs(ns, aug_map, type) {
 export async function promptForAugs(ns, aug_map, desired_augs, should_prompt) {
 	let purchased_augs = [];
 	for (const aug of desired_augs) {
-		// ns.tprint(`Considering ${aug}`);
 		// Do I have a faction for whom satisifes the rep cost?
 		let satisfy_rep = augRepAvailable(ns, aug_map[aug]["repreq"], aug_map[aug]["factions"]);
-		// ns.tprint("Rep: " + satisfy_rep);
 		// Do I have the money?
 		let rich_af = augCostAvailable(ns, aug_map[aug]["cost"]);
-		// ns.tprint("Cost: " + rich_af);
 		// Do I satisfy pre-reqs?
 		let needed_prereqs = augPreReqsAvailable(ns, aug_map[aug]["prereqs"]);
-		// ns.tprint("PreReqs: " + needed_prereqs);
 		if (needed_prereqs.length > 0) {
 			// Calculate our pre-reqs first
 			await promptForAugs(ns, aug_map, needed_prereqs, should_prompt);
