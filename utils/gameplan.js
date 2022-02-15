@@ -1,5 +1,4 @@
-import { maximizeScriptUse } from "utils/script_tools.js";
-
+import { maximizeScriptUse, HOME } from "utils/script_tools.js";
 
 /** 
  * Upgrade the home
