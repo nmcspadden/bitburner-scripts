@@ -24,7 +24,7 @@ export async function main(ns) {
 	let aug_map = await buildAugMap(ns);
 	// Neuroflux is handled completely differently
 	if (flagdata.type == "neuro") {
-		handleNeuroflux(ns);
+		await handleNeuroflux(ns);
 		ns.exit();
 	}
 	// Handle type
@@ -45,7 +45,7 @@ export async function main(ns) {
  * @param {boolean} owned Whether we include augs we already own
  * @returns List of aug names (strings) to purchase
  */
-export async function listPreferredAugs(ns, aug_map, type, owned=true) {
+export async function listPreferredAugs(ns, aug_map, type, owned = true) {
 	let preferred = [];
 	if (type) {
 		switch (type) {
@@ -113,27 +113,25 @@ export async function promptForAugs(ns, aug_map, desired_augs, should_prompt) {
 * Upgrade Neuroflux Governor
  * @param {import(".").NS} ns
 */
-export function handleNeuroflux(ns) {
+export async function handleNeuroflux(ns) {
 	// Is the NF available to me right now?
 	let player = ns.getPlayer();
-	output(ns, TERMINAL, "Current money: " + ns.nFormat(player.money, '$0.00a'));
 	// my_factions_w_nf is a list of factions selling NF sorted descending by highest rep
 	let my_factions_w_nf = findMyFactionsWithAug(ns, NF, player);
 	if (my_factions_w_nf.length == 0) {
 		output(ns, TERMINAL, "You don't currently belong to any factions that sell the NeuroFlux Governor.");
 		return
 	}
-	/*
-		What this should do for v3:
-		- Money goes faster than rep
-		- While we have enough money, check to see if we have enough rep
-		- Farm for rep until we have enough to buy
-		- Buy until we can't
-		- If out of money, end script and complain
-	*/
+	// output(ns, TERMINAL, "Current money: " + ns.nFormat(player.money, '$0.00a'));
 	let closest_faction = getClosestNFFaction(ns, my_factions_w_nf);
-	output(ns, TERMINAL, `Current NF rep req: ${ns.nFormat(ns.getAugmentationRepReq(NF), '0.000a')}`);
-	output(ns, TERMINAL, `Closest faction is ${closest_faction} with rep ${ns.nFormat(ns.getFactionRep(closest_faction), '0.000a')}`);
+	let closest_faction_rep = ns.getFactionRep(closest_faction);
+	let rep_req = ns.getAugmentationRepReq(NF);
+	// If we don't have enough rep to buy it, abort
+	if (rep_req > closest_faction_rep) {
+		output(ns, TERMINAL, `Current NF rep requirement: ${ns.nFormat(rep_req, '0.000a')}`);
+		output(ns, TERMINAL, `Closest faction is ${closest_faction} with rep ${ns.nFormat(closest_faction_rep, '0.000a')}`);
+		return
+	}
 	let didBuy = false;
 	let money = player.money;
 	let price = ns.getAugmentationPrice(NF);
@@ -145,7 +143,10 @@ export function handleNeuroflux(ns) {
 		didBuy = ns.purchaseAugmentation(closest_faction, NF);
 		money = ns.getPlayer().money;
 		price = ns.getAugmentationPrice(NF);
-		if (didBuy) output(ns, TERMINAL, `Bought from ${closest_faction} for ${ns.nFormat(bought_price, '$0.00a')}`)
+		if (didBuy) {
+			output(ns, TERMINAL, `Bought from ${closest_faction} for ${ns.nFormat(bought_price, '$0.00a')}`)
+		} else break
+		await ns.sleep(250);
 	}
 	output(ns, TERMINAL, `Not enough money to buy more NFs, need ${ns.nFormat(price, '$0.00a')}`);
 }
