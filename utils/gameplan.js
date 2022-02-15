@@ -35,7 +35,7 @@ export function upgradeHome(ns) {
 
 /** 
  * Spin up hacking scripts to grow hacking XP
- * @param {import(".").NS} ns
+ * @param {import("../.").NS} ns
 **/
 export function growHackingXP(ns) {
 	let HACKSCRIPT;
@@ -47,4 +47,17 @@ export function growHackingXP(ns) {
 	}
 	// Run this to 75% of total RAM
 	maximizeScriptUse(ns, HACKSCRIPT, HOME, 75);
+}
+
+/** 
+ * Join pending factions
+ * @param {import("../.").NS} ns
+**/
+export function joinFactions(ns) {
+	// Check our faction invites
+	let invited_factions = ns.checkFactionInvitations();
+	for (const faction of invited_factions) {
+		let did_join = ns.joinFaction(faction);
+		if (did_join) ns.print("Joined " + faction)
+	}
 }
