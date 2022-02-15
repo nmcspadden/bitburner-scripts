@@ -1,7 +1,7 @@
 import { outputLog, lookForProcess, HOME } from "utils/script_tools.js";
 import { buildAugMap } from "utils/augs.js";
 import { listPreferredAugs, promptForAugs, handleNeuroflux } from "FastAugmentMe.js";
-import { upgradeHome, growHackingXP } from "utils/gameplan.js";
+import { upgradeHome, growHackingXP, joinFactions } from "utils/gameplan.js";
 
 
 /**
@@ -62,6 +62,9 @@ async function buyAugmentLoop(ns, aug_map) {
 	let purchased_augs = 0;
 	await outputLog(ns, MID_LOG, `There are ${original_aug_length} augs to purchase`);
 	while (augs_to_buy.length > 0) {
+		// Join Section-12 faction if it's waiting
+		await outputLog(ns, MID_LOG, "Joining pending factions");
+		joinFactions(ns);
 		// Attempt to buy the augs silently
 		ns.print("Augs to buy: " + augs_to_buy.join(", "));
 		await outputLog(ns, MID_LOG, "Buying augmentations");
@@ -77,7 +80,7 @@ async function buyAugmentLoop(ns, aug_map) {
 			await listPreferredAugs(ns, aug_map, "faction", false),
 		);
 		// Also buy all available Neurofluxes
-		await outputLog(ns, MID_LOG, "Buying NeuroFlux Governor levels");
+		await outputLog(ns, MID_LOG, "Evaluating NeuroFlux Governor upgrades");
 		handleNeuroflux(ns);
 		// Now check: is the next cheapest aug simply too expensive? If so, we should install and reset
 		await isCheapestAugReasonable(ns, augs_to_buy);
