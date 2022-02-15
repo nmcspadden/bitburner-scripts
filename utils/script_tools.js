@@ -110,7 +110,6 @@ export function compareArrays(array1, array2) {
 	return (array1.length === array2.length) && array1.every(function(value, index) { return value === array2[index]})
 }
 
-
 /** 
  * Write a message to print + log
  * @param {import(".").NS} ns 
@@ -120,4 +119,14 @@ export function compareArrays(array1, array2) {
 export async function outputLog(ns, logfile, msg) {
 	ns.print(msg);
 	await ns.write(logfile, msg, "a");
+}
+
+/** 
+ * Write a message to either print or terminal
+ * @param {import(".").NS} ns 
+ * @param {boolean} terminal If true, output to terminal; otherwise print to log
+ * @param {string} msg Message to write
+**/
+export function output(ns, terminal=true, msg) {
+	terminal ? ns.tprint(msg) : ns.print(msg)
 }
