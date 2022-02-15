@@ -1,3 +1,6 @@
+import { maximizeScriptUse } from "utils/script_tools.js";
+
+
 /** 
  * Upgrade the home
  * @param {import("../.").NS} ns 
@@ -28,4 +31,20 @@ export function upgradeHome(ns) {
 	home_tuple.push(home_server_stats.maxRam);
 	home_tuple.push(home_server_stats.cpuCores);
 	return home_tuple;
+}
+
+/** 
+ * Spin up hacking scripts to grow hacking XP
+ * @param {import(".").NS} ns
+**/
+function growHackingXP(ns) {
+	let HACKSCRIPT;
+	if (ns.getHackingLevel() <= 300) {
+		HACKSCRIPT = "growHackingXP.js";
+	} else {
+		// TODO: Figure out which server to hack
+		HACKSCRIPT = "basicHack.js";
+	}
+	// Run this to 75% of total RAM
+	maximizeScriptUse(ns, HACKSCRIPT, HOME, 75);
 }

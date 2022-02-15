@@ -1,6 +1,6 @@
 import { commitKarmaFocusedCrime, GANG_KARMA } from "utils/crimes.js";
-import { maximizeScriptUse, lookForProcess, checkSForBN, outputLog } from "utils/script_tools.js";
-import { upgradeHome } from "utils/gameplan.js";
+import { lookForProcess, checkSForBN, outputLog } from "utils/script_tools.js";
+import { upgradeHome, growHackingXP } from "utils/gameplan.js";
 
 /**
  * Early Gameplan w/ Gangs (64+ GB RAM)
@@ -52,22 +52,6 @@ async function crimeWhileUpgradingLoop(ns) {
 	}
 }
 
-
-/** 
- * Spin up hacking scripts to grow hacking XP
- * @param {import(".").NS} ns
-**/
-function growHackingXP(ns) {
-	let HACKSCRIPT;
-	if (ns.getHackingLevel() <= 300) {
-		HACKSCRIPT = "growHackingXP.js";
-	} else {
-		// TODO: Figure out which server to hack
-		HACKSCRIPT = "basicHack.js";
-	}
-	// Run this to 75% of total RAM
-	maximizeScriptUse(ns, HACKSCRIPT, HOME, 75);
-}
 
 /** 
  * Check factions to see if I can join one and start a gang

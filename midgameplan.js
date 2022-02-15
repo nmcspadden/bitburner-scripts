@@ -1,6 +1,7 @@
 import { outputLog, lookForProcess } from "utils/script_tools.js";
 import { buildAugMap } from "utils/augs.js";
 import { listPreferredAugs, promptForAugs, handleNeuroflux } from "FastAugmentMe.js";
+import { upgradeHome, growHackingXP } from "utils/gameplan.js";
 
 
 /**
@@ -49,6 +50,8 @@ export async function main(ns) {
  * @param {*} aug_map Map of objects from buildAugMap()
  */
 async function buyAugmentLoop(ns, aug_map) {
+	let home_ram = ns.getServerMaxRam(HOME);
+	let home_stats = [home_ram, 2]; // RAM, then Cores; the cores are actually irrelevant
 	// Start with combat augs, as they directly help Bladeburner
 	let augs_to_buy = [].concat(
 		await listPreferredAugs(ns, aug_map, "combat", false),
@@ -77,6 +80,19 @@ async function buyAugmentLoop(ns, aug_map) {
 		// Also buy all available Neurofluxes
 		await outputLog(ns, MID_LOG, "Buying NeuroFlux Governor levels");
 		handleNeuroflux(ns);
+		// Now check: is the next cheapest aug simply too expensive? If so, we should install and reset
+		await isCheapestAugReasonable(ns, augs_to_buy);
+		// See if we can upgrade our home
+		ns.print("Looking at home upgrades...");
+		home_stats = upgradeHome(ns);
+		// Spin up hacking XP tools, only if we got more RAM
+		if (home_stats[0] > home_ram) {
+			ns.print("Re-evalauting hacking XP scripts");
+			home_ram = home_stats[0];
+			growHackingXP(ns);
+		}
+		// If we have lots of money, see if we can buy darkweb programs
+		ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
 		// Create new network map
 		await outputLog(ns, MID_LOG, "Generating updated network map...");
 		ns.exec("utils/networkmap.js", HOME);
@@ -86,5 +102,32 @@ async function buyAugmentLoop(ns, aug_map) {
 		// Sleep for 30 seconds
 		ns.print("Sleeping for 30 seconds");
 		await ns.sleep(30000);
+	}
+}
+
+/**
+ * Main loop where we buy augs and do things
+ * @param {import(".").NS} ns 
+ * @param {array} auglist List of augs to buy
+ * @param {*} aug_map Map of objects from buildAugMap()
+ */
+async function isCheapestAugReasonable(ns, auglist) {
+	let sortable_augs = {};
+	for (const aug of auglist) {
+		sortable_augs[aug] = ns.getAugmentationPrice(aug);
+	}
+	let sorted_list = Object.fromEntries(
+		Object.entries(sortable_augs).sort(
+			([, a], [, b]) => a["cost"] - b["cost"]
+		).reverse()
+	)
+	let cheapest_aug = Object.keys(sorted_list)[0];
+	// If the cheapest aug is > 1 trillion, it's probably time to reset
+	// Except Q-Link, that shit's 25t to start with
+	if ((cheapest_aug != "QLink") && (sorted_list[cheapest_aug] >= 1000000000000)) {
+		ns.print("Cheapest aug " + cheapest_aug + " costs " + ns.nFormat(sorted_list[cheapest_aug], '$0.00a'))
+		ns.print("The cheapest aug costs more than $1t, and isn't QLink. You should reset.")
+		let should_reset = await ns.prompt("Install augmentations and reset?");
+		if (should_reset) ns.installAugmentations('starter.js');
 	}
 }
