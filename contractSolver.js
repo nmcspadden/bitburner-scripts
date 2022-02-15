@@ -1,10 +1,14 @@
 import { readNetworkMap } from "utils/networkmap.js";
+import { output } from "utils/script_tools.js";
+
+let QUIET = false;
 
 /** @param {NS} ns */
 export async function main(ns) {
 	const flagdata = ns.flags([
 		["quiet", false],
 	])
+    QUIET = flagdata.quiet;
     let network_map = await readNetworkMap(ns);
     let contractList = [];
     let contracts = [];
@@ -20,7 +24,7 @@ export async function main(ns) {
             if (!flagdata.quiet) ns.tprint(`${server} - ${contract} - ${type} - ${didSolve || "FAILED!"}`);
         }
     }
-    if (!flagdata.quiet) {
+    if (QUIET) {
         ns.tprint(`Found ${contractList.length} contracts`);
         contracts.forEach((contract) => void ns.tprint(contract));
     }
@@ -68,7 +72,7 @@ function solve(type, data, server, contract, ns) {
             break;
         default:
             // If we can't solve it, delete it
-            ns.tprint(`Deleting ${type} from ${server}`)
+            if (!QUIET) ns.tprint(`Deleting ${type} from ${server}`)
             ns.rm(contract, server)
     }
     return (solution != "") ? ns.codingcontract.attempt(solution, contract, server, [true]) : "";
