@@ -375,7 +375,7 @@ async function purchaseAug(ns, aug, faction, should_prompt = true) {
 		await ns.sleep(5);
 		did_buy = ns.purchaseAugmentation(faction, aug);
 		if (did_buy) {
-			output(`Purchased ${aug}!`);
+			output(ns, TERMINAL, `Purchased ${aug}!`);
 		}
 	} else ns.exit();
 	return did_buy
