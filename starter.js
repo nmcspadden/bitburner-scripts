@@ -15,7 +15,6 @@ export async function main(ns) {
     // Create network map
     ns.exec("utils/networkmap.js", HOME);
     // We start at 32 GB RAM
-    // TODO: This should be a switch/case statement?
     if (home_ram <= 32) {
         // Start early game plan
         ns.spawn("startinggameplan.js", 1);
