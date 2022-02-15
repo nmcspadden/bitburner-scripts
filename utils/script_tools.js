@@ -1,4 +1,5 @@
 export const SF_MAP = "sourcefiles.json";
+export const HOME = "home";
 
 /** Run a script on a host with the maximum possible threads
  * @param {import("../.").NS} ns 

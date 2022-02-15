@@ -1,7 +1,7 @@
 import { findMyFactionsWithAug } from "utils/augs.js";
 import { donationAmountForRep, workUntilDonate } from "utils/repNeededForFavor.js";
 import { locateServer, createNetworkMap } from "utils/networkmap.js";
-import { maximizeScriptUse } from "utils/script_tools.js";
+import { maximizeScriptUse, HOME } from "utils/script_tools.js";
 
 /**
  * End-Gameplan
@@ -22,7 +22,6 @@ import { maximizeScriptUse } from "utils/script_tools.js";
 const TheRedPill = "The Red Pill";
 const FAVOR_TO_DONATE = 150;
 const WORLD = "w0r1d_d43m0n";
-const HOME = 'home';
 
 /** @param {NS} ns **/
 export async function main(ns) {

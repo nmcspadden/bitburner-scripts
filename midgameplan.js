@@ -1,4 +1,4 @@
-import { outputLog, lookForProcess } from "utils/script_tools.js";
+import { outputLog, lookForProcess, HOME } from "utils/script_tools.js";
 import { buildAugMap } from "utils/augs.js";
 import { listPreferredAugs, promptForAugs, handleNeuroflux } from "FastAugmentMe.js";
 import { upgradeHome, growHackingXP } from "utils/gameplan.js";
@@ -18,7 +18,6 @@ import { upgradeHome, growHackingXP } from "utils/gameplan.js";
  * Loop back until no more augs to buy
  */
 
-const HOME = 'home';
 const MID_LOG = "midgameplan.log.txt";
 
 /** @param {import(".").NS} ns **/

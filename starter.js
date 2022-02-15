@@ -1,10 +1,8 @@
-import { mapSourceFiles } from "utils/script_tools.js";
+import { mapSourceFiles, HOME } from "utils/script_tools.js";
 
 /* 
  Starter.js: starting point for launching the gameplans
 */
-
-const HOME = 'home';
 
 /** @param {NS} ns **/
 export async function main(ns) {

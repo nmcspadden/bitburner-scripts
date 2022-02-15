@@ -1,7 +1,6 @@
-import { maximizeScriptUse, lookForProcess } from "utils/script_tools.js";
+import { maximizeScriptUse, lookForProcess, HOME } from "utils/script_tools.js";
 import { SERVER_GROWN_FILE } from "serverGrower.js";
 
-const HOME = 'home';
 const NETWORK_MAP = 'network_map.json';
 
 /** 

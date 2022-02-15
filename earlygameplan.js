@@ -1,12 +1,11 @@
 import { commitKarmaFocusedCrime, GANG_KARMA } from "utils/crimes.js";
-import { lookForProcess, checkSForBN, outputLog } from "utils/script_tools.js";
+import { lookForProcess, checkSForBN, outputLog, HOME } from "utils/script_tools.js";
 import { upgradeHome, growHackingXP } from "utils/gameplan.js";
 
 /**
  * Early Gameplan w/ Gangs (64+ GB RAM)
 **/
 
-const HOME = "home";
 const EARLY_LOG = "earlygameplan.log.txt";
 
 /** @param {import(".").NS} ns **/

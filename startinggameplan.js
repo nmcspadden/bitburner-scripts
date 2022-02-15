@@ -1,5 +1,5 @@
 import { workoutAllUntil, commitKarmaFocusedCrime } from "utils/crimes.js";
-import { outputLog } from "utils/script_tools.js";
+import { outputLog, HOME } from "utils/script_tools.js";
 import { upgradeHome } from "utils/gameplan.js";
 
 /**
@@ -9,7 +9,6 @@ import { upgradeHome } from "utils/gameplan.js";
  * 3. Spin up the earlygameplan.js
  */
 
-const HOME = 'home';
 const MIN_STAT = 100;
 const START_LOG = "startinggameplan.log.txt";
 
