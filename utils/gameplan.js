@@ -37,7 +37,7 @@ export function upgradeHome(ns) {
  * Spin up hacking scripts to grow hacking XP
  * @param {import(".").NS} ns
 **/
-function growHackingXP(ns) {
+export function growHackingXP(ns) {
 	let HACKSCRIPT;
 	if (ns.getHackingLevel() <= 300) {
 		HACKSCRIPT = "growHackingXP.js";
