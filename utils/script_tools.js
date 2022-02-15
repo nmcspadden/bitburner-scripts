@@ -117,7 +117,7 @@ export function compareArrays(array1, array2) {
  * @param {string} logfile File to append to
  * @param {string} msg Message to write
 **/
-async function output(ns, logfile, msg) {
+export async function output(ns, logfile, msg) {
 	ns.print(msg);
 	await ns.write(logfile, msg, "a");
 }
