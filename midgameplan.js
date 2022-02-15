@@ -51,18 +51,17 @@ export async function main(ns) {
 async function buyAugmentLoop(ns, aug_map) {
 	// Start with combat augs, as they directly help Bladeburner
 	let augs_to_buy = [].concat(
-		await listPreferredAugs(ns, aug_map, "combat"),
-		await listPreferredAugs(ns, aug_map, "hack"),
-		await listPreferredAugs(ns, aug_map, "bladeburners"),
-		await listPreferredAugs(ns, aug_map, "faction"),
+		await listPreferredAugs(ns, aug_map, "combat", false),
+		await listPreferredAugs(ns, aug_map, "hack", false),
+		await listPreferredAugs(ns, aug_map, "bladeburners", false),
+		await listPreferredAugs(ns, aug_map, "faction", false),
 	);
-	ns.tprint(await listPreferredAugs(ns, aug_map, "combat"));
 	let original_aug_length = augs_to_buy.length;
 	let purchased_augs = 0;
 	await outputLog(ns, MID_LOG, `There are ${original_aug_length} augs to purchase`);
 	while (augs_to_buy.length > 0) {
 		// Attempt to buy the augs silently
-		ns.tprint("Augs to buy: " + augs_to_buy.join(", "));
+		ns.print("Augs to buy: " + augs_to_buy.join(", "));
 		await outputLog(ns, MID_LOG, "Buying augmentations");
 		let purchased_aug_list = await promptForAugs(ns, aug_map, augs_to_buy, false);
 		// How many are left?
@@ -70,10 +69,10 @@ async function buyAugmentLoop(ns, aug_map) {
 		if (purchased_augs < original_aug_length) await outputLog(ns, MID_LOG, `You have ${original_aug_length - purchased_augs} left to buy`)
 		// Recalculate how many augs are left to buy
 		augs_to_buy = [].concat(
-			await listPreferredAugs(ns, aug_map, "combat"),
-			await listPreferredAugs(ns, aug_map, "hack"),
-			await listPreferredAugs(ns, aug_map, "bladeburners"),
-			await listPreferredAugs(ns, aug_map, "faction"),
+			await listPreferredAugs(ns, aug_map, "combat", false),
+			await listPreferredAugs(ns, aug_map, "hack", false),
+			await listPreferredAugs(ns, aug_map, "bladeburners", false),
+			await listPreferredAugs(ns, aug_map, "faction", false),
 		);
 		// Also buy all available Neurofluxes
 		await outputLog(ns, MID_LOG, "Buying NeuroFlux Governor levels");
