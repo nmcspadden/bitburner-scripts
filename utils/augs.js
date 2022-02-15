@@ -151,3 +151,23 @@ export function findMyFactionsWithAug(ns, aug, player) {
 	}
 	return JSON.parse(ns.read(AUGMAP));
 }
+
+/**
+ * Sort augs by rep req, then cost
+ * @param aug_list List of aug names to sort
+ * @param aug_map Map of augs from readAugMap()
+ * @returns Same list of aug names sorted by rep, then by cost
+ */
+ export function sortAugsByRepThenCost(aug_list, aug_map) {
+	let aug_objects = {};
+	for (const aug in aug_list) {
+		aug_objects[aug] = aug_map[aug]
+	}
+	// Sort by rep
+	let sorted_rep_augs = Object.fromEntries(Object.entries(aug_objects).sort(([, a], [, b]) => a["repreq"] - b["repreq"]).reverse());
+	return Object.fromEntries(
+		Object.entries(sorted_rep_augs).sort(
+			([, a], [, b]) => a["cost"] - b["cost"]
+		).reverse()
+	);
+}
