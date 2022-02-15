@@ -1,5 +1,7 @@
-import { buildAugMap, aug_bonus_types } from "utils/augs.js";
+import { buildAugMap, aug_bonus_types, findMyFactionsWithAug } from "utils/augs.js";
 import { checkSForBN } from "utils/script_tools.js";
+
+export const NF = "NeuroFlux Governor";
 
 /** @param {import(".").NS} ns **/
 export async function main(ns) {
@@ -18,6 +20,11 @@ export async function main(ns) {
 	}
 	// Build the aug map first
 	let aug_map = await buildAugMap(ns);
+	// Neuroflux is handled completely differently
+	if (flagdata.type == "neuro") {
+		handleNeuroflux(ns);
+		ns.exit();
+	}
 	// Handle type
 	let preferred = await listPreferredAugs(ns, aug_map, flagdata.type);
 	// ns.tprint(`Augs to buy: ${preferred.join(", ")}`);
@@ -30,14 +37,13 @@ export async function main(ns) {
 }
 
 /**
- * Get a list of names of priority augs
+ * Get a list of names of priority augs, filtering out NeuroFlux
  * @param {import(".").NS} ns
  * @param {*} aug_map Map of objects from buildAugMap()
  * @param {string} type Type of augs to look for
- * @param {boolean} nf True if we should include the Neuroflux Governor (default: false)
  * @returns List of aug names (strings) to purchase
  */
-export async function listPreferredAugs(ns, aug_map, type, nf = false) {
+export async function listPreferredAugs(ns, aug_map, type) {
 	let preferred = [];
 	if (type) {
 		switch (type) {
@@ -67,8 +73,7 @@ export async function listPreferredAugs(ns, aug_map, type, nf = false) {
 				ns.exit();
 		}
 	}
-	if (!nf) return preferred.filter(aug => !aug.includes("NeuroFlux"))
-	return preferred
+	return preferred.filter(aug => !aug.includes("NeuroFlux"))
 }
 
 /**
@@ -78,7 +83,7 @@ export async function listPreferredAugs(ns, aug_map, type, nf = false) {
  * @param {boolean} should_prompt True if we should prompt to buy; false means we buy silently
  * @returns List of augs that we purchased
  */
- export async function promptForAugs(ns, aug_map, desired_augs, should_prompt) {
+export async function promptForAugs(ns, aug_map, desired_augs, should_prompt) {
 	let purchased_augs = [];
 	for (const aug of desired_augs) {
 		// ns.tprint(`Considering ${aug}`);
@@ -102,6 +107,47 @@ export async function listPreferredAugs(ns, aug_map, type, nf = false) {
 		}
 	}
 	return purchased_augs
+}
+
+/**
+* Upgrade Neuroflux Governor
+ * @param {import(".").NS} ns
+*/
+export function handleNeuroflux(ns) {
+	// Is the NF available to me right now?
+	let player = ns.getPlayer();
+	ns.tprint("Current money: " + ns.nFormat(player.money, '$0.00a'));
+	// my_factions_w_nf is a list of factions selling NF sorted descending by highest rep
+	let my_factions_w_nf = findMyFactionsWithAug(ns, NF, player);
+	if (my_factions_w_nf.length == 0) {
+		ns.tprint("You don't currently belong to any factions that sell the NeuroFlux Governor.");
+		return
+	}
+	/*
+		What this should do for v3:
+		- Money goes faster than rep
+		- While we have enough money, check to see if we have enough rep
+		- Farm for rep until we have enough to buy
+		- Buy until we can't
+		- If out of money, end script and complain
+	*/
+	let closest_faction = getClosestNFFaction(ns, my_factions_w_nf);
+	ns.tprint(`Current NF rep req: ${ns.nFormat(ns.getAugmentationRepReq(NF), '0.000a')}`);
+	ns.tprint(`Closest faction is ${closest_faction} with rep ${ns.nFormat(ns.getFactionRep(closest_faction), '0.000a')}`);
+	let didBuy = false;
+	let money = player.money;
+	let price = ns.getAugmentationPrice(NF);
+	let bought_price;
+	// While there are factions who sell NF and I don't want to stop buying:
+	while (money >= price) {
+		// Buy while we have enough money
+		bought_price = price;
+		didBuy = ns.purchaseAugmentation(closest_faction, NF);
+		money = ns.getPlayer().money;
+		price = ns.getAugmentationPrice(NF);
+		if (didBuy) ns.tprint(`Bought from ${closest_faction} for ${ns.nFormat(bought_price, '$0.00a')}`)
+	}
+	ns.tprint(`Not enough money to buy more NFs, need ${ns.nFormat(price, '$0.00a')}`);
 }
 
 /**
@@ -506,4 +552,15 @@ function printAugCheckbox(ns, aug, aug_map) {
  */
 function printCheckbox(condition, label) {
 	return `[${!!condition ? 'x' : ' '}] ${label}`
+}
+
+/** 
+ * Determine the faction whose rep is closest to the next rep requirement. 
+ * @param {import(".").NS} ns
+ * @param avail_factions Factions I belong to that sell NF 
+**/
+function getClosestNFFaction(ns, avail_factions) {
+	let rep_sorted_fax = avail_factions.sort((a, b) => ns.getFactionRep(a) - ns.getFactionRep(b));
+	let sorted_fax = rep_sorted_fax.sort((a, b) => (ns.getAugmentationRepReq(NF) - ns.getFactionRep(a)) < (ns.getAugmentationRepReq(NF) - ns.getFactionRep(b)))
+	return sorted_fax[0]
 }
