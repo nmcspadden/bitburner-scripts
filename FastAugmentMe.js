@@ -87,7 +87,9 @@ export async function listPreferredAugs(ns, aug_map, type, owned=true) {
  */
 export async function promptForAugs(ns, aug_map, desired_augs, should_prompt) {
 	let purchased_augs = [];
+	let my_augs = ns.getOwnedAugmentations(true);
 	for (const aug of desired_augs) {
+		if (my_augs.includes(aug)) continue
 		// Do I have a faction for whom satisifes the rep cost?
 		let satisfy_rep = augRepAvailable(ns, aug_map[aug]["repreq"], aug_map[aug]["factions"]);
 		// Do I have the money?
