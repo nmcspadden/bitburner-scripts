@@ -1,6 +1,6 @@
 import { outputLog, lookForProcess } from "utils/script_tools.js";
 import { buildAugMap } from "utils/augs.js";
-import { listPreferredAugs, promptForAugs, NF, handleNeuroflux } from "FastAugmentMe.js";
+import { listPreferredAugs, promptForAugs, handleNeuroflux } from "FastAugmentMe.js";
 
 
 /**
