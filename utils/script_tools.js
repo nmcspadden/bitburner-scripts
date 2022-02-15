@@ -119,7 +119,7 @@ export function compareArrays(array1, array2) {
 **/
 export async function outputLog(ns, logfile, msg) {
 	ns.print(msg);
-	await ns.write(logfile, msg, "a");
+	await ns.write(logfile, msg + "\n", "a");
 }
 
 /** 
