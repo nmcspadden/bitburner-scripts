@@ -21,10 +21,10 @@ export async function main(ns) {
             const type = ns.codingcontract.getContractType(contract, server);
             const data = ns.codingcontract.getData(contract, server);
             const didSolve = solve(type, data, server, contract, ns);
-            if (!flagdata.quiet) ns.tprint(`${server} - ${contract} - ${type} - ${didSolve || "FAILED!"}`);
+            if (!QUIET) ns.tprint(`${server} - ${contract} - ${type} - ${didSolve || "FAILED!"}`);
         }
     }
-    if (QUIET && contractList.length > 0) {
+    if (!QUIET && contractList.length > 0) {
         ns.tprint(`Found ${contractList.length} contracts`);
         contracts.forEach((contract) => void ns.tprint(contract));
     }
