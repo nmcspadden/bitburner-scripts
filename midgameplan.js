@@ -38,6 +38,9 @@ export async function main(ns) {
 	ns.exec("utils/networkmap.js", HOME);
 	// Build the aug map first
 	let aug_map = await buildAugMap(ns);
+	// Evaluate hacking scripts again
+	await outputLog(ns, MID_LOG, "Re-evaluating hacking scripts");
+	growHackingXP(ns);
 	// TODO: Bladeburner tools
 	await buyAugmentLoop(ns, aug_map);
 	// ENDGAME: When there are no more augs left to buy
