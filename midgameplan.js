@@ -40,7 +40,7 @@ export async function main(ns) {
 	let aug_map = await buildAugMap(ns);
 	// Evaluate hacking scripts again
 	await outputLog(ns, MID_LOG, "Re-evaluating hacking scripts");
-	growHackingXP(ns);
+	await growHackingXP(ns);
 	// Make sure bladeburners is running
 	if (!lookForProcess(ns, HOME, "bladeburners.js")) {
 		await outputLog(ns, MID_LOG, "Starting Bladeburners script...")
@@ -98,7 +98,7 @@ async function buyAugmentLoop(ns, aug_map) {
 		if (home_stats[0] > home_ram) {
 			ns.print("Re-evalauting hacking XP scripts");
 			home_ram = home_stats[0];
-			growHackingXP(ns);
+			await growHackingXP(ns);
 		}
 		// If we have lots of money, see if we can buy darkweb programs
 		ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
