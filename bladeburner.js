@@ -1,7 +1,7 @@
 // This code is largely stolen from someone else
 // https://github.com/InfraK/bitburner-scripts/blob/master/bladeburner.js
 
-import { output } from "utils/script_tools.js";
+import { output, compareArrays } from "utils/script_tools.js";
 
 let TERMINAL = false;
 
@@ -21,10 +21,10 @@ const SKILL_LIMIT = 30;
  * Get Stamina percentage
  * @returns Stamina percentage
  */
- function getStaminaPercentage(ns) {
+function getStaminaPercentage(ns) {
     const [current, max] = ns.bladeburner.getStamina();
     return current / max;
- }
+}
 
 /**
  * Check if we can work
@@ -61,6 +61,35 @@ function rest(ns) {
 }
 
 /**
+ * Do a Contract, Operation, or BlackOp
+ * @param {import(".").NS} ns
+ * @returns Time it takes to trigger an action
+ */
+function findBestBlackOp(ns) {
+    const blackops = ns.bladeburner.getBlackOpNames();
+    // Sort by rank requirement
+    const bestBlackOp = blackops.map(blackop => {
+        return {
+            type: "blackop",
+            name: blackop,
+            chance: getChance("blackop", blackop, ns),
+            rank: ns.bladeburner.getBlackOpRank(blackop),
+            done: ns.bladeburner.getActionCountRemaining("blackop", blackop) // 0 if we've done it, 1 if we haven't
+        };
+    }).filter(op => op.done == 1)
+    .reduce((a, b) => (a.rank < b.rank ? a : b));
+    // blackOp looks like this: 
+    // [{"type":"blackop","name":"Operation Typhoon","chance":[1,1],"rank":2500, "done": 1}
+    // If the chance is 100%, and we have the rank to do it, and we haven't already done it, return it
+    output(ns, TERMINAL, `Next BlackOp: ${bestBlackOp.name}, requires rank ${ns.nFormat(bestBlackOp.rank, '0,0')}, chance is ${bestBlackOp.chance[0]*100}-${bestBlackOp.chance[1]*100}%`)
+    if (
+        compareArrays(bestBlackOp.chance, [1, 1]) &&
+        (ns.bladeburner.getRank() >= bestBlackOp.rank) &&
+        (bestBlackOp.done == 1)
+    ) return bestBlackOp
+}
+
+/**
  * Get the chance to perform an action
  * @param {string} type Type of action
  * @param {string} name Name of action
@@ -71,7 +100,7 @@ const getChance = (type, name, ns) =>
     ns.bladeburner.getActionEstimatedSuccessChance(type, name);
 
 /**
- * Do a Contract, Operation
+ * Do a Contract, Operation, or BlackOp
  * @param {import(".").NS} ns
  * @returns Time it takes to trigger an action
  */
@@ -99,7 +128,13 @@ function workContractOrOp(ns) {
         })
         .reduce((a, b) => (a.chance > b.chance ? a : b));
 
-    // TODO: add Black Op in here somewhere 
+    const bestBlackOp = findBestBlackOp(ns);
+    if (bestBlackOp) {
+        output(ns, TERMINAL, `Beginning BlackOp ${bestBlackOp.name}`);
+        ns.bladeburner.startAction(bestBlackOp.type, bestBlackOp.name);
+        return ns.bladeburner.getActionTime(bestBlackOp.type, bestBlackOp.name);
+    }
+
     if (bestOp.chance >= bestContract.chance) {
         output(ns, TERMINAL, `Beginning operation ${bestOp.name}`);
         ns.bladeburner.startAction(bestOp.type, bestOp.name);
@@ -134,17 +169,14 @@ function checkSkills(ns) {
             cost: ns.bladeburner.getSkillUpgradeCost(skill)
         };
     });
-    // TODO: This needs to loop until not enough points to buy something
     // Only level up the important skills
-    skills.filter(skill => BB_IMPORTANT_SKILLS.includes(skill.name)).filtered_skills.forEach(skill => {
+    skills.filter(skill => BB_IMPORTANT_SKILLS.includes(skill.name)).forEach(skill => {
         switch (skill.name) {
             case "Cloak":
             case "Short-Circuit":
-                output(ns, TERMINAL, "Cloak/Short-circuit skills");
                 if (skill.level < SKILL_LIMIT) levelUpSkill(ns, skill)
                 break;
             default:
-                output(ns, TERMINAL, "Other skills");
                 levelUpSkill(ns, skill);
                 break;
         }
@@ -181,9 +213,9 @@ export async function handleBladeburner(ns) {
  * @param {import(".").NS} ns
  */
 export async function main(ns) {
-	const flagdata = ns.flags([
-		["quiet", false],
-	])
+    const flagdata = ns.flags([
+        ["quiet", false],
+    ])
     TERMINAL = !flagdata.quiet;
     if (!TERMINAL) {
         ns.disableLog("ALL");
