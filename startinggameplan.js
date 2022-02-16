@@ -18,11 +18,11 @@ export async function main(ns) {
 	ns.toast("Starting beginning game plan!", "info", null);
 	ns.disableLog("ALL"); // Disable the log
 	ns.tail(); // Open a window to view the status of the script
-	outputLog(ns, START_LOG, "Beginning workout");
+	await outputLog(ns, START_LOG, "Beginning workout");
 	await workoutAllUntil(ns, MIN_STAT);
-	outputLog(ns, START_LOG, "Committing crimes while upgrading loop");
+	await outputLog(ns, START_LOG, "Committing crimes while upgrading loop");
 	await crimeWhileUpgradingLoop(ns);
-	outputLog(ns, START_LOG, "Bought enough RAM to move to Early Game!");
+	await outputLog(ns, START_LOG, "Bought enough RAM to move to Early Game!");
 	ns.spawn('earlygameplan.js');
 }
 

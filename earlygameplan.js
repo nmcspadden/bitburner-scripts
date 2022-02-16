@@ -24,7 +24,7 @@ export async function main(ns) {
 	joinBladeburners(ns);
 	// Evaluate hacking scripts again
 	outputLog(ns, EARLY_LOG, "Re-evaluating hacking scripts");
-	await growHackingXP(ns);
+	growHackingXP(ns);
 	// Go into a waiting loop where we upgrade, buy programs, re-evaluate hacking XP
 	outputLog(ns, EARLY_LOG, "Passive money and upgrade loop while managing gang");
 	await upgradingLoop(ns);
@@ -45,7 +45,7 @@ async function crimeWhileUpgradingLoop(ns) {
 		// If we have lots of money, see if we can buy darkweb programs
 		ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
 		// Spin up hacking XP tools
-		await growHackingXP(ns);
+		growHackingXP(ns);
 		// Otherwise, commit crime!
 		commitKarmaFocusedCrime(ns);
 	}
@@ -107,7 +107,7 @@ async function upgradingLoop(ns) {
 		if (home_stats[0] > home_ram) {
 			ns.print("Re-evalauting hacking XP scripts");
 			home_ram = home_stats[0];
-			await growHackingXP(ns);
+			growHackingXP(ns);
 		}
 		// Run contract solver
 		ns.exec('contractSolver.js', HOME, 1, "--quiet");
