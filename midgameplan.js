@@ -88,7 +88,7 @@ async function buyAugmentLoop(ns, aug_map) {
 		);
 		// Also buy all available Neurofluxes
 		await outputLog(ns, MID_LOG, "Evaluating NeuroFlux Governor upgrades");
-		handleNeuroflux(ns);
+		await handleNeuroflux(ns);
 		// Now check: is the next cheapest aug simply too expensive? If so, we should install and reset
 		await isCheapestAugReasonable(ns, augs_to_buy);
 		// See if we can upgrade our home
