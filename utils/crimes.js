@@ -14,7 +14,7 @@ export const GANG_KARMA = 54000;
 
 /** 
  * Work out all stats until they hit a certain level
- * @param {NS} ns 
+ * @param {import("../.").NS} ns
  * @param {number} level The amount we all stats should be
 **/
 export async function workoutAllUntil(ns, level) {
@@ -40,7 +40,7 @@ export async function workoutAllUntil(ns, level) {
 
 /** 
  * Commit a single crime to get us closer to Gang Karma levels
- * @param {NS} ns 
+ * @param {import("../.").NS} ns
 **/
 export function commitKarmaFocusedCrime(ns) {
 	const HOMICIDE = "homicide";
@@ -58,7 +58,7 @@ export function commitKarmaFocusedCrime(ns) {
 
 /** 
  * Commit crimes until we have enough negative karma to start a gang
- * @param {NS} ns 
+ * @param {import("../.").NS} ns
 **/
 export async function crimeUntilGang(ns) {
 	/** 
@@ -76,7 +76,7 @@ export async function crimeUntilGang(ns) {
 }
 
 
-/** @param {NS} ns */
+/** @param {import("../.").NS} ns */
 export async function main(ns) {
 	const flagdata = ns.flags([
 		["crimes", []],
