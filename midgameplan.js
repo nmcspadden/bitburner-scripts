@@ -28,8 +28,8 @@ export async function main(ns) {
 	ns.tail(); // Open a window to view the status of the script
 	// Make sure gangs is running
 	if (!lookForProcess(ns, HOME, "gangs.js")) {
-		await outputLog(ns, MID_LOG, "Starting gangs script...")
-		ns.exec("gangs.js", HOME)
+		await outputLog(ns, MID_LOG, "Starting gangs script...");
+		ns.exec("gangs.js", HOME);
 	}
 	// Try to buy more darkweb programs
 	ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
@@ -41,7 +41,11 @@ export async function main(ns) {
 	// Evaluate hacking scripts again
 	await outputLog(ns, MID_LOG, "Re-evaluating hacking scripts");
 	growHackingXP(ns);
-	// TODO: Bladeburner tools
+	// Make sure bladeburners is running
+	if (!lookForProcess(ns, HOME, "bladeburners.js")) {
+		await outputLog(ns, MID_LOG, "Starting Bladeburners script...")
+		ns.exec("bladeburner.js", HOME, 1, "--quiet");
+	}
 	await buyAugmentLoop(ns, aug_map);
 	// ENDGAME: When there are no more augs left to buy
 }
