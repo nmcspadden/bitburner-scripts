@@ -28,7 +28,7 @@ export async function main(ns) {
 		ns.exit();
 	}
 	// Handle type
-	let preferred = await listPreferredAugs(ns, aug_map, flagdata.type);
+	let preferred = await listPreferredAugs(ns, aug_map, flagdata.type, false);
 	printPrettyAugList(ns, preferred, aug_map);
 	// Now check to see if we should buy
 	if (preferred.length > 0) {
@@ -438,6 +438,8 @@ function listExpAugs(aug_map, type, owned = false) {
 	for (let [aug, model] of Object.entries(aug_map)) {
 		// Look for matching stats
 		if (aug_stat_types.some(item => Object.keys(model["stats"]).includes(item))) {
+			// BB augs can have combat stats but are not easily obtained, so exclude them
+			if (aug_map[aug]["factions"].includes("Bladeburners")) continue
 			// Skip items we own unless specifically told to include them
 			if (aug_map[aug]["owned"] && !owned) continue
 			desired_augs[aug] = model;
