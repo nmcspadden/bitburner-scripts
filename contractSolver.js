@@ -24,7 +24,7 @@ export async function main(ns) {
             if (!flagdata.quiet) ns.tprint(`${server} - ${contract} - ${type} - ${didSolve || "FAILED!"}`);
         }
     }
-    if (QUIET) {
+    if (QUIET && contractList.length > 0) {
         ns.tprint(`Found ${contractList.length} contracts`);
         contracts.forEach((contract) => void ns.tprint(contract));
     }
