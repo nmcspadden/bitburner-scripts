@@ -134,14 +134,17 @@ function checkSkills(ns) {
             cost: ns.bladeburner.getSkillUpgradeCost(skill)
         };
     });
+    // TODO: This needs to loop until not enough points to buy something
     // Only level up the important skills
-    skills.filter(skill => BB_IMPORTANT_SKILLS.includes(skill)).forEach(skill => {
-        switch (skill) {
+    skills.filter(skill => BB_IMPORTANT_SKILLS.includes(skill.name)).filtered_skills.forEach(skill => {
+        switch (skill.name) {
             case "Cloak":
             case "Short-Circuit":
+                output(ns, TERMINAL, "Cloak/Short-circuit skills");
                 if (skill.level < SKILL_LIMIT) levelUpSkill(ns, skill)
                 break;
             default:
+                output(ns, TERMINAL, "Other skills");
                 levelUpSkill(ns, skill);
                 break;
         }
