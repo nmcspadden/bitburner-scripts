@@ -36,7 +36,7 @@ function canWork(ns) {
 
 /**
  * Determine if we should train or not
- * @param {import("../.").NS} ns
+ * @param {import(".").NS} ns
  * @returns True if stamina < 400
  */
 function shouldTrain(ns) {
@@ -46,7 +46,7 @@ function shouldTrain(ns) {
 
 /**
  * Rest to recover stamina, by training or field analysis
- * @param {import("../.").NS} ns
+ * @param {import(".").NS} ns
  * @returns Time it takes to trigger an action
  */
 function rest(ns) {
@@ -64,7 +64,7 @@ function rest(ns) {
  * Get the chance to perform an action
  * @param {string} type Type of action
  * @param {string} name Name of action
- * @param {import("../.").NS} ns
+ * @param {import(".").NS} ns
  * @returns Estimated success chance of action
  */
 const getChance = (type, name, ns) =>
@@ -72,11 +72,10 @@ const getChance = (type, name, ns) =>
 
 /**
  * Do a Contract, Operation
- * @param {import("../.").NS} ns
+ * @param {import(".").NS} ns
  * @returns Time it takes to trigger an action
  */
 function workContractOrOp(ns) {
-    output(ns, TERMINAL, "Evaluating contracts + operations");
     const contracts = ns.bladeburner.getContractNames();
     const operations = ns.bladeburner.getOperationNames();
 
@@ -102,6 +101,7 @@ function workContractOrOp(ns) {
 
     // TODO: add Black Op in here somewhere 
     if (bestOp.chance >= bestContract.chance) {
+        output(ns, TERMINAL, `Beginning operation ${bestOp.name}`);
         ns.bladeburner.startAction(bestOp.type, bestOp.name);
         return ns.bladeburner.getActionTime(bestOp.type, bestOp.name);
     }
@@ -114,7 +114,7 @@ function workContractOrOp(ns) {
 
 /**
  * Check our current skill levels and costs, and upgrade them
- * @param {import("../.").NS} ns
+ * @param {import(".").NS} ns
  * @param {*} skill Skill object created by CheckSkills()
  */
 function levelUpSkill(ns, skill) {
@@ -124,7 +124,7 @@ function levelUpSkill(ns, skill) {
 
 /**
  * Check our current skill levels and costs, and upgrade them
- * @param {import("../.").NS} ns
+ * @param {import(".").NS} ns
  */
 function checkSkills(ns) {
     const skills = ns.bladeburner.getSkillNames().map(skill => {
@@ -135,7 +135,6 @@ function checkSkills(ns) {
         };
     });
     // Only level up the important skills
-    output(ns, TERMINAL, "Checking skills");
     skills.filter(skill => BB_IMPORTANT_SKILLS.includes(skill)).forEach(skill => {
         switch (skill) {
             case "Cloak":
@@ -151,7 +150,7 @@ function checkSkills(ns) {
 
 /**
  * Handle the Bladeburner logic
- * @param {import("../.").NS} ns
+ * @param {import(".").NS} ns
  */
 export async function handleBladeburner(ns) {
     output(ns, TERMINAL, "Setting auto-level on everything");
@@ -168,7 +167,7 @@ export async function handleBladeburner(ns) {
     output(ns, TERMINAL, "Beginning Bladeburner loop");
     while (true) {
         const sleepTime = canWork(ns) ? workContractOrOp(ns) : rest(ns);
-        output(ns, TERMINAL, `Sleep time: ${ns.tFormat(sleepTime)}`);
+        output(ns, TERMINAL, `Sleeping for ${ns.tFormat(sleepTime)}`);
         await ns.sleep(sleepTime);
         checkSkills(ns);
     }
@@ -176,7 +175,7 @@ export async function handleBladeburner(ns) {
 
 
 /**
- * @param {import("../.").NS} ns
+ * @param {import(".").NS} ns
  */
 export async function main(ns) {
 	const flagdata = ns.flags([
