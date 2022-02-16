@@ -81,7 +81,7 @@ function findBestBlackOp(ns) {
     // blackOp looks like this: 
     // [{"type":"blackop","name":"Operation Typhoon","chance":[1,1],"rank":2500, "done": 1}
     // If the chance is 100%, and we have the rank to do it, and we haven't already done it, return it
-    output(ns, TERMINAL, `Next BlackOp: ${bestBlackOp.name}, requires rank ${ns.nFormat(bestBlackOp.rank, '0,0')}, chance is ${bestBlackOp.chance[0]*100}-${bestBlackOp.chance[1]*100}%`)
+    output(ns, TERMINAL, `Next BlackOp: ${bestBlackOp.name}, requires rank ${ns.nFormat(bestBlackOp.rank, '0,0')}, chance is ${ns.nFormat(bestBlackOp.chance[0]*100, '0.0%')}-${ns.nFormat(bestBlackOp.chance[1]*100, '0.0%')}`)
     if (
         compareArrays(bestBlackOp.chance, [1, 1]) &&
         (ns.bladeburner.getRank() >= bestBlackOp.rank) &&
@@ -107,7 +107,10 @@ const getChance = (type, name, ns) =>
 function workContractOrOp(ns) {
     const contracts = ns.bladeburner.getContractNames();
     const operations = ns.bladeburner.getOperationNames();
-
+    /* This logic only sorts by chance; it doesn't take into account things like number of actions left.
+    TODO: Add logic to check if there actually _are_ actions left, and if NOT, re-calculate based on best rank gain/hr
+    (rankgain * chance) / time seems to be a reasonable metric
+    */
     const bestContract = contracts
         .map(contract => {
             return {
@@ -176,11 +179,36 @@ function checkSkills(ns) {
             case "Short-Circuit":
                 if (skill.level < SKILL_LIMIT) levelUpSkill(ns, skill)
                 break;
+            case "Overclock":
+                // Overclock caps at 90, so don't bother trying
+                if (skill.level < 90) levelUpSkill(ns, skill)
+                break;
             default:
                 levelUpSkill(ns, skill);
                 break;
         }
     });
+}
+
+/**
+ * Check if Chaos is too high
+ * @param {import(".").NS} ns
+ */
+function chaosRising(ns) {
+    /*
+    Any time the spread between success chance is >15%, it's too unreliable and we should do Field Analysis
+    If the average chance (low + high / 2) > 1.0, probably need to do field analysis
+    Diplomacy scales better with Charisma, but I generally ignore Charisma as a stat, and it always takes 60s
+    Stealth Retirement does about 1-3% chaos reduction per execution
+    */
+    const STEALTH_RET_OP = "Stealth Retirement Operation";
+    let current_chaos = ns.bladeburner.getCityChaos(ns.bladeburner.getCity());
+    if (current_chaos > 50) {
+        // Too high! Spend time reducing it
+        output(ns, TERMINAL, `Chaos is too high (${current_chaos})! Starting Stealth Retirement`);
+        ns.bladeburner.startAction("operation", STEALTH_RET_OP);
+        return ns.bladeburner.getActionTime(bestOp.type, bestOp.name);
+    }
 }
 
 /**
@@ -201,6 +229,7 @@ export async function handleBladeburner(ns) {
     );
     output(ns, TERMINAL, "Beginning Bladeburner loop");
     while (true) {
+        // TODO: Check for Chaos
         const sleepTime = canWork(ns) ? workContractOrOp(ns) : rest(ns);
         output(ns, TERMINAL, `Sleeping for ${ns.tFormat(sleepTime)}`);
         await ns.sleep(sleepTime);
