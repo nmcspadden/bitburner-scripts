@@ -27,8 +27,8 @@ export async function main(ns) {
 		await handleNeuroflux(ns);
 		ns.exit();
 	}
-	// Handle type
-	let preferred = await listPreferredAugs(ns, aug_map, flagdata.type, false);
+	// Handle type - ignoring owned items, but allowing pending ones
+	let preferred = await listPreferredAugs(ns, aug_map, flagdata.type, false, true);
 	printPrettyAugList(ns, preferred, aug_map);
 	// Now check to see if we should buy
 	if (preferred.length > 0) {
@@ -45,7 +45,7 @@ export async function main(ns) {
  * @param {boolean} owned Whether we include augs we already own
  * @returns List of aug names (strings) to purchase
  */
-export async function listPreferredAugs(ns, aug_map, type, owned = true) {
+export async function listPreferredAugs(ns, aug_map, type, owned = true, pending = false) {
 	let preferred = [];
 	if (type) {
 		switch (type) {
@@ -75,7 +75,11 @@ export async function listPreferredAugs(ns, aug_map, type, owned = true) {
 				ns.exit();
 		}
 	}
-	return preferred.filter(aug => !aug.includes("NeuroFlux"))
+	// Don't include Neurofluxes here; they're handled separately
+	preferred = preferred.filter(aug => !aug.includes("NeuroFlux"));
+	// Exclude pending installs if desired
+	if (!pending) preferred = preferred.filter(aug => !aug_map[aug]["pending"])
+	return preferred
 }
 
 /**
@@ -182,7 +186,7 @@ function listBladeburnerAugsPrimitive(aug_map, substring, owned = false) {
 		// Look for matching stats
 		if (aug_stat_types.some(item => Object.keys(model["stats"]).includes(item))) {
 			// Skip items we own unless specifically told to include them
-			if (aug_map[aug]["owned"] && !owned) continue
+			if (model["owned"] && !owned) continue
 			desired_augs[aug] = model;
 		}
 	}
