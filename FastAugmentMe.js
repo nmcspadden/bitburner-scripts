@@ -80,6 +80,7 @@ export async function listPreferredAugs(ns, aug_map, type, owned = true) {
 
 /**
  * Prompt to buy a list of augs
+ * @param {import(".").NS} ns
  * @param {*} aug_map Map of objects from buildAugMap()
  * @param {array} desired_augs List of strings to buy
  * @param {boolean} should_prompt True if we should prompt to buy; false means we buy silently
