@@ -1,5 +1,5 @@
 // This code is largely stolen from someone else
-// TODO: go find the github or reddit post I got this from
+// https://www.reddit.com/r/Bitburner/comments/rmpgn5/map_code/
 
 /** @param {NS} ns **/
 export async function main(ns) {

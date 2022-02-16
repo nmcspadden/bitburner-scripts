@@ -1,5 +1,5 @@
 // This code is largely stolen from someone else
-// TODO: go find the github or reddit post I got this from
+// https://github.com/alainbryden/bitburner-scripts/blob/main/gangs.js
 
 import { formatMoney, formatNumberShort, getNsDataThroughFile, getActiveSourceFiles, runCommand, tryGetBitNodeMultipliers } from './helpers.js'
 

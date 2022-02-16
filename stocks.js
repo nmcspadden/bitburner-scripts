@@ -1,5 +1,5 @@
 // This code is largely stolen from someone else
-// TODO: go find the github or reddit post I got this from
+// https://github.com/kw5918448/bitburner_scripts/blob/main/lateGame/autoStocks.js
 
 /** @param {NS} ns **/
 export async function main(ns) {

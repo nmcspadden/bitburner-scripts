@@ -1,5 +1,5 @@
 // This code is largely stolen from someone else
-// TODO: go find the github or reddit post I got this from
+// https://steamlists.com/bitburner-crime-script-code-odds-of-success-requirements/
 
 let crimes = [
 	"heist",

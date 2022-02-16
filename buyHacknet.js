@@ -1,5 +1,5 @@
 // This code is largely stolen from someone else
-// TODO: go find the github or reddit post I got this from
+// https://github.com/ChaelCodes/bitburner-scripts/blob/main/scripts/buyHacknet.js
 
 let functions = { buyNode, upgradeNodes, buyNodes, help };
 let maxNodeCost;
