@@ -541,7 +541,7 @@ function printCheckbox(condition, label) {
  * @param avail_factions Factions I belong to that sell NF 
 **/
 function getClosestNFFaction(ns, avail_factions) {
-	let rep_sorted_fax = avail_factions.sort((a, b) => ns.getFactionRep(a) - ns.getFactionRep(b));
+	let rep_sorted_fax = avail_factions.sort((a, b) => ns.getFactionRep(a) - ns.getFactionRep(b)).reverse();
 	let sorted_fax = rep_sorted_fax.sort((a, b) => (ns.getAugmentationRepReq(NF) - ns.getFactionRep(a)) < (ns.getAugmentationRepReq(NF) - ns.getFactionRep(b)))
 	return sorted_fax[0]
 }
