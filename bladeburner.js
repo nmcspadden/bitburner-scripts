@@ -81,10 +81,11 @@ function findBestBlackOp(ns) {
     // blackOp looks like this: 
     // [{"type":"blackop","name":"Operation Typhoon","chance":[1,1],"rank":2500, "done": 1}
     // If the chance is 100%, and we have the rank to do it, and we haven't already done it, return it
-    output(ns, TERMINAL, `Next BlackOp: ${bestBlackOp.name}, requires rank ${ns.nFormat(bestBlackOp.rank, '0,0')}, chance is ${ns.nFormat(bestBlackOp.chance[0]*100, '0.0%')}-${ns.nFormat(bestBlackOp.chance[1]*100, '0.0%')}`)
+    let current_rank = ns.bladeburner.getRank();
+    output(ns, TERMINAL, `Next BlackOp: ${bestBlackOp.name}, requires rank ${ns.nFormat(bestBlackOp.rank, '0,0')} (current: ${ns.nFormat(current_rank, '0,0')}), chance is ${ns.nFormat(bestBlackOp.chance[0], '0.0%')}-${ns.nFormat(bestBlackOp.chance[1], '0.0%')}`)
     if (
         compareArrays(bestBlackOp.chance, [1, 1]) &&
-        (ns.bladeburner.getRank() >= bestBlackOp.rank) &&
+        (current_rank >= bestBlackOp.rank) &&
         (bestBlackOp.done == 1)
     ) return bestBlackOp
 }
