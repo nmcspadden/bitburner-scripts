@@ -251,5 +251,7 @@ export async function main(ns) {
         ns.disableLog("ALL");
         ns.tail();
     }
+    // TODO: add in safety check to make sure we're part of Bladeburner
+    // and/or have minimum stats to join it
     await handleBladeburner(ns);
 }
