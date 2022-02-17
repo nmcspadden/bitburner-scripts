@@ -28,7 +28,8 @@ export async function main(ns) {
 	// Go into a waiting loop where we upgrade, buy programs, re-evaluate hacking XP
 	await outputLog(ns, EARLY_LOG, "Passive money and upgrade loop while managing gang");
 	await upgradingLoop(ns);
-	await outputLog(ns, EARLY_LOG, "Done with early game");
+	await outputLog(ns, EARLY_LOG, "Done with early game, spawning mid-game");
+	ns.spawn('midgameplan.js');
 }
 
 /** 
