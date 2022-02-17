@@ -21,7 +21,7 @@ export async function main(ns) {
 	await outputLog(ns, EARLY_LOG, "Starting a gang");
 	await startAGang(ns);
 	// Join bladeburners, if possible
-	joinBladeburners(ns);
+	await joinBladeburners(ns);
 	// Evaluate hacking scripts again
 	await outputLog(ns, EARLY_LOG, "Re-evaluating hacking scripts");
 	growHackingXP(ns);
@@ -123,7 +123,8 @@ async function upgradingLoop(ns) {
 **/
 async function joinBladeburners(ns) {
 	if (!checkSForBN(ns, 7)) return
+	//TODO: Also add 100-stat requirement check here
 	await outputLog(ns, EARLY_LOG, "Joining the Bladeburners");
-	ns.bladeburner.joinBladeburners();
+	ns.bladeburner.joinBladeburnerDivision();
 	// What else do I do here?
 }
