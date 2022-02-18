@@ -51,13 +51,13 @@ function shouldTrain(ns) {
  */
 function rest(ns) {
     if (shouldTrain(ns)) {
-        output(ns, TERMINAL, "Resting - training, because stamina is < 400");
+        output(ns, TERMINAL, "Resting - training, because max stamina is < 400");
         ns.bladeburner.startAction("general", "Training");
-        return ns.bladeburner.getActionTime("general", "Training") * 1000;
+        return ns.bladeburner.getActionTime("general", "Training");
     }
     output(ns, TERMINAL, "Resting - field analysis");
     ns.bladeburner.startAction("general", "Field Analysis");
-    return ns.bladeburner.getActionTime * 1000;
+    return ns.bladeburner.getActionTime;
 }
 
 /**
