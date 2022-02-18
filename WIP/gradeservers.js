@@ -8,6 +8,8 @@ import { squishLines, makeTable } from 'WIP/tablemaker.js'
 import { getBatchInfo } from 'WIP/hyperbatcher.js'
 import { readNetworkMap } from "utils/networkmap.js";
 
+export const SERVERGRADES = 'servergrades.json';
+
 /** @param {NS} ns **/
 export async function main(ns) {
     // Fail if no Formulas.exe
@@ -45,7 +47,7 @@ export async function main(ns) {
         }
         data.push(getServerInfo(ns, server, pct));
     }
-	await ns.write('servergrades.json', JSON.stringify(data, null, 2), 'w');
+	await ns.write(SERVERGRADES, JSON.stringify(data, null, 2), 'w');
     ns.print(makeTable(data, false));
     await ns.sleep(10);
     squishLines(ns.getScriptName() + " " + ns.args.join(" "));

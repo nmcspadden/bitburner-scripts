@@ -1,4 +1,4 @@
-export const AUGMAP = "augmap.json.txt";
+export const AUGMAP = "augmap.json";
 
 export const factionList = [
 	/* basic factions */
@@ -121,7 +121,7 @@ export function findMyFactionsWithAug(ns, aug, player) {
 			aug_map[aug]["pending"] = pending_augs.includes(aug);
 		}
 	}
-	await ns.write("augmap.json", JSON.stringify(aug_map, null, 2), 'w');
+	await ns.write(AUGMAP, JSON.stringify(aug_map, null, 2), 'w');
 	return aug_map;
 }
 
@@ -146,10 +146,10 @@ export function findMyFactionsWithAug(ns, aug, player) {
  * @returns Object of the aug map
  */
  export async function readAugMap(ns) {
-	if (!ns.ls('home', AUGMAP)) {
+	if (!ns.ls('home', AUGMAP+".txt")) {
 		await buildAugMap(ns);
 	}
-	return JSON.parse(ns.read(AUGMAP));
+	return JSON.parse(ns.read(AUGMAP+".txt"));
 }
 
 /**
