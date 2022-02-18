@@ -6,15 +6,18 @@ export const HOME = "home";
  * @param {string} script Name of script to evaluate and run
  * @param {string} host Name of server to execute on
  * @param {number} threshold Max percent of RAM to consume (default 100)
+ * @param {boolean} run_on_home If true, run on home if we can't run on target server
 */
-export function maximizeScriptUse(ns, script, host, threshold=100) {
+export function maximizeScriptUse(ns, script, host, threshold = 100, run_on_home = true) {
 	let threads = maxThreads(ns, script, host, threshold);
 	// ns.tprint(`${host} threads: ${threads}`);
 	if (threads > 0) {
 		// Kill it first before recalculating usage
 		ns.kill(script, host);
 		ns.exec(script, host, threads);
-	} else {
+		return
+	}
+	if (run_on_home) {
 		ns.kill(script, 'home', host);
 		ns.exec(script, 'home', 1, host);
 	}
@@ -26,12 +29,12 @@ export function maximizeScriptUse(ns, script, host, threshold=100) {
  * @param {string} host Name of server to execute on
  * @param {number} threshold Max percent of RAM to consume (default 100)
 */
-export function maxThreads(ns, script, host, threshold=100) {
+export function maxThreads(ns, script, host, threshold = 100) {
 	let current_ram = ns.getServerMaxRam(host) - ns.getServerUsedRam(host);
 	// ns.tprint(`${host} current RAM: ${current_ram}`);
 	let script_cost = ns.getScriptRam(script);
 	// ns.tprint(`${host} script cost: ${script_cost}`);
-	return Math.floor((current_ram * (threshold/100)) / script_cost);
+	return Math.floor((current_ram * (threshold / 100)) / script_cost);
 }
 
 /** Look for a matching script on any host's process list
@@ -41,7 +44,7 @@ export function maxThreads(ns, script, host, threshold=100) {
  * @param {array} args List of args to also validate
  * @returns True if we found the script running, false otherwise
 */
-export function lookForProcess(ns, host, script, args=[]) {
+export function lookForProcess(ns, host, script, args = []) {
 	/* Example ns.ps() output:
 	[
 		{"filename":"gangs.js","threads":1,"args":[],"pid":2},
@@ -108,7 +111,7 @@ export async function readSourceFilesMap(ns) {
  * @param {*} array2 
  */
 export function compareArrays(array1, array2) {
-	return (array1.length === array2.length) && array1.every(function(value, index) { return value === array2[index]})
+	return (array1.length === array2.length) && array1.every(function (value, index) { return value === array2[index] })
 }
 
 /** 
@@ -128,6 +131,6 @@ export async function outputLog(ns, logfile, msg) {
  * @param {boolean} terminal If true, output to terminal; otherwise print to log
  * @param {string} msg Message to write
 **/
-export function output(ns, terminal=true, msg) {
+export function output(ns, terminal = true, msg) {
 	terminal ? ns.tprint(msg) : ns.print(msg)
 }

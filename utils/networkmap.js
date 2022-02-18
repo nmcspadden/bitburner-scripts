@@ -79,7 +79,11 @@ export async function createNetworkMap(ns) {
 		if (!already_running) {
 			// ns.tprint(`Attempting to run ${script} on ${node}`);
 			await ns.scp(script, node);
-			maximizeScriptUse(ns, script, node);
+			// Don't attempt to run the scripts on home if we're at 32GB or less,
+			// or it interferes with startinggameplan
+			let run_on_home = true;
+			if (data["home"].maxRAM <= 32) run_on_home = false;
+			maximizeScriptUse(ns, script, node, 100, run_on_home);
 		}
 		// TODO: backdoor the faction servers to replace joinFactions.js
 	}
