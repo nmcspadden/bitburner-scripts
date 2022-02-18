@@ -9,8 +9,8 @@ import { upgradeHome } from "utils/gameplan.js";
  * 3. Spin up the earlygameplan.js
  */
 
+export const START_LOG = "startinggameplan.log.txt";
 const MIN_STAT = 100;
-const START_LOG = "startinggameplan.log.txt";
 
 /** @param {import(".").NS} ns **/
 export async function main(ns) {

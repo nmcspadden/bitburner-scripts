@@ -6,7 +6,7 @@ import { upgradeHome, growHackingXP } from "utils/gameplan.js";
  * Early Gameplan w/ Gangs (64+ GB RAM)
 **/
 
-const EARLY_LOG = "earlygameplan.log.txt";
+export const EARLY_LOG = "earlygameplan.log.txt";
 
 /** @param {import(".").NS} ns **/
 export async function main(ns) {

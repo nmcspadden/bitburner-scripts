@@ -18,7 +18,7 @@ import { upgradeHome, growHackingXP, joinFactions } from "utils/gameplan.js";
  * Loop back until no more augs to buy
  */
 
-const MID_LOG = "midgameplan.log.txt";
+export const MID_LOG = "midgameplan.log.txt";
 
 /** @param {import(".").NS} ns **/
 export async function main(ns) {

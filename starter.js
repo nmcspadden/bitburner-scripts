@@ -1,11 +1,19 @@
 import { mapSourceFiles, HOME } from "utils/script_tools.js";
+import { START_LOG } from "startinggameplan.js";
+import { EARLY_LOG } from "earlygameplan.js";
+import { MID_LOG } from "midgameplan.js";
 
 /* 
  Starter.js: starting point for launching the gameplans
 */
 
-/** @param {NS} ns **/
+/** @param {import(".").NS} ns **/
 export async function main(ns) {
+    // Clean up old log files
+    ns.rm(START_LOG);
+    ns.rm(EARLY_LOG);
+    ns.rm(MID_LOG);
+
     // Create the source file map
     await mapSourceFiles(ns);
     // Determine our current RAM level
