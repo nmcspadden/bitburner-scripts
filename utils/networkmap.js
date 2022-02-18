@@ -1,7 +1,7 @@
 import { maximizeScriptUse, lookForProcess, HOME } from "utils/script_tools.js";
 import { SERVER_GROWN_FILE } from "serverGrower.js";
 
-const NETWORK_MAP = 'network_map.json';
+export const NETWORK_MAP = 'network_map.json';
 
 /** 
  * Create a network map in JSON format
