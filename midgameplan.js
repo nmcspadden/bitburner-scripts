@@ -46,6 +46,11 @@ export async function main(ns) {
 		await outputLog(ns, MID_LOG, "Starting Bladeburners script...")
 		ns.exec("bladeburner.js", HOME, 1, "--quiet");
 	}
+	// Make sure corporations are running
+	if (!lookForProcess(ns, HOME, "corporations.js")) {
+		await outputLog(ns, MID_LOG, "Starting Corporations script...")
+		ns.exec("WIP/corporations.js", HOME);
+	}
 	await buyAugmentLoop(ns, aug_map);
 	// ENDGAME: When there are no more augs left to buy
 }
@@ -74,7 +79,7 @@ async function buyAugmentLoop(ns, aug_map) {
 		joinFactions(ns);
 		// Attempt to buy the augs silently
 		ns.print("Augs to buy: " + augs_to_buy.join(", "));
-		await outputLog(ns, MID_LOG, "Buying augmentations");
+		await outputLog(ns, MID_LOG, "Checking for augmentations to buy");
 		let purchased_aug_list = await promptForAugs(ns, aug_map, augs_to_buy, false);
 		// How many are left?
 		purchased_augs += purchased_aug_list.length;

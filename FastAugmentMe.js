@@ -46,6 +46,8 @@ export async function main(ns) {
  * @returns List of aug names (strings) to purchase
  */
 export async function listPreferredAugs(ns, aug_map, type, owned = true, pending = false) {
+	// TODO: One notable problem here is that if there are pending EXP+ installs, the others won't get
+	// considered. Should we change that logic?
 	let preferred = [];
 	if (type) {
 		switch (type) {
