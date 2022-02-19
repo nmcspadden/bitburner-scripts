@@ -245,12 +245,13 @@ export async function handleBladeburner(ns) {
 export async function main(ns) {
     const flagdata = ns.flags([
         ["quiet", false],
+        ["tail", false]
     ])
-    TERMINAL = !flagdata.quiet;
-    if (!TERMINAL) {
-        ns.disableLog("ALL");
-        ns.tail();
-    }
+    TERMINAL = !(flagdata.quiet || flagdata.tail);
+    // Don't print to terminal or otherwise make any log messages
+    if (!TERMINAL) ns.disableLog("ALL")
+    // Only open a tail window if we want it
+    if (flagdata.tail) ns.tail()
     // TODO: add in safety check to make sure we're part of Bladeburner
     // and/or have minimum stats to join it
     await handleBladeburner(ns);
