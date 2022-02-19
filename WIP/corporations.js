@@ -36,13 +36,15 @@ export async function main(ns) {
             ns.print("Creating new one!");
             product_number += 1;
             // new product in numerical order, with 1b each of design and marketing investment.
-            ns.corporation.makeProduct(division_tobacco, "Aevum", `Tobacco-${product_number}`, 1000000000, 1000000000);
+            ns.corporation.makeProduct(division_tobacco, "Aevum", `Tobacco-v${product_number}`, 1000000000, 1000000000);
             product_names = ns.corporation.getDivision(division_tobacco).products;
         }
         ns.print("Sleeping for 5 seconds");
         await ns.sleep(5000); // sleep for 5 seconds
     }
 }
+
+// TODO: Need a function that correctly picks a new product name
 
 /* This is what a Corporation object from ns.corporation.getCorporation() looks like
 {
