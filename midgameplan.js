@@ -26,32 +26,11 @@ export async function main(ns) {
 	ns.toast("Starting mid game plan!", "info", null);
 	ns.disableLog("ALL"); // Disable the log
 	ns.tail(); // Open a window to view the status of the script
-	// Make sure gangs is running
-	if (!lookForProcess(ns, HOME, "gangs.js")) {
-		await outputLog(ns, MID_LOG, "Starting gangs script...");
-		ns.exec("gangs.js", HOME);
-	}
-	// Try to buy more darkweb programs
-	ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
-	// Create new network map
-	await outputLog(ns, MID_LOG, "Generating updated network map...");
-	ns.exec("utils/networkmap.js", HOME);
-	// Build the aug map first
-	let aug_map = await buildAugMap(ns);
-	// Evaluate hacking scripts again
-	await outputLog(ns, MID_LOG, "Re-evaluating hacking scripts");
-	growHackingXP(ns);
-	// Make sure bladeburners is running
-	if (!lookForProcess(ns, HOME, "bladeburners.js")) {
-		await outputLog(ns, MID_LOG, "Starting Bladeburners script...")
-		ns.exec("bladeburner.js", HOME, 1, "--quiet");
-	}
-	// Make sure corporations are running
-	if (!lookForProcess(ns, HOME, "corporations.js")) {
-		await outputLog(ns, MID_LOG, "Starting Corporations script...")
-		ns.exec("WIP/corporations.js", HOME);
-	}
+
+	let aug_map = await setUpGame(ns);
+
 	await buyAugmentLoop(ns, aug_map);
+	
 	await outputLog(ns, MID_LOG, "Moving to endgame!");
 	ns.spawn('endgameplan.js');
 }
@@ -119,6 +98,40 @@ async function buyAugmentLoop(ns, aug_map) {
 		ns.print("Sleeping for 30 seconds");
 		await ns.sleep(30000);
 	}
+}
+
+/**
+ * One-time setup scripts for the game phase
+ * @param {import(".").NS} ns 
+ * @returns the aug_map built by buildAugMap()
+ */
+async function setUpGame(ns) {
+	// Make sure gangs is running
+	if (!lookForProcess(ns, HOME, "gangs.js")) {
+		await outputLog(ns, MID_LOG, "Starting gangs script...");
+		ns.exec("gangs.js", HOME);
+	}
+	// Try to buy more darkweb programs
+	ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
+	// Create new network map
+	await outputLog(ns, MID_LOG, "Generating updated network map...");
+	ns.exec("utils/networkmap.js", HOME);
+	// Build the aug map first
+	let aug_map = await buildAugMap(ns);
+	// Evaluate hacking scripts again
+	await outputLog(ns, MID_LOG, "Re-evaluating hacking scripts");
+	growHackingXP(ns);
+	// Make sure bladeburners is running
+	if (!lookForProcess(ns, HOME, "bladeburners.js")) {
+		await outputLog(ns, MID_LOG, "Starting Bladeburners script...")
+		ns.exec("bladeburner.js", HOME, 1, "--quiet");
+	}
+	// Make sure corporations are running
+	if (!lookForProcess(ns, HOME, "corporations.js")) {
+		await outputLog(ns, MID_LOG, "Starting Corporations script...")
+		ns.exec("WIP/corporations.js", HOME);
+	}
+	return aug_map
 }
 
 /**
