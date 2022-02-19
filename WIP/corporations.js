@@ -1,3 +1,49 @@
+
+/** @param {import("../.").NS} ns **/
+export async function main(ns) {
+    ns.disableLog("ALL");
+    ns.tail();
+    let corp = ns.corporation.getCorporation();
+    // In my corp right now, this is the second item in the array
+    // TODO: Add a function to find a given division based on type
+    let division_tobacco = corp.divisions[1].name; // "Sin Sticks"
+    let product_names = ns.corporation.getDivision(division_tobacco).products;
+    ns.print("Products: " + JSON.stringify(product_names, null, 2));
+    // let tobacco_cities = corp.divisions[1].cities;
+    let product_number = 1;
+    while (true) {
+        // Sell initial products at MAX / MP, then set to TA.II 
+        ns.print("Selling each product for MAX/MP and then TA.II");
+        product_names.forEach(prod => {
+            ns.corporation.sellProduct(division_tobacco, "Aevum", prod, "MAX", "MP", true);
+            ns.corporation.setProductMarketTA2(division_tobacco, prod, true);
+        });
+        // Are any products in dev progress?
+        let in_dev = product_names.find(prod => ns.corporation.getProduct(division_tobacco, prod).developmentProgress < 100);
+        ns.print("In development product: " + in_dev)
+        if (!in_dev) {
+            //discontinue the oldest/crappiest one if nothing's in development right now
+            // Naively assume the first product in the list is the oldest
+            let product_to_remove = product_names[0];
+            // Sell all of it at MP to get rid of all inventory
+            ns.print(`Selling off ${product_to_remove}`);
+            ns.corporation.setProductMarketTA2(division_tobacco, product_to_remove, false);
+            ns.corporation.sellProduct(division_tobacco, "Aevum", product_to_remove, "MAX", "MP", true);
+            ns.print("Waiting 10 seconds...");
+            await ns.sleep(10000); // wait 10 seconds for a tick to sell all inventory
+            ns.print("Discontinuing product");
+            ns.corporation.discontinueProduct(division_tobacco, product_to_remove);
+            ns.print("Creating new one!");
+            product_number += 1;
+            // new product in numerical order, with 1b each of design and marketing investment.
+            ns.corporation.makeProduct(division_tobacco, "Aevum", `Tobacco-${product_number}`, 1000000000, 1000000000);
+            product_names = ns.corporation.getDivision(division_tobacco).products;
+        }
+        ns.print("Sleeping for 5 seconds");
+        await ns.sleep(5000); // sleep for 5 seconds
+    }
+}
+
 /* This is what a Corporation object from ns.corporation.getCorporation() looks like
 {
   "name": "Meatverse",
@@ -169,30 +215,3 @@ What a Product looks like:
   "developmentProgress": 100.09179492337837
 }
 */
-
-/** @param {import("../.").NS} ns **/
-export async function main(ns) {
-    let corp = ns.corporation.getCorporation();
-    // In my corp right now, this is the second item in the array
-    // TODO: Add a function to find a given division based on type
-    let division_tobacco = corp.divisions[1].name; // "Sin Sticks"
-    let products = ns.corporation.getDivision(division_tobacco).products;
-    while (true) {
-        // Set all products to TA.II
-        ns.tprint("Setting product to TA.II");
-        products.forEach(prod => ns.corporation.setProductMarketTA2(division_tobacco, prod, true));
-        // Are any products in dev progress?
-        let in_dev = products.find(prod => ns.corporation.getProduct(division_tobacco, prod).developmentProgress < 100);
-        if (!in_dev) {
-            //discontinue the oldest/crappiest one if nothing's in development right now
-            // Naively assume the first product in the list is the oldest
-            let product_to_remove = products[0].name;
-            // Sell all of it at MP to get rid of all inventory
-            ns.corporation.sellProduct(division_tobacco, "Aevum", product_to_remove, "MAX", "MP", true)
-            // Wait until we have no more
-            while (ns.corporation.getDivision(division_tobacco).products[product_to_remove]) {
-                // something?
-            }
-        }
-    }
-}
