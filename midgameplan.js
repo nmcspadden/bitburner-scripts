@@ -52,12 +52,13 @@ export async function main(ns) {
 		ns.exec("WIP/corporations.js", HOME);
 	}
 	await buyAugmentLoop(ns, aug_map);
-	// ENDGAME: When there are no more augs left to buy
+	await outputLog(ns, MID_LOG, "Moving to endgame!");
+	ns.spawn('endgameplan.js');
 }
 
 /**
  * Main loop where we buy augs and do things
- * @param {import("../.").NS} ns 
+ * @param {import(".").NS} ns 
  * @param {*} aug_map Map of objects from buildAugMap()
  */
 async function buyAugmentLoop(ns, aug_map) {
@@ -73,7 +74,8 @@ async function buyAugmentLoop(ns, aug_map) {
 	let original_aug_length = augs_to_buy.length;
 	let purchased_augs = 0;
 	await outputLog(ns, MID_LOG, `There are ${original_aug_length} augs to purchase`);
-	while (augs_to_buy.length > 0) {
+	// We move to Endgame when there are no more augs left to buy, or we hit hacking 2500
+	while (augs_to_buy.length > 0 || ns.getPlayer().hacking >= 2500) {
 		// Join Section-12 faction if it's waiting
 		await outputLog(ns, MID_LOG, "Joining pending factions");
 		joinFactions(ns);
