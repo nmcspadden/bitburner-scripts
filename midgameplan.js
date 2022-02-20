@@ -19,6 +19,7 @@ import { upgradeHome, growHackingXP, joinFactions } from "utils/gameplan.js";
  */
 
 export const MID_LOG = "midgameplan.log.txt";
+const TheRedPill = "The Red Pill";
 
 /** @param {import(".").NS} ns **/
 export async function main(ns) {
@@ -27,10 +28,10 @@ export async function main(ns) {
 	ns.disableLog("ALL"); // Disable the log
 	ns.tail(); // Open a window to view the status of the script
 
-	let aug_map = await setUpGame(ns);
-
-	await buyAugmentLoop(ns, aug_map);
-	
+	if (!ns.getOwnedAugmentations().includes(TheRedPill)) {
+		let aug_map = await setUpGame(ns);
+		await buyAugmentLoop(ns, aug_map);
+	}
 	await outputLog(ns, MID_LOG, "Moving to endgame!");
 	ns.spawn('endgameplan.js');
 }
