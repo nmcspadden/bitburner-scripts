@@ -1,50 +1,84 @@
+const PRODUCT_CAPACITY_UPGRADE = "uPgrade: Capacity.I";
+const TOBACCO_PRFX = "Tobacco-v";
 
 /** @param {import("../.").NS} ns **/
 export async function main(ns) {
-    ns.disableLog("ALL");
-    ns.tail();
-    let corp = ns.corporation.getCorporation();
-    // In my corp right now, this is the second item in the array
-    // TODO: Add a function to find a given division based on type
-    let division_tobacco = corp.divisions[1].name; // "Sin Sticks"
-    let product_names = ns.corporation.getDivision(division_tobacco).products;
-    ns.print("Products: " + JSON.stringify(product_names, null, 2));
-    // let tobacco_cities = corp.divisions[1].cities;
-    let product_number = 1;
-    while (true) {
-        // Sell initial products at MAX / MP, then set to TA.II 
-        ns.print("Selling each product for MAX/MP and then TA.II");
-        product_names.forEach(prod => {
-            ns.corporation.sellProduct(division_tobacco, "Aevum", prod, "MAX", "MP", true);
-            ns.corporation.setProductMarketTA2(division_tobacco, prod, true);
-        });
-        // Are any products in dev progress?
-        let in_dev = product_names.find(prod => ns.corporation.getProduct(division_tobacco, prod).developmentProgress < 100);
-        ns.print("In development product: " + in_dev)
-        if (!in_dev) {
-            //discontinue the oldest/crappiest one if nothing's in development right now
-            // Naively assume the first product in the list is the oldest
-            let product_to_remove = product_names[0];
-            // Sell all of it at MP to get rid of all inventory
-            ns.print(`Selling off ${product_to_remove}`);
-            ns.corporation.setProductMarketTA2(division_tobacco, product_to_remove, false);
-            ns.corporation.sellProduct(division_tobacco, "Aevum", product_to_remove, "MAX", "MP", true);
-            ns.print("Waiting 10 seconds...");
-            await ns.sleep(10000); // wait 10 seconds for a tick to sell all inventory
-            ns.print("Discontinuing product");
-            ns.corporation.discontinueProduct(division_tobacco, product_to_remove);
-            ns.print("Creating new one!");
-            product_number += 1;
-            // new product in numerical order, with 1b each of design and marketing investment.
-            ns.corporation.makeProduct(division_tobacco, "Aevum", `Tobacco-v${product_number}`, 1000000000, 1000000000);
-            product_names = ns.corporation.getDivision(division_tobacco).products;
-        }
-        ns.print("Sleeping for 5 seconds");
-        await ns.sleep(5000); // sleep for 5 seconds
+  ns.disableLog("ALL");
+  ns.tail();
+  let corp = ns.corporation.getCorporation();
+  // In my corp right now, this is the second item in the array
+  // TODO: Add a function to find a given division based on type
+  let division_tobacco = corp.divisions[1].name; // "Sin Sticks"
+  let product_names = ns.corporation.getDivision(division_tobacco).products;
+  // The default max number of products is 3, but can be 4 with research
+  let max_number_of_products = 3;
+  if (ns.corporation.hasResearched(division_tobacco, PRODUCT_CAPACITY_UPGRADE)) max_number_of_products += 1
+  // ns.print("Products: " + JSON.stringify(product_names, null, 2));
+  // let tobacco_cities = corp.divisions[1].cities;
+  while (true) {
+    // Sell initial products at MAX / MP, then set to TA.II 
+    // ns.print("Selling each product for MAX/MP and then TA.II");
+    product_names.forEach(prod => {
+      ns.corporation.sellProduct(division_tobacco, "Aevum", prod, "MAX", "MP", true);
+      ns.corporation.setProductMarketTA2(division_tobacco, prod, true);
+    });
+    // Do we have less than the max number of products?
+    while (product_names.length < max_number_of_products) {
+      // develop more products
+      developNewProduct(ns);
+      product_names = ns.corporation.getDivision(division_tobacco).products;
     }
+    // Are any products in dev progress?
+    let in_dev = product_names.find(prod => ns.corporation.getProduct(division_tobacco, prod).developmentProgress < 100);
+    ns.print("In development product: " + in_dev)
+    // If nothing is in development, then we should sell off + discontinue the oldest one
+    if (!in_dev) {
+      await discontinueOldestProduct(ns);
+    }
+    product_names = ns.corporation.getDivision(division_tobacco).products;
+    ns.print("Sleeping for 5 seconds");
+    await ns.sleep(5000); // sleep for 5 seconds  
+  }
 }
 
-// TODO: Need a function that correctly picks a new product name
+function developNewProduct(ns) {
+  let new_product_name = nextProductName(ns);
+  ns.print("Creating new product: " + new_product_name);
+  // Safety check: make sure we don't have it, since a name collision causes a runtime error
+  while (ns.corporation.getDivision(division_tobacco).products.includes(new_product_name)) {
+    product_number += 1;
+    new_product_name = TOBACCO_PRFX + product_number;
+  }
+  // new product in numerical order, with 1b each of design and marketing investment.
+  ns.corporation.makeProduct(division_tobacco, "Aevum", new_product_name, 1000000000, 1000000000);
+}
+
+function nextProductName(ns) {
+  let product_names = ns.corporation.getDivision(division_tobacco).products.sort();
+  let last_version = 1;
+  // If there are existing products, try to figure out the last one
+  if (product_names.length > 0) {
+    let last_char = product_names.slice(-1)[0].slice(-1);
+    // if the last character is a number (not NaN), use it for evaluation
+    if (!isNaN(last_char)) last_version = last_char;
+  }
+  return TOBACCO_PRFX + last_version + 1;
+}
+
+async function discontinueOldestProduct(ns) {
+  let product_names = ns.corporation.getDivision(division_tobacco).products.sort();
+  // Safety net, don't discontinue if we have no products
+  if (product_names.length == 0) return
+  // Sell all of it at MP to get rid of all inventory
+  ns.print(`Selling off ${product_names[0]}`);
+  ns.corporation.setProductMarketTA2(division_tobacco, product_names[0], false);
+  ns.corporation.sellProduct(division_tobacco, "Aevum", product_names[0], "MAX", "MP", true);
+  ns.print("Waiting 20 seconds...");
+  await ns.sleep(20000); // wait 20 seconds for two ticks to sell all inventory
+  ns.print("Discontinuing product");
+  // Now discontinue once we're done selling
+  ns.corporation.discontinueProduct(division_tobacco, product_names[0]);
+}
 
 /* This is what a Corporation object from ns.corporation.getCorporation() looks like
 {
