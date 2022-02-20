@@ -103,5 +103,5 @@ export function donationAmountForRep(ns, faction, repreq) {
  */
  export function calculateBribeNeededForRep(ns, faction, repreq) {
     let current_rep = ns.getFactionRep(faction);
-    return Math.ceil(1e8 * (Math.max(0, repreq - current_rep)));
+    return Math.ceil(1e9 * (Math.max(0, repreq - current_rep)));
 }
