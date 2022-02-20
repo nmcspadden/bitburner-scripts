@@ -25,15 +25,15 @@ export async function main(ns) {
     // Do we have less than the max number of products?
     while (product_names.length < max_number_of_products) {
       // develop more products
-      developNewProduct(ns);
+      developNewProduct(ns, division_tobacco);
       product_names = ns.corporation.getDivision(division_tobacco).products;
     }
     // Are any products in dev progress?
     let in_dev = product_names.find(prod => ns.corporation.getProduct(division_tobacco, prod).developmentProgress < 100);
-    ns.print("In development product: " + in_dev)
+    if (in_dev) ns.print("In development product: " + in_dev)
     // If nothing is in development, then we should sell off + discontinue the oldest one
     if (!in_dev) {
-      await discontinueOldestProduct(ns);
+      await discontinueOldestProduct(ns, division_tobacco);
     }
     product_names = ns.corporation.getDivision(division_tobacco).products;
     ns.print("Sleeping for 5 seconds");
@@ -41,43 +41,44 @@ export async function main(ns) {
   }
 }
 
-function developNewProduct(ns) {
-  let new_product_name = nextProductName(ns);
+function developNewProduct(ns, division) {
+  let new_product_name = nextProductName(ns, division);
   ns.print("Creating new product: " + new_product_name);
-  // Safety check: make sure we don't have it, since a name collision causes a runtime error
-  while (ns.corporation.getDivision(division_tobacco).products.includes(new_product_name)) {
-    product_number += 1;
-    new_product_name = TOBACCO_PRFX + product_number;
-  }
+  // // Safety check: make sure we don't have it, since a name collision causes a runtime error
+  // while (ns.corporation.getDivision(division).products.includes(new_product_name)) {
+  //   product_number += 1;
+  //   new_product_name = TOBACCO_PRFX + product_number;
+  // }
   // new product in numerical order, with 1b each of design and marketing investment.
-  ns.corporation.makeProduct(division_tobacco, "Aevum", new_product_name, 1000000000, 1000000000);
+  ns.corporation.makeProduct(division, "Aevum", new_product_name, 1000000000, 1000000000);
 }
 
-function nextProductName(ns) {
-  let product_names = ns.corporation.getDivision(division_tobacco).products.sort();
+function nextProductName(ns, division) {
+  let product_names = ns.corporation.getDivision(division).products.sort((a,b) => a - b);
   let last_version = 1;
   // If there are existing products, try to figure out the last one
   if (product_names.length > 0) {
-    let last_char = product_names.slice(-1)[0].slice(-1);
+    let last_char = product_names.slice(-1)[0].slice(9);
     // if the last character is a number (not NaN), use it for evaluation
-    if (!isNaN(last_char)) last_version = last_char;
+    if (!isNaN(last_char)) last_version = Number(last_char);
   }
-  return TOBACCO_PRFX + last_version + 1;
+  return TOBACCO_PRFX + (last_version + 1);
 }
 
-async function discontinueOldestProduct(ns) {
-  let product_names = ns.corporation.getDivision(division_tobacco).products.sort();
+async function discontinueOldestProduct(ns, division) {
+  let product_names = ns.corporation.getDivision(division).products.sort((a,b) => a - b);
+  // ns.print("Product names: " + product_names);
   // Safety net, don't discontinue if we have no products
   if (product_names.length == 0) return
   // Sell all of it at MP to get rid of all inventory
   ns.print(`Selling off ${product_names[0]}`);
-  ns.corporation.setProductMarketTA2(division_tobacco, product_names[0], false);
-  ns.corporation.sellProduct(division_tobacco, "Aevum", product_names[0], "MAX", "MP", true);
+  ns.corporation.setProductMarketTA2(division, product_names[0], false);
+  ns.corporation.sellProduct(division, "Aevum", product_names[0], "MAX", "MP", true);
   ns.print("Waiting 20 seconds...");
   await ns.sleep(20000); // wait 20 seconds for two ticks to sell all inventory
   ns.print("Discontinuing product");
   // Now discontinue once we're done selling
-  ns.corporation.discontinueProduct(division_tobacco, product_names[0]);
+  ns.corporation.discontinueProduct(division, product_names[0]);
 }
 
 /* This is what a Corporation object from ns.corporation.getCorporation() looks like
