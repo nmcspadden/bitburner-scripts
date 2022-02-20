@@ -1,7 +1,10 @@
-import { findMyFactionsWithAug } from "utils/augs.js";
+import { buildAugMap, findMyFactionsWithAug } from "utils/augs.js";
 import { donationAmountForRep, workUntilDonate } from "utils/repNeededForFavor.js";
 import { locateServer } from "utils/networkmap.js";
-import { HOME } from "utils/script_tools.js";
+import { listPreferredAugs, promptForAugs, handleNeuroflux } from "FastAugmentMe.js";
+import { outputLog, lookForProcess, HOME } from "utils/script_tools.js";
+import { growHackingXP } from "utils/gameplan.js";
+import { numFormat } from "utils/format.js";
 
 /**
  * End-Gameplan
@@ -23,6 +26,7 @@ export const END_LOG = "endgameplan.log.txt";
 const TheRedPill = "The Red Pill";
 const FAVOR_TO_DONATE = 150;
 const WORLD = "w0r1d_d43m0n";
+const CORP_BRIBE_RATIO = 1000000000; // corp rep bribes are divided by 1e9 
 
 /** @param {NS} ns **/
 export async function main(ns) {
@@ -34,12 +38,12 @@ export async function main(ns) {
 	let aug_map = await setUpGame(ns);
 
 	/* Now do the actual endgame content */
-	await print("Looking for Daedalus faction");
+	await logprint(ns, "Looking for Daedalus faction");
 	await joinDaedalus(ns);
-	await print("Evaluating the process of obtaining of The Red Pill...");
+	await logprint(ns, "Evaluating the process of obtaining of The Red Pill...");
 	await grindForRedPill(ns);
 	// hack the world daemon!
-	await print("HACK THE PLANET! HACK THE PLANET!");
+	await logprint(ns, "HACK THE PLANET! HACK THE PLANET!");
 	await hackThePlanet(ns);
 }
 
@@ -52,17 +56,17 @@ async function setUpGame(ns) {
 	/* Game Setup Scripts */
 	// Make sure gangs is running
 	if (!lookForProcess(ns, HOME, "gangs.js")) {
-		await print("Starting gangs script...");
+		await logprint(ns, "Starting gangs script...");
 		ns.exec("gangs.js", HOME);
 	}
 	// Make sure bladeburners is running
 	if (!lookForProcess(ns, HOME, "bladeburners.js")) {
-		await print("Starting Bladeburners script...")
+		await logprint(ns, "Starting Bladeburners script...")
 		ns.exec("bladeburner.js", HOME, 1, "--quiet");
 	}
 	// Make sure corporations are running
 	if (!lookForProcess(ns, HOME, "corporations.js")) {
-		await print("Starting Corporations script...")
+		await logprint(ns, "Starting Corporations script...")
 		ns.exec("WIP/corporations.js", HOME);
 	}
 	// Try to buy more darkweb programs
@@ -73,12 +77,12 @@ async function setUpGame(ns) {
 		await ns.sleep(1000);
 	}
 	// Create new network map
-	await print("Generating updated network map...");
+	await logprint(ns, "Generating updated network map...");
 	ns.exec("utils/networkmap.js", HOME);
 	// Build the aug map first
-	await buildAugMap(ns);
+	let aug_map = await buildAugMap(ns);
 	// Evaluate hacking scripts again
-	await print("Re-evaluating hacking scripts");
+	await logprint(ns, "Re-evaluating hacking scripts");
 	growHackingXP(ns);
 	return aug_map
 }
@@ -95,10 +99,11 @@ async function grindForRedPill(ns) {
 	// First, find the faction with the red pill
 	let factions_w_red_pill = findMyFactionsWithAug(ns, TheRedPill, player);
 	/* DEV CHECK */
-	ns.print(`Have corp: ${player.hasCorporation}, corp money: ${ns.nFormat(ns.corporation.getCorporation().funds, '$0.00a')}`);
+	ns.print(`Have corp: ${player.hasCorporation}, corp money: ${numFormat(ns.corporation.getCorporation().funds)}`);
 	/* END DEV */
 	let money_needed = donationAmountForRep(ns, factions_w_red_pill[0], red_pill_req);
-	ns.print(`Need to donate ${money_needed}`);
+	let corp_money_needed = money_needed * CORP_BRIBE_RATIO;
+	ns.print(`Need to donate $${numFormat(money_needed)} or bribe $${numFormat(corp_money_needed)} to earn ${numFormat(red_pill_req)} rep`);
 	while (factions_w_red_pill.length == 0) {
 		ns.print("You don't currently belong to any factions with " + TheRedPill);
 		factions_w_red_pill = findMyFactionsWithAug(ns, TheRedPill, player);
@@ -129,16 +134,16 @@ async function grindForRedPill(ns) {
 			return
 		} else if (ns.getFactionFavor(factions_w_red_pill[0]) >= FAVOR_TO_DONATE) {
 			// Do we have enough favor to to donate rep?
-			let should_donate = await ns.prompt(`Donate ${ns.nFormat(money_needed, '$0.00a')} to ${factions_w_red_pill[0]}?`);
+			let should_donate = await ns.prompt(`Donate ${numFormat(money_needed)} to ${factions_w_red_pill[0]}?`);
 			let did_donate = false;
 			if (should_donate) did_donate = ns.donateToFaction(factions_w_red_pill[0], money_needed);
 			if (did_donate) {
-				ns.print(`Donated ${ns.nFormat(money_needed, '$0.00a')} to ${factions_w_red_pill[0]}`);
+				ns.print(`Donated $${numFormat(money_needed)} to ${factions_w_red_pill[0]}`);
 			}
-		} else if (player.hasCorporation && (ns.corporation.getCorporation().funds >= money_needed)) {
+		} else if (player.hasCorporation && (ns.corporation.getCorporation().funds >= corp_money_needed)) {
 			// Are we in a corporation with enough money to donate to earn The Red Pill?
-			ns.print(`Bribing ${factions_w_red_pill[0]} for ${ns.nFormat(money_needed, '$0.00a')}`);
-			let did_bribe = ns.corporation.bribe(factions_w_red_pill[0], money_needed, 0);
+			ns.print(`Bribing ${factions_w_red_pill[0]} for $${numFormat(corp_money_needed)}`);
+			let did_bribe = ns.corporation.bribe(factions_w_red_pill[0], corp_money_needed, 0);
 			if (did_bribe) ns.print("Bribed successfully!");
 		}
 		return // DEV ONLY
@@ -199,6 +204,6 @@ async function joinDaedalus(ns) {
 	}
 }
 
-async function print(msg) {
+async function logprint(ns, msg) {
 	await outputLog(ns, END_LOG, msg);
 }
