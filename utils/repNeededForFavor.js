@@ -94,3 +94,14 @@ export function donationAmountForRep(ns, faction, repreq) {
     let faction_rep_mult = ns.getPlayer().faction_rep_mult;
     return Math.ceil(1e6 * (Math.max(0, repreq - current_rep) / faction_rep_mult));
 }
+
+/**
+ * Return the amount of money needed to bribe (from a corp) to hit a specific rep amount
+ * @param {NS} ns 
+ * @param {string} faction Name of faction to calculate 
+ * @param {number} repreq Amount of rep we want to reach 
+ */
+ export function calculateBribeNeededForRep(ns, faction, repreq) {
+    let current_rep = ns.getFactionRep(faction);
+    return Math.ceil(1e8 * (Math.max(0, repreq - current_rep)));
+}
