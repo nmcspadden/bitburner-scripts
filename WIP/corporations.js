@@ -1,10 +1,22 @@
+import { numFormat } from "utils/format.js";
+
 const PRODUCT_CAPACITY_UPGRADE = "uPgrade: Capacity.I";
 const TOBACCO_PRFX = "Tobacco-v";
+const WILSON = "Wilson Analytics";
+
+const job_list = [
+  "Business",
+  "Engineer",
+  "Management",
+  "Operations",
+  "Research & Development",
+];
 
 /** @param {import("../.").NS} ns **/
 export async function main(ns) {
   ns.disableLog("ALL");
   ns.tail();
+  ns.print("***Starting out Corporation management");
   let corp = ns.corporation.getCorporation();
   // In my corp right now, this is the second item in the array
   // TODO: Add a function to find a given division based on type
@@ -36,11 +48,79 @@ export async function main(ns) {
       await discontinueOldestProduct(ns, division_tobacco);
     }
     product_names = ns.corporation.getDivision(division_tobacco).products;
+    // Now actual corp development:
+    ns.print("Making improvements to Aevum");
+    await improveCorp(ns, division_tobacco, "Aevum");
     ns.print("Sleeping for 5 seconds");
     await ns.sleep(5000); // sleep for 5 seconds  
   }
 }
 
+/**
+ * Improve the corp overall with research, unlocks, hiring
+ * @param {import("../.").NS} ns 
+ * @param {*} corp Corporation object
+ * @param {string} division Name of division
+ * @param {string} city Name of city
+ */
+async function improveCorp(ns, division, city) {
+  /*
+  1. Buy Wilson Analytics
+  2. if AdvertInc. is cheaper than +15 Aevum, buy that
+  3. Otherwise, buy +15 Aevum, hire new employees, re-assign 3 to each of the 5 roles (2 to biz, 4 to research)
+  4. For each other city, increase size to be Aevum-60 
+  */
+  let office = ns.corporation.getOffice(division, city);
+  // Can we afford Wilson Analytics?
+  let wilson_cost = ns.corporation.getUpgradeLevelCost(WILSON);
+  if (ns.corporation.getCorporation().funds >= wilson_cost) {
+    ns.print(`Upgrading ${WILSON} for $${numFormat(wilson_cost)}`);
+    ns.corporation.levelUpgrade(WILSON);
+  }
+  // Compare AdVert vs. expanding Aevum - go with whichever is cheaper
+  const EXPANSION_SIZE = 15;
+  let advert_cost = ns.corporation.getHireAdVertCost(division);
+  let aevum_exp_cost = ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE);
+  if (advert_cost < aevum_exp_cost) {
+    ns.print(`Hiring AdVert for ${numFormat(advert_cost)}`);
+    ns.corporation.hireAdVert(division);
+  } else {
+    ns.print("Expanding office size by " + EXPANSION_SIZE);
+    ns.corporation.upgradeOfficeSize(division, city, EXPANSION_SIZE);
+    ns.print(`Hiring employees for ${city} office`);
+    office = ns.corporation.getOffice(division, city);
+    // Hire employees until we're at cap
+    while (office.employees.length < office.size) {
+      ns.corporation.hireEmployee(division, city);
+      office = ns.corporation.getOffice(division, city);
+    }
+    // To assign employees, divide the total number by 5; then assign each batch to one job, then the next, etc.
+    // Subtract one from Business and add one to Research & Dev from each batch
+    ns.print("Assigning employees to jobs");
+    await assignEmployees(ns, office.employees, division, city);
+  }
+}
+
+/**
+ * Assign all employees to jobs
+ * @param {import("../.").NS} ns
+ * @param {array} employee_list List of all employees
+ * @param {string} division The division we're building in
+ * @param {string} city The city office we're assigning
+ */
+ async function assignEmployees(ns, employee_list, division, city) {
+  let batch_size = Math.floor(employee_list.length / 5); // use ints just in case we ever have a non-divisible-by-5 numeral
+  ns.print("Assigning " + batch_size + " jobs each to " + job_list.join(", "));
+  for (const role of job_list) {
+    await ns.corporation.setAutoJobAssignment(division, city, role, batch_size);
+  }
+}
+
+/**
+ * Create a new iteratively-named product
+ * @param {import("../.").NS} ns
+ * @param {string} division The division we're building in
+ */
 function developNewProduct(ns, division) {
   let new_product_name = nextProductName(ns, division);
   ns.print("Creating new product: " + new_product_name);
@@ -53,8 +133,14 @@ function developNewProduct(ns, division) {
   ns.corporation.makeProduct(division, "Aevum", new_product_name, 1000000000, 1000000000);
 }
 
+/**
+ * Calculate the next product name
+ * @param {import("../.").NS} ns
+ * @param {string} division The division we're building in
+ * @returns the next product name
+ */
 function nextProductName(ns, division) {
-  let product_names = ns.corporation.getDivision(division).products.sort((a,b) => a - b);
+  let product_names = ns.corporation.getDivision(division).products.sort((a, b) => a - b);
   let last_version = 1;
   // If there are existing products, try to figure out the last one
   if (product_names.length > 0) {
@@ -65,8 +151,13 @@ function nextProductName(ns, division) {
   return TOBACCO_PRFX + (last_version + 1);
 }
 
+/**
+ * Discontinue the oldest product (based on name)
+ * @param {import("../.").NS} 
+ * @param {*} division The division we're building in
+ */
 async function discontinueOldestProduct(ns, division) {
-  let product_names = ns.corporation.getDivision(division).products.sort((a,b) => a - b);
+  let product_names = ns.corporation.getDivision(division).products.sort((a, b) => a - b);
   // ns.print("Product names: " + product_names);
   // Safety net, don't discontinue if we have no products
   if (product_names.length == 0) return
@@ -74,8 +165,8 @@ async function discontinueOldestProduct(ns, division) {
   ns.print(`Selling off ${product_names[0]}`);
   ns.corporation.setProductMarketTA2(division, product_names[0], false);
   ns.corporation.sellProduct(division, "Aevum", product_names[0], "MAX", "MP", true);
-  ns.print("Waiting 20 seconds...");
-  await ns.sleep(20000); // wait 20 seconds for two ticks to sell all inventory
+  ns.print("Waiting 10 seconds...");
+  await ns.sleep(10000); // wait 20 seconds for two ticks to sell all inventory
   ns.print("Discontinuing product");
   // Now discontinue once we're done selling
   ns.corporation.discontinueProduct(division, product_names[0]);
@@ -251,4 +342,29 @@ What a Product looks like:
   },
   "developmentProgress": 100.09179492337837
 }
+
+What an office looks like:
+{
+  "loc": "Aevum",
+  "size": 390,
+  "minEne": 0,
+  "maxEne": 100,
+  "minHap": 0,
+  "maxHap": 100,
+  "maxMor": 110,
+  "employees": [
+    "xS3RVpm",
+    "FhEKJg6",
+    ...
+  ],
+  "employeeProd": {
+    "Operations": 66431.555991098,
+    "Engineer": 71284.66524481219,
+    "Business": 27966.22150579291,
+    "Management": 70983.26080915287,
+    "Research & Development": 68906.91757981491,
+    "Training": 0
+  }
+}
+
 */
