@@ -26,6 +26,7 @@ const CITY_LIST = [
 export async function main(ns) {
   ns.disableLog("ALL");
   ns.tail();
+  if (!ns.getPlayer().hasCorporation) bootstrapCorp(ns)
   ns.print("***Starting out Corporation management");
   let corp = ns.corporation.getCorporation();
   // In my corp right now, this is the second item in the array
