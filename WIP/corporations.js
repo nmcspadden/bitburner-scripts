@@ -1,15 +1,25 @@
 import { numFormat } from "utils/format.js";
 
+const CORP_NAME = "VIP Champagne";
 const PRODUCT_CAPACITY_UPGRADE = "uPgrade: Capacity.I";
 const TOBACCO_PRFX = "Tobacco-v";
 const WILSON = "Wilson Analytics";
 
-const job_list = [
+const JOB_LIST = [
   "Business",
   "Engineer",
   "Management",
   "Operations",
   "Research & Development",
+];
+
+const CITY_LIST = [
+  "Aevum",
+  "Chongqing",
+  "Sector-12",
+  "New Tokyo",
+  "Ishima",
+  "Volhaven"
 ];
 
 /** @param {import("../.").NS} ns **/
@@ -54,6 +64,166 @@ export async function main(ns) {
     ns.print("Sleeping for 5 seconds");
     await ns.sleep(5000); // sleep for 5 seconds  
   }
+}
+
+/**
+ * Bootstrap a corp
+ * @param {import("../.").NS} ns 
+ */
+export async function bootstrapCorp(ns) {
+  ns.disableLog("ALL");
+  ns.tail();
+  const FIRST_INDUSTRY = "Agriculture";
+  const DIVISION = "Rich Table";
+  let player = ns.getPlayer();
+  if (player.funds < 150000000000) {
+    ns.print("Not enough funds to start a corporation. You need $150b.");
+    ns.exit();
+  }
+  ns.print("Creating corporation!");
+  ns.corporation.createCorporation(CORP_NAME, true);
+  // return // ONLY DURING DEV
+  let corp = ns.corporation.getCorporation();
+  // This is so the script can be safely idempotent; running expandIndustry with the same args causes 
+  // a runtime error
+  if (corp.divisions.length == 0) {
+    ns.print("Creating new industry!");
+    ns.corporation.expandIndustry(FIRST_INDUSTRY, DIVISION);
+  }
+  const SMART_SUPPLY = "Smart Supply";
+  if (!ns.corporation.hasUnlockUpgrade(SMART_SUPPLY)) {
+    ns.print("Buying Smart Supply");
+    ns.corporation.unlockUpgrade(SMART_SUPPLY);
+  }
+  // Possible safe ways to check for Office / Warehouse APIs?
+  /* BEGINNING PHASE */
+  corp = ns.corporation.getCorporation();
+  // Turn on smart supply for starting city
+  ns.print("Enabling Smart Supply for " + DIVISION + " in " + corp.divisions[0].cities[0]);
+  ns.corporation.setSmartSupply(DIVISION, corp.divisions[0].cities[0], true);
+  // Now expand offices to other cities
+  ns.print("Starting expansion of other cities");
+  for (const city of CITY_LIST) {
+    let employee_list = [];
+    // Expand the office to each new city
+    if (!corp.divisions[0].cities.includes(city)) {
+      ns.print("Expanding to " + city);
+      ns.corporation.expandCity(DIVISION, city);
+    }
+    let office = ns.corporation.getOffice(DIVISION, city);
+    if (office.employees < 3) {
+      ns.print("Hiring employees");
+      for (let i = 1; i <= 3; i++) {
+        // Hire 3 employees for each city
+        employee_list.push(ns.corporation.hireEmployee(DIVISION, city));
+      }
+      ns.print("Assigning jobs to employees");
+      await assignEmployees(ns, employee_list, DIVISION, city, ["Operations", "Engineer", "Business"]);
+    }
+    if (ns.corporation.getHireAdVertCount(DIVISION) < 1) {
+      // Buy one level of AdVert
+      ns.print("Buying one round of AdVert");
+      ns.corporation.hireAdVert(DIVISION);
+    }
+    // Buy a warehouse if we don't have one
+    if (!ns.corporation.hasWarehouse(DIVISION, city)) {
+      ns.print("Buying Warehouse");
+      ns.corporation.purchaseWarehouse(DIVISION, city);
+    }
+    ns.print("Enabling Smart Supply for " + DIVISION + " in " + corp.divisions[0].cities[0]);
+    ns.corporation.setSmartSupply(DIVISION, city, true);
+    // Upgrade the warehouse to fit at least 300
+    ns.print("Upgrading the warehouse to 300");
+    while (ns.corporation.getWarehouse(DIVISION, city).size < 300) {
+      ns.corporation.upgradeWarehouse(DIVISION, city);
+    }
+    // Now start selling Plants + Food
+    ns.print("Setting sale prices for materials Plants + Food");
+    ns.corporation.sellMaterial(DIVISION, city, "Plants", "MAX", "MP");
+    ns.corporation.sellMaterial(DIVISION, city, "Food", "MAX", "MP");
+    // Loop!
+    corp = ns.corporation.getCorporation();
+    ns.print(`* Current funds: $${numFormat(corp.funds)}`);
+    await ns.sleep(100);
+  }
+  /* TIME TO GROW */
+  ns.print("TIME TO GROW!");
+  // Now time to get some upgrades
+  const UPGRADE_LIST = [
+    "FocusWires",
+    "Neural Accelerators",
+    "Speech Processor Implants",
+    "Nuoptimal Nootropic Injector Implants",
+    "Smart Factories"
+  ];
+  ns.print("Checking initial upgrade levels...");
+  for (const upgrade of UPGRADE_LIST) {
+    // Level each upgrade twice
+    const DESIRED_LEVEL = 2;
+    for (let i = 0; i < DESIRED_LEVEL - ns.corporation.getUpgradeLevel(upgrade); i++) {
+      ns.corporation.levelUpgrade(upgrade);
+    }
+    ns.print(`${upgrade} is now level ${ns.corporation.getUpgradeLevel(upgrade)}`);
+  }
+  ns.print("Buying initial materials in each city");
+  // Buy materials
+  for (const city of CITY_LIST) {
+    while (ns.corporation.getMaterial(DIVISION, city, "Hardware")["qty"] < 125) {
+      ns.corporation.buyMaterial(DIVISION, city, "Hardware", 12.5);
+      ns.corporation.buyMaterial(DIVISION, city, "AI Cores", 7.5);
+      ns.corporation.buyMaterial(DIVISION, city, "Real Estate", 2.7);
+      /* What a Material looks like:
+      {"name":"Hardware","qty":1250,"qlt":0,"prod":0,"sell":0}
+      */
+      // Wait for a tick - can't use 10 seconds becaue bonus times breaks the timing
+      ns.print("Waiting for Hardware quantity to reach 125...");
+      await ns.sleep(50);
+      ns.print("Current hardware material: " + ns.corporation.getMaterial(DIVISION, city, "Hardware")["qty"]);
+    }
+    ns.print("Setting materials back down to 0 purchasing");
+    ns.corporation.buyMaterial(DIVISION, city, "Hardware", 0);
+    ns.corporation.buyMaterial(DIVISION, city, "AI Cores", 0);
+    ns.corporation.buyMaterial(DIVISION, city, "Real Estate", 0);
+    corp = ns.corporation.getCorporation();
+    ns.print(`* Current funds: $${numFormat(corp.funds)}`);
+    // Now wait for employee stats to improve
+    ns.print("Looking at Employee Happiness, Morale, and Energy");
+    let average_morale = calculateAverageEmployeeStat(ns, DIVISION, city, "Morale");
+    while (average_morale < 100.00) {
+      ns.print("Waiting for employee morale to improve. Currently: " + average_morale);
+      await ns.sleep(10000);
+      average_morale = calculateAverageEmployeeStat(ns, DIVISION, city, "Morale");
+    }
+  }
+  ns.print("Ready to move on...");
+}
+
+/**
+ * Calculate running average morale/happiness/energy of employees in an office
+ * @param {import("../.").NS} ns 
+ * @param {string} division Name of division
+ * @param {string} city Name of city
+ * @param {string} stat Should be "Morale", "Happiness", or "Energy"
+ * @returns True if I own both, otherwise False
+ */
+function calculateAverageEmployeeStat(ns, division, city, stat) {
+  // If we got a bad type, assume "Morale"
+  if (!["Morale", "Happiness", "Energy"].includes(stat)) stat = "Morale"
+  let office = ns.corporation.getOffice(division, city);
+  let average = 0;
+  for (const employee of office.employees) {
+    average += ns.corporation.getEmployee(division, city, employee).mor
+  }
+  return average / office.employees.length
+}
+
+/**
+ * Check if I own both Warehouse + Office APIs
+ * @param {import("../.").NS} ns 
+ * @returns True if I own both, otherwise False
+ */
+function checkForCorpAPIs(ns) {
+  return ns.corporation.hasUnlockUpgrade("Warehouse API") && ns.corporation.hasUnlockUpgrade("Office API")
 }
 
 /**
@@ -108,8 +278,8 @@ async function improveCorp(ns, division, city) {
  * @param {string} division The division we're building in
  * @param {string} city The city office we're assigning
  */
- async function assignEmployees(ns, employee_list, division, city) {
-  let batch_size = Math.floor(employee_list.length / 5); // use ints just in case we ever have a non-divisible-by-5 numeral
+async function assignEmployees(ns, employee_list, division, city, job_list = JOB_LIST) {
+  let batch_size = Math.floor(employee_list.length / job_list.length); // use ints just in case we ever have a non-divisible-by-5 numeral
   ns.print("Assigning " + batch_size + " jobs each to " + job_list.join(", "));
   for (const role of job_list) {
     await ns.corporation.setAutoJobAssignment(division, city, role, batch_size);
@@ -343,7 +513,7 @@ What a Product looks like:
   "developmentProgress": 100.09179492337837
 }
 
-What an office looks like:
+What an Office looks like:
 {
   "loc": "Aevum",
   "size": 390,
@@ -365,6 +535,15 @@ What an office looks like:
     "Research & Development": 68906.91757981491,
     "Training": 0
   }
+}
+
+What a Warehouse looks like:
+{
+  "level": 3,
+  "loc": "Aevum",
+  "size": 300,
+  "sizeUsed": 157.41848516400472,
+  "smartSupplyEnabled": true
 }
 
 */
