@@ -55,6 +55,8 @@ export function autocomplete(data, _) {
     return [];
 }
 
+let QUIET = false;
+
 /** @param {NS} ns **/
 export async function main(ns) {
     ownedSourceFiles = await getActiveSourceFiles(ns);
@@ -74,8 +76,10 @@ export async function main(ns) {
 /** @param {NS} ns 
  * One-time setup actions. **/
 async function initialize(ns) {
-    ns.disableLog('ALL');
     options = ns.flags(argsSchema);
+    QUIET = options.quiet;
+    // Don't print to terminal or otherwise make any toasts
+    if (QUIET) ns.disableLog("ALL")
     pctTraining = options['no-training'] ? 0 : options['training-percentage'];
 
     let loggedWaiting = false;
@@ -498,7 +502,7 @@ function calculateMoneyGains(myGangInfo, currentTask, memberInfo) {
 function log(ns, message, toastStyle, terminal = undefined) {
     ns.print(message);
     if (terminal === true || (terminal === undefined && toastStyle === 'error')) ns.tprint(message);
-    if (toastStyle) ns.toast(message, toastStyle);
+    if (toastStyle && !QUIET) ns.toast(message, toastStyle);
 }
 
 /** Helps us not get caught in cycles by reducing gang member crime tiers in a random order */
