@@ -144,6 +144,8 @@ async function setUpGame(ns) {
 async function isCheapestAugReasonable(ns, auglist) {
 	let sortable_augs = {};
 	for (const aug of auglist) {
+		// Skip augs I already own/have pending
+		if (ns.getOwnedAugmentations(true).includes(aug)) continue
 		sortable_augs[aug] = ns.getAugmentationPrice(aug);
 	}
 	let sorted_list = Object.fromEntries(
