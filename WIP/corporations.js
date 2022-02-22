@@ -172,7 +172,7 @@ export async function bootstrapCorp(ns) {
     while (ns.corporation.getMaterial(DIVISION, city, "Hardware")["qty"] < 125) {
       ns.corporation.buyMaterial(DIVISION, city, "Hardware", 12.5);
       ns.corporation.buyMaterial(DIVISION, city, "AI Cores", 7.5);
-      ns.corporation.buyMaterial(DIVISION, city, "Real Estate", 2.7);
+      ns.corporation.buyMaterial(DIVISION, city, "Real Estate", 2700);
       /* What a Material looks like:
       {"name":"Hardware","qty":1250,"qlt":0,"prod":0,"sell":0}
       */
