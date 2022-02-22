@@ -61,22 +61,23 @@ export async function createNetworkMap(ns) {
 		if (node == HOME) continue
 		// If we've grown the server completely, do a hacking script instead
 		if (
-			ns.ls(node, SERVER_GROWN_FILE) &&
+			(ns.getServerMoneyAvailable(node) == data[node].maxMoney) &&
 			(data[node]["hackLevel"] <= my_hack_level)
 		) script = BASICHACK
 		// If we have root access, check to see if the server is already running the process
 		// Or check to see if we have the process running on home targeting it
 		if (!data[node]["root"]) continue
-		let already_running = false;
+		let already_running_home = false;
+		let already_running_target = false;
 		if (lookForProcess(ns, node, script)) {
 			// ns.tprint(`${node} already running ${script}`);
-			already_running = true;
+			already_running_home = true;
 		}
 		if (lookForProcess(ns, HOME, script, [node])) {
 			// ns.tprint(`${node} already targeted by home with ${script}`);
-			already_running = true;
+			already_running_target = true;
 		}
-		if (!already_running) {
+		if (!(already_running_home || already_running_target)) {
 			// ns.tprint(`Attempting to run ${script} on ${node}`);
 			await ns.scp(script, node);
 			// Don't attempt to run the scripts on home if we're at 32GB or less,
