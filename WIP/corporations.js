@@ -112,7 +112,7 @@ export async function bootstrapCorp(ns) {
       ns.corporation.expandCity(DIVISION, city);
     }
     let office = ns.corporation.getOffice(DIVISION, city);
-    if (office.employees < 3) {
+    if (office.employees.length < 3) {
       ns.print("Hiring employees");
       for (let i = 1; i <= 3; i++) {
         // Hire 3 employees for each city
@@ -148,7 +148,7 @@ export async function bootstrapCorp(ns) {
     await ns.sleep(100);
   }
   /* TIME TO GROW */
-  ns.print("TIME TO GROW!");
+  ns.print("*** Time to grow!");
   // Now time to get some upgrades
   const UPGRADE_LIST = [
     "FocusWires",
@@ -196,7 +196,88 @@ export async function bootstrapCorp(ns) {
       average_morale = calculateAverageEmployeeStat(ns, DIVISION, city, "Morale");
     }
   }
-  ns.print("Ready to move on...");
+  /* TIME TO FIND INVESTORS */
+  ns.print("*** Time to find investors!");
+  let offer = ns.corporation.getInvestmentOffer();
+  ns.print(`Starting offer: $${numFormat(offer.funds)}`)
+  // For the first offer, we want at least $110b
+  while (offer.funds < 110000000000) {
+    ns.print(`Waiting 10 seconds for a better offer than $${numFormat(offer.funds)}`);
+    await ns.sleep(10000);
+    offer = ns.corporation.getInvestmentOffer();
+  }
+  ns.print(`Accepting investment offer for $${numFormat(offer.funds)}!`);
+  ns.corporation.acceptInvestmentOffer();
+  // Time to upgrade the corp again
+  const NEW_OFFICE_SIZE = 9;
+  for (const city of CITY_LIST) {
+    let employee_list = [];
+    let office = ns.corporation.getOffice(DIVISION, city);
+    // Expand to 9 employees each
+    if (office.size < NEW_OFFICE_SIZE) {
+      ns.print(`Adding ${NEW_OFFICE_SIZE - office.size} slots to ${city}`);
+      ns.corporation.upgradeOfficeSize(DIVISION, city, 6);
+    }
+    office = ns.corporation.getOffice(DIVISION, city);
+    while (office.employees.length < office.size) {
+      ns.print("Hiring employees");
+      for (let i = 0; i < (office.size - office.employees.length); i++) {
+        employee_list.push(ns.corporation.hireEmployee(DIVISION, city));
+      }
+      ns.print("Assigning jobs to employees");
+      // This is ugly. Please forgive me for my sins
+      await ns.corporation.setAutoJobAssignment(DIVISION, city, "Business", 1);
+      await ns.corporation.setAutoJobAssignment(DIVISION, city, "Engineer", 2);
+      await ns.corporation.setAutoJobAssignment(DIVISION, city, "Management", 2);
+      await ns.corporation.setAutoJobAssignment(DIVISION, city, "Operations", 2);
+      await ns.corporation.setAutoJobAssignment(DIVISION, city, "Research & Development", 2);
+      office = ns.corporation.getOffice(DIVISION, city);
+    }
+  }
+  corp = ns.corporation.getCorporation();
+  ns.print(`* Current funds: $${numFormat(corp.funds)}`);
+  // Upgrade Smart stuff to level 10 each
+  ns.print("Upgrading Smart Factories + Smart Storage");
+  for (const upgrade of ["Smart Factories", "Smart Storage"]) {
+    // Level each upgrade twice
+    const NEW_DESIRED_LEVEL = 10;
+    for (let i = 0; i < NEW_DESIRED_LEVEL - ns.corporation.getUpgradeLevel(upgrade); i++) {
+      ns.corporation.levelUpgrade(upgrade);
+    }
+    ns.print(`${upgrade} is now level ${ns.corporation.getUpgradeLevel(upgrade)}`);
+  }
+  for (const city of CITY_LIST) {
+    // Upgrade the warehouse to fit at least 2000
+    ns.print("Upgrading the warehouse to 2000");
+    while (ns.corporation.getWarehouse(DIVISION, city).size < 2000) {
+      ns.corporation.upgradeWarehouse(DIVISION, city);
+    }
+  }
+  // Buy more materials!
+  ns.print("Buying additional materials in each city");
+  for (const city of CITY_LIST) {
+    while (ns.corporation.getMaterial(DIVISION, city, "Hardware")["qty"] < 2800) {
+      ns.corporation.buyMaterial(DIVISION, city, "Hardware", 267.5);
+      ns.corporation.buyMaterial(DIVISION, city, "Robots", 9.6);
+      ns.corporation.buyMaterial(DIVISION, city, "AI Cores", 244.5);
+      ns.corporation.buyMaterial(DIVISION, city, "Real Estate", 11940);
+      // Wait for a tick - can't use 10 seconds becaue bonus times breaks the timing
+      ns.print("Waiting for Hardware quantity to reach 2800...");
+      await ns.sleep(50);
+      ns.print("Current hardware material: " + ns.corporation.getMaterial(DIVISION, city, "Hardware")["qty"]);
+    }
+    ns.print("Setting materials back down to 0 purchasing");
+    ns.corporation.buyMaterial(DIVISION, city, "Hardware", 0);
+    ns.corporation.buyMaterial(DIVISION, city, "Robots", 0);
+    ns.corporation.buyMaterial(DIVISION, city, "AI Cores", 0);
+    ns.corporation.buyMaterial(DIVISION, city, "Real Estate", 0);
+  }
+  corp = ns.corporation.getCorporation();
+  ns.print(`* Current funds: $${numFormat(corp.funds)}`);
+  // Find more investors!
+  ns.print("Waiting for 20 seconds for income to stabilize before finding investors...");
+  await ns.sleep(20000);
+  ns.print("*** GO FIND MORE INVESTORS!")
 }
 
 /**
@@ -280,11 +361,30 @@ async function improveCorp(ns, division, city) {
  * @param {string} city The city office we're assigning
  */
 async function assignEmployees(ns, employee_list, division, city, job_list = JOB_LIST) {
-  let batch_size = Math.floor(employee_list.length / job_list.length); // use ints just in case we ever have a non-divisible-by-5 numeral
+  let batch_size = Math.floor(employee_list.length / job_list.length);
+  let remainder = employee_list.length % job_list.length;
   ns.print("Assigning " + batch_size + " jobs each to " + job_list.join(", "));
+  // First, assign all common employees equally
   for (const role of job_list) {
     await ns.corporation.setAutoJobAssignment(division, city, role, batch_size);
   }
+  // TODO: Fix the logic for accommodating non-disible remainders
+  // // For the remainder, distribute equally into all jobs that are _not_ Business / R&D
+  // let biz_index = job_list.indexOf("Business");
+  // let job_list_no_biz = job_list;
+  // if (biz_index > -1) job_list_no_biz.splice(biz_index, 1);
+  // let rd_index = job_list.indexOf("Research & Development");
+  // let job_list_no_biz_no_rd = job_list_no_biz;
+  // if (rd_index > -1) job_list_no_biz_no_rd.splice(biz_index, 1);
+  // // Can we divide what's left evenly?
+  // batch_size = Math.floor(remainder / job_list_no_biz_no_rd.length);
+  // for (const role of job_list_no_biz_no_rd) {
+  //   await ns.corporation.setAutoJobAssignment(division, city, role, batch_size);
+  // }
+  // for (let i = 0; i < remainder; i++) {
+  //   // Always prefer R&D for anything else
+  //   await ns.corporation.assignJob()
+  // }
 }
 
 /**
