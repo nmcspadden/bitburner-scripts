@@ -77,7 +77,7 @@ function findBestBlackOp(ns) {
             done: ns.bladeburner.getActionCountRemaining("blackop", blackop) // 0 if we've done it, 1 if we haven't
         };
     }).filter(op => op.done == 1)
-    .reduce((a, b) => (a.rank < b.rank ? a : b));
+        .reduce((a, b) => (a.rank < b.rank ? a : b));
     // blackOp looks like this: 
     // [{"type":"blackop","name":"Operation Typhoon","chance":[1,1],"rank":2500, "done": 1}
     // If the chance is 100%, and we have the rank to do it, and we haven't already done it, return it
@@ -95,10 +95,32 @@ function findBestBlackOp(ns) {
  * @param {string} type Type of action
  * @param {string} name Name of action
  * @param {import(".").NS} ns
- * @returns Estimated success chance of action
+ * @returns Estimated success chance of action [low, high]
  */
 const getChance = (type, name, ns) =>
     ns.bladeburner.getActionEstimatedSuccessChance(type, name);
+
+/**
+ * Get the average chance to perform an action
+ * @param {string} type Type of action
+ * @param {string} name Name of action
+ * @param {import(".").NS} ns
+ * @returns Estimated success chance of action
+ */
+ function calculateChance(type, name, ns) {
+    const [low, high] = getChance(type, name, ns);
+    return (low + high) / 2
+}
+
+/**
+ * Determine the spread between the low and high chance
+ * @param {number} low Low percent chance of an action
+ * @param {number} high Highest percent chance of an action
+ * @returns int representing how much higher % High is than Low
+ */
+ function determineChanceSpread(low, high) {
+    return low-high === 0 ? 0 : 100 * Math.abs( ( low - high ) / high  )
+}
 
 /**
  * Do a Contract, Operation, or BlackOp
@@ -117,7 +139,7 @@ function workContractOrOp(ns) {
             return {
                 type: "contract",
                 name: contract,
-                chance: getChance("contract", contract, ns)
+                chance: calculateChance("contract", contract, ns)
             };
         })
         .reduce((a, b) => (a.chance > b.chance ? a : b));
@@ -127,7 +149,7 @@ function workContractOrOp(ns) {
             return {
                 type: "operation",
                 name: operation,
-                chance: getChance("operation", operation, ns)
+                chance: calculateChance("operation", operation, ns)
             };
         })
         .reduce((a, b) => (a.chance > b.chance ? a : b));
@@ -138,11 +160,17 @@ function workContractOrOp(ns) {
         ns.bladeburner.startAction(bestBlackOp.type, bestBlackOp.name);
         return ns.bladeburner.getActionTime(bestBlackOp.type, bestBlackOp.name);
     }
-
-    if (bestOp.chance >= bestContract.chance) {
+    // Don't do an op if the chance is under 90%;
+    const SUCCESS_THRESHOLD = 0.9;
+    if ((bestOp.chance >= bestContract.chance) && (bestOp.chance >= SUCCESS_THRESHOLD)) {
         output(ns, TERMINAL, `Beginning operation ${bestOp.name}`);
         ns.bladeburner.startAction(bestOp.type, bestOp.name);
         return ns.bladeburner.getActionTime(bestOp.type, bestOp.name);
+    }
+    // If our best chance is less than 90%, do training / field analysis instead
+    if (bestContract.chance < SUCCESS_THRESHOLD) {
+        ns.print(`Best possible action is under ${SUCCESS_THRESHOLD * 100}% at ${ns.nFormat(bestContract.chance, '0.0%')}, resting instead`);
+        return rest(ns);
     }
     output(ns, TERMINAL, `Beginning contract ${bestContract.name}`);
     ns.bladeburner.startAction(bestContract.type, bestContract.name);
