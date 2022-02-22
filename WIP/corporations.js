@@ -76,8 +76,7 @@ export async function bootstrapCorp(ns) {
   ns.tail();
   const FIRST_INDUSTRY = "Agriculture";
   const DIVISION = "Rich Table";
-  let player = ns.getPlayer();
-  if (player.funds < 150000000000) {
+  if (ns.getPlayer().money < 150e9) {
     ns.print("Not enough funds to start a corporation. You need $150b.");
     ns.exit();
   }
