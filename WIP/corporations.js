@@ -24,9 +24,17 @@ const CITY_LIST = [
 
 /** @param {import("../.").NS} ns **/
 export async function main(ns) {
+  let player = ns.getPlayer();
+  if (!player.hasCorporation) {
+    if (player.money > 150e9) { 
+      await bootstrapCorp(ns);
+    } else {
+      ns.exit();
+    }
+  }
   ns.disableLog("ALL");
   ns.tail();
-  if (!ns.getPlayer().hasCorporation) bootstrapCorp(ns)
+
   ns.print("***Starting out Corporation management");
   let corp = ns.corporation.getCorporation();
   // In my corp right now, this is the second item in the array
