@@ -68,7 +68,7 @@ export async function main(ns) {
     }
     product_names = ns.corporation.getDivision(division_tobacco).products;
     // Now actual corp development:
-    ns.print("Making improvements to Aevum");
+    ns.print("Evaluating potential improvements to Aevum");
     await improveCorp(ns, division_tobacco, "Aevum");
     ns.print("Sleeping for 5 seconds");
     await ns.sleep(5000); // sleep for 5 seconds  
@@ -396,10 +396,10 @@ async function improveCorp(ns, division, city) {
   const EXPANSION_SIZE = 15;
   let advert_cost = ns.corporation.getHireAdVertCost(division);
   let aevum_exp_cost = ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE);
-  if (advert_cost < aevum_exp_cost) {
+  if ((advert_cost < aevum_exp_cost) && advert_cost < ns.corporation.getCorporation().funds) {
     ns.print(`Hiring AdVert for ${numFormat(advert_cost)}`);
     ns.corporation.hireAdVert(division);
-  } else {
+  } else if (ns.corporation.getCorporation().funds > ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE)){
     ns.print("Expanding office size by " + EXPANSION_SIZE);
     ns.corporation.upgradeOfficeSize(division, city, EXPANSION_SIZE);
     ns.print(`Hiring employees for ${city} office`);
