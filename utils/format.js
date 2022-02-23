@@ -6,7 +6,7 @@
  * @param {NS} ns
  * @param {Number} time
  * @param {Boolean} msAcc
- * @return {String} a shortened ns.tFormat();
+ * @returns {String} a shortened ns.tFormat();
  */
  export function timeFormat(ns, time, msAcc) {
     return ns.tFormat(time, msAcc)
@@ -27,7 +27,7 @@
 /**
  * Format a given number into an exponent.
  * @param {Number} num
- * @return {String} the number represented in exponents.
+ * @returns {String} the number represented in exponents.
  */
 export function exponentFormat(num) {
     let exp = Math.floor(Math.log10(num));
@@ -39,13 +39,18 @@ export function exponentFormat(num) {
  * Kind of like ns.nFormat, but better.
  * @param {Number} num
  * @param {String?} type 'game' or 'SI' suffix style (Default: 'game')
- * @return {String} formatted number.
+ * @returns {String} formatted number.
  */
 export function numFormat(num, type = 'game') {
     const GAME_SUFFIX = ['', 'k', 'm', 'b', 't', 'q', 'Q', 's', 'S', 'o', 'n'];
     const SI_SUFFIX = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
     let suffix;
 
+    let negative;
+    if (num < 0) {
+        negative = true;
+        num = Math.abs(num);
+    }
     // pick the correct suffix array.
     if (type.toLowerCase() == 'game') {
         suffix = GAME_SUFFIX;
@@ -67,6 +72,8 @@ export function numFormat(num, type = 'game') {
     // Get the right base.
     let base = num / 10 ** (exp - exp % 3);
 
+    let return_val = Math.round(base * 1e3) / 1e3 + suffix[Math.floor(exp / 3)];
     // Return it with the right suffix.
-    return Math.round(base * 1e3) / 1e3 + suffix[Math.floor(exp / 3)];
+    if (negative) return "-" + return_val
+    return return_val;
 }
