@@ -22,6 +22,7 @@ import { hasStockAccess } from "stocks";
 /* TODOs:
 - Add income calculation to determine whether waiting for an aug is worthwhile or not
 - Add Sleeve support 
+- Add --wait options for all scripts to daemonize them so they can sit there waiting
 */
 
 export const MID_LOG = "midgameplan.log.txt";

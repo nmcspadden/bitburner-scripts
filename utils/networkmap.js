@@ -60,6 +60,7 @@ export async function createNetworkMap(ns) {
 		// skip home, and don't try to hack servers we haven't rooted
 		if (node == HOME) continue
 		// If we've grown the server completely, do a hacking script instead
+		// TODO: Don't bother on servers with low money (darkweb)
 		if (
 			(ns.getServerMoneyAvailable(node) == data[node].maxMoney) &&
 			(data[node]["hackLevel"] <= my_hack_level)
