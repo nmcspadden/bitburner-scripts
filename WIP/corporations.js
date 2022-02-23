@@ -26,7 +26,7 @@ const CITY_LIST = [
 export async function main(ns) {
   let player = ns.getPlayer();
   if (!player.hasCorporation) {
-    if (player.money > 150e9) { 
+    if (player.money > 150e9) {
       await bootstrapCorp(ns);
     } else {
       ns.exit();
@@ -84,7 +84,7 @@ export async function bootstrapCorp(ns) {
   ns.tail();
   const FIRST_INDUSTRY = "Agriculture";
   const DIVISION = "Rich Table";
-  if (ns.getPlayer().money < 150e9) {
+  if (!ns.getPlayer().hasCorporation && ns.getPlayer().money < 150e9) {
     ns.print("Not enough funds to start a corporation. You need $150b.");
     ns.exit();
   }
@@ -106,9 +106,12 @@ export async function bootstrapCorp(ns) {
   // Possible safe ways to check for Office / Warehouse APIs?
   /* BEGINNING PHASE */
   corp = ns.corporation.getCorporation();
-  // Turn on smart supply for starting city
-  ns.print("Enabling Smart Supply for " + DIVISION + " in " + corp.divisions[0].cities[0]);
-  ns.corporation.setSmartSupply(DIVISION, corp.divisions[0].cities[0], true);
+  let warehouse = ns.corporation.getWarehouse(DIVISION, corp.divisions[0].cities[0]);
+  if (!warehouse.smartSupplyEnabled) {
+    // Turn on smart supply for starting city
+    ns.print("Enabling Smart Supply for " + DIVISION + " in " + corp.divisions[0].cities[0]);
+    ns.corporation.setSmartSupply(DIVISION, corp.divisions[0].cities[0], true);
+  }
   // Now expand offices to other cities
   ns.print("Starting expansion of other cities");
   for (const city of CITY_LIST) {
@@ -120,12 +123,12 @@ export async function bootstrapCorp(ns) {
     }
     let office = ns.corporation.getOffice(DIVISION, city);
     if (office.employees.length < 3) {
-      ns.print("Hiring employees");
+      ns.print(`${city}: Hiring employees`);
       for (let i = 1; i <= 3; i++) {
         // Hire 3 employees for each city
         employee_list.push(ns.corporation.hireEmployee(DIVISION, city));
       }
-      ns.print("Assigning jobs to employees");
+      ns.print(`${city}: Assigning jobs to employees`);
       await assignEmployees(ns, employee_list, DIVISION, city, ["Operations", "Engineer", "Business"]);
     }
     if (ns.corporation.getHireAdVertCount(DIVISION) < 1) {
@@ -135,18 +138,21 @@ export async function bootstrapCorp(ns) {
     }
     // Buy a warehouse if we don't have one
     if (!ns.corporation.hasWarehouse(DIVISION, city)) {
-      ns.print("Buying Warehouse");
+      ns.print(`${city}: Buying Warehouse`);
       ns.corporation.purchaseWarehouse(DIVISION, city);
     }
-    ns.print("Enabling Smart Supply for " + DIVISION + " in " + corp.divisions[0].cities[0]);
-    ns.corporation.setSmartSupply(DIVISION, city, true);
+    warehouse = ns.corporation.getWarehouse(DIVISION, city);
+    if (!warehouse.smartSupplyEnabled) {
+      ns.print(`${city}: Enabling Smart Supply`);
+      ns.corporation.setSmartSupply(DIVISION, city, true);
+    }
     // Upgrade the warehouse to fit at least 300
-    ns.print("Upgrading the warehouse to 300");
+    ns.print(`${city}: Ensuring the warehouse size is 300`);
     while (ns.corporation.getWarehouse(DIVISION, city).size < 300) {
       ns.corporation.upgradeWarehouse(DIVISION, city);
     }
     // Now start selling Plants + Food
-    ns.print("Setting sale prices for materials Plants + Food");
+    ns.print(`${city}: Setting sale prices for materials Plants + Food`);
     ns.corporation.sellMaterial(DIVISION, city, "Plants", "MAX", "MP");
     ns.corporation.sellMaterial(DIVISION, city, "Food", "MAX", "MP");
     // Loop!
@@ -166,16 +172,20 @@ export async function bootstrapCorp(ns) {
   ];
   ns.print("Checking initial upgrade levels...");
   for (const upgrade of UPGRADE_LIST) {
+    let did_upgrade = false;
     // Level each upgrade twice
     const DESIRED_LEVEL = 2;
     for (let i = 0; i < DESIRED_LEVEL - ns.corporation.getUpgradeLevel(upgrade); i++) {
       ns.corporation.levelUpgrade(upgrade);
+      did_upgrade = true;
     }
-    ns.print(`${upgrade} is now level ${ns.corporation.getUpgradeLevel(upgrade)}`);
+    if (did_upgrade) ns.print(`${upgrade} is now level ${ns.corporation.getUpgradeLevel(upgrade)}`);
   }
   ns.print("Buying initial materials in each city");
   // Buy materials
   for (const city of CITY_LIST) {
+    // For idempotency
+    if (ns.corporation.getMaterial(DIVISION, city, "Hardware")["qty"] >= 125) break;
     while (ns.corporation.getMaterial(DIVISION, city, "Hardware")["qty"] < 125) {
       ns.corporation.buyMaterial(DIVISION, city, "Hardware", 12.5);
       ns.corporation.buyMaterial(DIVISION, city, "AI Cores", 7.5);
@@ -203,88 +213,134 @@ export async function bootstrapCorp(ns) {
       average_morale = calculateAverageEmployeeStat(ns, DIVISION, city, "Morale");
     }
   }
-  /* TIME TO FIND INVESTORS */
-  ns.print("*** Time to find investors!");
+  /* TIME TO FIND FIRST INVESTORS */
   let offer = ns.corporation.getInvestmentOffer();
-  ns.print(`Starting offer: $${numFormat(offer.funds)}`)
-  // For the first offer, we want at least $110b
-  while (offer.funds < 110000000000) {
-    ns.print(`Waiting 10 seconds for a better offer than $${numFormat(offer.funds)}`);
-    await ns.sleep(10000);
-    offer = ns.corporation.getInvestmentOffer();
-  }
-  ns.print(`Accepting investment offer for $${numFormat(offer.funds)}!`);
-  ns.corporation.acceptInvestmentOffer();
-  // Time to upgrade the corp again
-  const NEW_OFFICE_SIZE = 9;
-  for (const city of CITY_LIST) {
-    let employee_list = [];
-    let office = ns.corporation.getOffice(DIVISION, city);
-    // Expand to 9 employees each
-    if (office.size < NEW_OFFICE_SIZE) {
-      ns.print(`Adding ${NEW_OFFICE_SIZE - office.size} slots to ${city}`);
-      ns.corporation.upgradeOfficeSize(DIVISION, city, 6);
+  if (offer.round == 1) {
+    ns.print("*** Time to find investors!")
+    ns.print(`Starting offer: $${numFormat(offer.funds)}`)
+    // For the first offer, we want at least $110b
+    while (offer.funds < 109.5e9) {
+      ns.print(`Waiting 10 seconds for a better offer than $${numFormat(offer.funds)}`);
+      await ns.sleep(10000);
+      offer = ns.corporation.getInvestmentOffer();
     }
-    office = ns.corporation.getOffice(DIVISION, city);
-    while (office.employees.length < office.size) {
-      ns.print("Hiring employees");
-      for (let i = 0; i < (office.size - office.employees.length); i++) {
-        employee_list.push(ns.corporation.hireEmployee(DIVISION, city));
+    ns.print(`Accepting investment offer for $${numFormat(offer.funds)}!`);
+    ns.corporation.acceptInvestmentOffer();
+    // Time to upgrade the corp again
+    const NEW_OFFICE_SIZE = 9;
+    for (const city of CITY_LIST) {
+      let employee_list = [];
+      let office = ns.corporation.getOffice(DIVISION, city);
+      // Expand to 9 employees each
+      if (office.size < NEW_OFFICE_SIZE) {
+        ns.print(`Adding ${NEW_OFFICE_SIZE - office.size} slots to ${city}`);
+        ns.corporation.upgradeOfficeSize(DIVISION, city, 6);
       }
-      ns.print("Assigning jobs to employees");
-      // This is ugly. Please forgive me for my sins
-      await ns.corporation.setAutoJobAssignment(DIVISION, city, "Business", 1);
-      await ns.corporation.setAutoJobAssignment(DIVISION, city, "Engineer", 2);
-      await ns.corporation.setAutoJobAssignment(DIVISION, city, "Management", 2);
-      await ns.corporation.setAutoJobAssignment(DIVISION, city, "Operations", 2);
-      await ns.corporation.setAutoJobAssignment(DIVISION, city, "Research & Development", 2);
       office = ns.corporation.getOffice(DIVISION, city);
+      while (office.employees.length < office.size) {
+        ns.print("Hiring employees");
+        for (let i = 0; i < (office.size - office.employees.length); i++) {
+          employee_list.push(ns.corporation.hireEmployee(DIVISION, city));
+        }
+        ns.print("Assigning jobs to employees");
+        // This is ugly. Please forgive me for my sins
+        await ns.corporation.setAutoJobAssignment(DIVISION, city, "Business", 1);
+        await ns.corporation.setAutoJobAssignment(DIVISION, city, "Engineer", 2);
+        await ns.corporation.setAutoJobAssignment(DIVISION, city, "Management", 2);
+        await ns.corporation.setAutoJobAssignment(DIVISION, city, "Operations", 2);
+        await ns.corporation.setAutoJobAssignment(DIVISION, city, "Research & Development", 2);
+        office = ns.corporation.getOffice(DIVISION, city);
+      }
+    }
+    corp = ns.corporation.getCorporation();
+    ns.print(`* Current funds: $${numFormat(corp.funds)}`);
+    // Upgrade Smart stuff to level 10 each
+    ns.print("Upgrading Smart Factories + Smart Storage");
+    for (const upgrade of ["Smart Factories", "Smart Storage"]) {
+      let did_upgrade = false;
+      // Level each upgrade twice
+      const NEW_DESIRED_LEVEL = 10;
+      for (let i = 0; i < NEW_DESIRED_LEVEL - ns.corporation.getUpgradeLevel(upgrade); i++) {
+        ns.corporation.levelUpgrade(upgrade);
+        did_upgrade = true;
+      }
+      if (did_upgrade) ns.print(`${upgrade} is now level ${ns.corporation.getUpgradeLevel(upgrade)}`);
+    }
+    for (const city of CITY_LIST) {
+      // Upgrade the warehouse to fit at least 2000
+      ns.print("Upgrading the warehouse to 2000");
+      while (ns.corporation.getWarehouse(DIVISION, city).size < 2000) {
+        ns.corporation.upgradeWarehouse(DIVISION, city);
+      }
+    }
+    corp = ns.corporation.getCorporation();
+    ns.print(`* Current funds: $${numFormat(corp.funds)}`);
+    // Buy more materials!
+    ns.print("Buying additional materials in each city");
+    for (const city of CITY_LIST) {
+      while (ns.corporation.getMaterial(DIVISION, city, "Hardware")["qty"] < 2800) {
+        ns.corporation.buyMaterial(DIVISION, city, "Hardware", 267.5);
+        ns.corporation.buyMaterial(DIVISION, city, "Robots", 9.6);
+        ns.corporation.buyMaterial(DIVISION, city, "AI Cores", 244.5);
+        ns.corporation.buyMaterial(DIVISION, city, "Real Estate", 11940);
+        // Wait for a tick - can't use 10 seconds becaue bonus times breaks the timing
+        ns.print("Waiting for Hardware quantity to reach 2800...");
+        await ns.sleep(50);
+        ns.print("Current hardware material: " + ns.corporation.getMaterial(DIVISION, city, "Hardware")["qty"]);
+      }
+      ns.print("Setting materials back down to 0 purchasing");
+      ns.corporation.buyMaterial(DIVISION, city, "Hardware", 0);
+      ns.corporation.buyMaterial(DIVISION, city, "Robots", 0);
+      ns.corporation.buyMaterial(DIVISION, city, "AI Cores", 0);
+      ns.corporation.buyMaterial(DIVISION, city, "Real Estate", 0);
+    }
+    corp = ns.corporation.getCorporation();
+    ns.print(`* Current funds: $${numFormat(corp.funds)}`);
+    // Find more investors!
+    ns.print("Waiting for 20 seconds for income to stabilize before finding investors...");
+    await ns.sleep(20000);
+  }
+  /* SECOND ROUND OF INVESTING */
+  offer = ns.corporation.getInvestmentOffer();
+  if (offer.round == 2) {
+    ns.print("*** GO FIND MORE INVESTORS!")
+    ns.print(`Round ${offer.round} offer: $${numFormat(offer.funds)}`)
+    // For the second offer, we want around $2.195t
+    while (offer.funds < 2.195e12) {
+      ns.print(`Waiting 10 seconds for a better offer than $${numFormat(offer.funds)}`);
+      await ns.sleep(10000);
+      offer = ns.corporation.getInvestmentOffer();
+    }
+    ns.print(`Accepting investment offer for $${numFormat(offer.funds)}!`);
+    ns.corporation.acceptInvestmentOffer();
+    for (const city of CITY_LIST) {
+      // Upgrade the warehouse to fit at least 3800
+      ns.print("Upgrading the warehouse to 3800");
+      while (ns.corporation.getWarehouse(DIVISION, city).size < 3800) {
+        ns.corporation.upgradeWarehouse(DIVISION, city);
+      }
+    }
+    // Buy more materials!
+    ns.print("Buying additional materials in each city");
+    for (const city of CITY_LIST) {
+      while (ns.corporation.getMaterial(DIVISION, city, "Hardware")["qty"] < 9300) {
+        ns.corporation.buyMaterial(DIVISION, city, "Hardware", 650);
+        ns.corporation.buyMaterial(DIVISION, city, "Robots", 63);
+        ns.corporation.buyMaterial(DIVISION, city, "AI Cores", 375);
+        ns.corporation.buyMaterial(DIVISION, city, "Real Estate", 8400);
+        // Wait for a tick - can't use 10 seconds becaue bonus times breaks the timing
+        ns.print("Waiting for Hardware quantity to reach 9300...");
+        await ns.sleep(50);
+        ns.print("Current hardware material: " + ns.corporation.getMaterial(DIVISION, city, "Hardware")["qty"]);
+      }
+      ns.print("Setting materials back down to 0 purchasing");
+      ns.corporation.buyMaterial(DIVISION, city, "Hardware", 0);
+      ns.corporation.buyMaterial(DIVISION, city, "Robots", 0);
+      ns.corporation.buyMaterial(DIVISION, city, "AI Cores", 0);
+      ns.corporation.buyMaterial(DIVISION, city, "Real Estate", 0);
     }
   }
-  corp = ns.corporation.getCorporation();
-  ns.print(`* Current funds: $${numFormat(corp.funds)}`);
-  // Upgrade Smart stuff to level 10 each
-  ns.print("Upgrading Smart Factories + Smart Storage");
-  for (const upgrade of ["Smart Factories", "Smart Storage"]) {
-    // Level each upgrade twice
-    const NEW_DESIRED_LEVEL = 10;
-    for (let i = 0; i < NEW_DESIRED_LEVEL - ns.corporation.getUpgradeLevel(upgrade); i++) {
-      ns.corporation.levelUpgrade(upgrade);
-    }
-    ns.print(`${upgrade} is now level ${ns.corporation.getUpgradeLevel(upgrade)}`);
-  }
-  for (const city of CITY_LIST) {
-    // Upgrade the warehouse to fit at least 2000
-    ns.print("Upgrading the warehouse to 2000");
-    while (ns.corporation.getWarehouse(DIVISION, city).size < 2000) {
-      ns.corporation.upgradeWarehouse(DIVISION, city);
-    }
-  }
-  // Buy more materials!
-  ns.print("Buying additional materials in each city");
-  for (const city of CITY_LIST) {
-    while (ns.corporation.getMaterial(DIVISION, city, "Hardware")["qty"] < 2800) {
-      ns.corporation.buyMaterial(DIVISION, city, "Hardware", 267.5);
-      ns.corporation.buyMaterial(DIVISION, city, "Robots", 9.6);
-      ns.corporation.buyMaterial(DIVISION, city, "AI Cores", 244.5);
-      ns.corporation.buyMaterial(DIVISION, city, "Real Estate", 11940);
-      // Wait for a tick - can't use 10 seconds becaue bonus times breaks the timing
-      ns.print("Waiting for Hardware quantity to reach 2800...");
-      await ns.sleep(50);
-      ns.print("Current hardware material: " + ns.corporation.getMaterial(DIVISION, city, "Hardware")["qty"]);
-    }
-    ns.print("Setting materials back down to 0 purchasing");
-    ns.corporation.buyMaterial(DIVISION, city, "Hardware", 0);
-    ns.corporation.buyMaterial(DIVISION, city, "Robots", 0);
-    ns.corporation.buyMaterial(DIVISION, city, "AI Cores", 0);
-    ns.corporation.buyMaterial(DIVISION, city, "Real Estate", 0);
-  }
-  corp = ns.corporation.getCorporation();
-  ns.print(`* Current funds: $${numFormat(corp.funds)}`);
-  // Find more investors!
-  ns.print("Waiting for 20 seconds for income to stabilize before finding investors...");
-  await ns.sleep(20000);
-  ns.print("*** GO FIND MORE INVESTORS!")
+  ns.print("*** TIME TO CREATE PRODUCTS!");
 }
 
 /**
