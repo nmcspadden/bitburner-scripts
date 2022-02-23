@@ -1,7 +1,7 @@
 // This code is largely stolen from someone else
 // https://github.com/kw5918448/bitburner_scripts/blob/main/lateGame/autoStocks.js
 
-/** @param {NS} ns **/
+/** @param {import(".").NS} ns **/
 export async function main(ns) {
 	//*********PARAMS FOR SCRIPT ************//
 	var maxSharePer = 0.45                  // maximum percent of a symbol's total stock to buy
@@ -13,10 +13,21 @@ export async function main(ns) {
 	var profPer = 0.05                //       min profit percentage to sell
 	var panicPer = 0.15              //        percentage loss to panic sell at
 	//******************************//
+
+	// Can we buy our Stock access now? Requires $36.2b for all things, add some extra fudge
+	let player = ns.getPlayer();
+	if (!hasStockAccess(ns)) {
+		if (player.money >= 32.3e9) {
+			ns.tprint("You need to purchase all the relevant Stock APIs manually, you have enough money.");
+		}
+		ns.exit();
+	}
+
 	while (true) {
 		ns.disableLog('disableLog');
 		ns.disableLog('sleep');
 		ns.disableLog('getServerMoneyAvailable')
+
 		var stocks = ns.stock.getSymbols();
 		for (const stock of stocks) {
 			var position = ns.stock.getPosition(stock)
@@ -58,4 +69,9 @@ export async function main(ns) {
 		}
 	}
 
+}
+
+export function hasStockAccess(ns) {
+	let player = ns.getPlayer();
+	return (player.hasWseAccount && player.has4SData && player.has4SDataTixApi && player.hasTixApiAccess)
 }
