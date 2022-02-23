@@ -180,7 +180,7 @@ async function isCheapestAugReasonable(ns, auglist) {
 	ns.print("Cheapest aug " + cheapest_aug + " costs " + ns.nFormat(sorted_list[cheapest_aug], '$0.00a'));
 	// If the cheapest aug is > 1 trillion, it's probably time to reset
 	// Except Q-Link, that shit's 25t to start with
-	if ((cheapest_aug != "QLink") && (sorted_list[cheapest_aug] >= 1000000000000)) {
+	if ((cheapest_aug != "QLink") && (sorted_list[cheapest_aug] >= 1000000000000) && (ns.getServerMoneyAvailable(HOME) < sorted_list[cheapest_aug])) {
 		ns.print("The cheapest aug costs more than $1t, and isn't QLink. You should reset.");
 		let should_reset = await ns.prompt("Install augmentations and reset?");
 		if (should_reset) ns.installAugmentations('starter.js');
