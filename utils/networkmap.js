@@ -62,6 +62,7 @@ export async function createNetworkMap(ns) {
 		// If we've grown the server completely, do a hacking script instead
 		// TODO: Don't bother on servers with low money (darkweb)
 		if (
+			(ns.getServerMoneyAvailable(node) > 0) && 
 			(ns.getServerMoneyAvailable(node) == data[node].maxMoney) &&
 			(data[node]["hackLevel"] <= my_hack_level)
 		) {
