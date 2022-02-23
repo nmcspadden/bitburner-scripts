@@ -19,6 +19,11 @@ import { hasStockAccess } from "stocks";
  * Loop back until no more augs to buy
  */
 
+/* TODOs:
+- Add income calculation to determine whether waiting for an aug is worthwhile or not
+- Add Sleeve support 
+*/
+
 export const MID_LOG = "midgameplan.log.txt";
 const TheRedPill = "The Red Pill";
 
@@ -29,7 +34,7 @@ export async function main(ns) {
 	ns.disableLog("ALL"); // Disable the log
 	ns.tail(); // Open a window to view the status of the script
 
-	if (!ns.getOwnedAugmentations().includes(TheRedPill)) {
+	if (!endGameTrigger(ns)) {
 		let aug_map = await setUpGame(ns);
 		await buyAugmentLoop(ns, aug_map);
 	}
@@ -56,7 +61,7 @@ async function buyAugmentLoop(ns, aug_map) {
 	let purchased_augs = 0;
 	await outputLog(ns, MID_LOG, `There are ${original_aug_length} augs to purchase`);
 	// We move to Endgame when there are no more augs left to buy, or we hit hacking 2500
-	while (augs_to_buy.length > 0 && ns.getPlayer().hacking <= 2500) {
+	while (augs_to_buy.length > 0 || endGameTrigger(ns)) {
 		// Join Section-12 faction if it's waiting
 		await outputLog(ns, MID_LOG, "Joining pending factions");
 		joinFactions(ns);
@@ -95,7 +100,7 @@ async function buyAugmentLoop(ns, aug_map) {
 		ns.exec("utils/networkmap.js", HOME);
 		// Run contract solver
 		await outputLog(ns, MID_LOG, "Checking for contracts...");
-		ns.exec('contractSolver.js', HOME, 1, "--quiet");
+		ns.exec("contractSolver.js", HOME, 1, "--quiet");
 		// Sleep for 30 seconds
 		ns.print("Sleeping for 30 seconds");
 		await ns.sleep(30000);
@@ -143,6 +148,11 @@ async function setUpGame(ns) {
 	if (!lookForProcess(ns, HOME, "corporations.js")) {
 		await outputLog(ns, MID_LOG, "Starting Corporations script...")
 		ns.exec("WIP/corporations.js", HOME);
+	}
+	// Stonks?
+	if (!lookForProcess(ns, HOME, "stocks.js") && hasStockAccess(ns)) {
+		await outputLog(ns, MID_LOG, "Running Stocks script");
+		ns.exec("stocks.js", HOME);
 	}
 	return aug_map
 }
