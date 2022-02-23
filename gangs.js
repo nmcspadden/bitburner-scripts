@@ -48,6 +48,7 @@ const argsSchema = [
     ['ascend-multi-threshold-spacing', 0.05], // Members will space their acention multis by this amount to ensure they are ascending at different rates 
     // Note: given the above two defaults, members would ascend at multis [1.6, 1.55, 1.50, ..., 1.1, 1.05] once you have 12 members.
     ['min-training-ticks', 20], // Require this many ticks of training after ascending or recruiting
+    ["quiet", false] // Don't make toasts
 ];
 
 export function autocomplete(data, _) {
