@@ -62,7 +62,7 @@ async function buyAugmentLoop(ns, aug_map) {
 	let purchased_augs = 0;
 	await outputLog(ns, MID_LOG, `There are ${original_aug_length} augs to purchase`);
 	// We move to Endgame when there are no more augs left to buy, or we hit hacking 2500
-	while (augs_to_buy.length > 0 || endGameTrigger(ns)) {
+	while (augs_to_buy.length > 0 || !endGameTrigger(ns)) {
 		// Join Section-12 faction if it's waiting
 		await outputLog(ns, MID_LOG, "Joining pending factions");
 		joinFactions(ns);
