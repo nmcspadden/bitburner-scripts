@@ -63,7 +63,11 @@ export async function createNetworkMap(ns) {
 		if (
 			(ns.getServerMoneyAvailable(node) == data[node].maxMoney) &&
 			(data[node]["hackLevel"] <= my_hack_level)
-		) script = BASICHACK
+		) {
+			// Kill servergrower if we're switching to basicHack
+			ns.kill(SERVERGROWER, node);
+			script = BASICHACK;
+		}
 		// If we have root access, check to see if the server is already running the process
 		// Or check to see if we have the process running on home targeting it
 		if (!data[node]["root"]) continue
