@@ -7,6 +7,8 @@
 // Parameter affectStocks: "H","G", or "GH", to let grows and/or hacks affect stocks. (Default: "")
 // Parameter simulate: If true, don't run scripts; print the expected results instead. (Default: false)
 
+import { isProcessRunning, findMatchingProcess } from "utils/script_tools";
+
 export function autocomplete(data, args) {
     return [...data.servers];
 }
@@ -312,7 +314,8 @@ export async function main(ns) {
             if (ns.getHostname() == src) {
                 ns.tprint(`FAIL: [${src}]Recalc is telling us to killall, but we're hacking from the dispatcher.`);
             }
-            ns.killall(src);
+            // ns.killall(src);
+            killMyself(ns, src);
             [threads, runTimes, profit] = calcThreads(ns, tgt, pct);
             recalc = false;
         }
@@ -365,4 +368,20 @@ export function timeFormat(ns, time, msAcc) {
 
         .replaceAll(",", "")
         .replaceAll(" ", "");
+}
+
+/**
+ * Kill all hyperbatcher-related scripts specifically
+ * @param {import("../.").NS} ns 
+ * @param {string} host Host to target for script nuking
+ */
+function killMyself(ns, host) {
+    let hack = findMatchingProcess(ns, host, "hack.js", "*");
+    ns.kill(hack.pid, host);
+    let grow = findMatchingProcess(ns, host, "grow.js", "*");
+    ns.kill(grow.pid, host);
+    let weaken = findMatchingProcess(ns, host, "weaken.js", "*");
+    ns.kill(weaken.pid, host);
+    // let hyperbatcher = findMatchingProcess(ns, host, "hack.js", "*");
+    // ns.kill(hyperbatcher.pid, host);
 }

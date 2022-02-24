@@ -56,6 +56,25 @@ export function isProcessRunning(ns, host, script, args = []) {
 	return process_list.some(proc => (proc["filename"].includes(script) && compareArrays(args, process["args"])))
 }
 
+/** Find a matching script on any host's process list
+ * @param {NS} ns 
+ * @param {string} host Name of server to execute on
+ * @param {string} script Name of script to search for
+ * @param {array} args List of args to also validate; if the only value of this is "*" then match any args
+ * @returns {Process} An object matching the process that was matched
+*/
+export function findMatchingProcess(ns, host, script, args = []) {
+	/* Example ns.ps() output:
+	[
+		{"filename":"gangs.js","threads":1,"args":[],"pid":2},
+		{"filename":"basicHack.js","threads":1,"args":["n00dles"],"pid":3146},
+	]
+	*/
+	let process_list = ns.ps(host);
+	if (args == "*") return process_list.some(proc => proc["filename"].includes("script"))
+	return process_list.find(proc => (proc["filename"].includes(script) && compareArrays(args, process["args"])))
+}
+
 /** Check to see if we're in a BN or own its source file
  * @param {NS} ns 
  * @param {number} source Source to file to check for validation of
