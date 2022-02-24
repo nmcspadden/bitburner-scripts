@@ -1,4 +1,4 @@
-let crimes = [
+export const CRIMES = [
 	"heist",
 	"assassination",
 	"kidnap",
@@ -88,6 +88,7 @@ export async function main(ns) {
 		);
 		return
 	}
+	let crimes = CRIMES;
 	if (flagdata.crimes.length > 0) {
 		// Only commit specific crimes
 		crimes = flagdata.crimes;
