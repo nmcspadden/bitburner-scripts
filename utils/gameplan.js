@@ -60,3 +60,32 @@ export function joinFactions(ns) {
 		if (did_join) ns.print("Joined " + faction)
 	}
 }
+
+/**
+ * Determine which phase of the game we're in
+ * @param {import("../.").NS} ns 
+ * @returns {string} starting, early, mid, end
+ */
+ export function gamePhase(ns) {
+	// Determine our current RAM level
+	let home_ram = ns.getServerMaxRam(HOME);
+	if (home_ram <= 32) {
+		return "starting"
+	} else if (home_ram <= 1000) {
+		return "early"
+	} else if (endGameTrigger(ns)) {
+		return "end"
+	}
+	return "mid"
+}
+
+/** 
+ * Determine if we meet the conditions to move to Endgame (capable of joining Daedalus)
+ * @param {import(".").NS} ns 
+ * @returns True if we meet Daedalus requirements: hacking >= 2500, combat stats >= 1500
+**/
+function endGameTrigger(ns) {
+	// return true if hacking level >= 2500 (to join Daedalus), or ALL combat stats >= 1500
+	let player = ns.getPlayer()
+	return (player.hacking >= 2500) || ((player.strength >= 1500) && (player.defense >= 1500) && (player.dexterity >= 1500) && (player.agility >= 1500))
+}

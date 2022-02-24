@@ -1,7 +1,7 @@
 import { outputLog, isProcessRunning, HOME } from "utils/script_tools.js";
 import { buildAugMap } from "utils/augs.js";
 import { listPreferredAugs, promptForAugs, handleNeuroflux } from "FastAugmentMe.js";
-import { upgradeHome, growHackingXP, joinFactions } from "utils/gameplan.js";
+import { upgradeHome, growHackingXP, joinFactions, endGameTrigger } from "utils/gameplan.js";
 import { hasStockAccess } from "stocks";
 
 
@@ -106,17 +106,6 @@ async function buyAugmentLoop(ns, aug_map) {
 		ns.print("Sleeping for 30 seconds");
 		await ns.sleep(30000);
 	}
-}
-
-/** 
- * Determine if we meet the conditions to move to Endgame (capable of joining Daedalus)
- * @param {import(".").NS} ns 
- * @returns True if we meet Daedalus requirements: hacking >= 2500, combat stats >= 1500
-**/
-function endGameTrigger(ns) {
-	// return true if hacking level >= 2500 (to join Daedalus), or ALL combat stats >= 1500
-	let player = ns.getPlayer()
-	return (player.hacking >= 2500) || ((player.strength >= 1500) && (player.defense >= 1500) && (player.dexterity >= 1500) && (player.agility >= 1500))
 }
 
 /**
