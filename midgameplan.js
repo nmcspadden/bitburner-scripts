@@ -146,9 +146,9 @@ async function setUpGame(ns) {
 		ns.exec("bladeburner.js", HOME, 1, "--quiet");
 	}
 	// Make sure corporations are running
-	if (!lookForProcess(ns, HOME, "corporations.js")) {
+	if (!lookForProcess(ns, HOME, "corporations.js", "--daemon")) {
 		await outputLog(ns, MID_LOG, "Starting Corporations script...")
-		ns.exec("WIP/corporations.js", HOME);
+		ns.exec("WIP/corporations.js", HOME, 1, "--daemon");
 	}
 	// Stonks?
 	if (!lookForProcess(ns, HOME, "stocks.js") && hasStockAccess(ns)) {
