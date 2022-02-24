@@ -127,7 +127,7 @@ const getChance = (type, name, ns) =>
  * @param {import(".").NS} ns
  * @returns Time it takes to trigger an action
  */
-function workContractOrOp(ns) {
+async function workContractOrOp(ns) {
     const contracts = ns.bladeburner.getContractNames();
     const operations = ns.bladeburner.getOperationNames();
     /* This logic only sorts by chance; it doesn't take into account things like number of actions left.
@@ -156,6 +156,12 @@ function workContractOrOp(ns) {
 
     const bestBlackOp = findBestBlackOp(ns);
     if (bestBlackOp) {
+        if (bestBlackOp.rank == 400000) {
+            // This is the final blackop: finishing this ends the bitnode
+            // We should ask first
+            let should_end = await ns.prompt("Complete final blackop and end the bitnode?");
+            if (!should_end) ns.exit();
+        }
         output(ns, TERMINAL, `Beginning BlackOp ${bestBlackOp.name}`);
         ns.bladeburner.startAction(bestBlackOp.type, bestBlackOp.name);
         return ns.bladeburner.getActionTime(bestBlackOp.type, bestBlackOp.name);
@@ -259,7 +265,7 @@ export async function handleBladeburner(ns) {
     output(ns, TERMINAL, "Beginning Bladeburner loop");
     while (true) {
         // TODO: Check for Chaos
-        const sleepTime = canWork(ns) ? workContractOrOp(ns) : rest(ns);
+        const sleepTime = canWork(ns) ? await workContractOrOp(ns) : rest(ns);
         output(ns, TERMINAL, `Sleeping for ${ns.tFormat(sleepTime)}`);
         await ns.sleep(sleepTime);
         checkSkills(ns);
