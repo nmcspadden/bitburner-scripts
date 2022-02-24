@@ -1,4 +1,4 @@
-import { maximizeScriptUse, lookForProcess, HOME } from "utils/script_tools.js";
+import { maximizeScriptUse, isProcessRunning, HOME } from "utils/script_tools.js";
 import { SERVER_GROWN_FILE } from "serverGrower.js";
 
 export const NETWORK_MAP = 'network_map.json';
@@ -75,11 +75,11 @@ export async function createNetworkMap(ns) {
 		if (!data[node]["root"]) continue
 		let already_running_home = false;
 		let already_running_target = false;
-		if (lookForProcess(ns, node, script)) {
+		if (isProcessRunning(ns, node, script)) {
 			// ns.tprint(`${node} already running ${script}`);
 			already_running_home = true;
 		}
-		if (lookForProcess(ns, HOME, script, [node])) {
+		if (isProcessRunning(ns, HOME, script, [node])) {
 			// ns.tprint(`${node} already targeted by home with ${script}`);
 			already_running_target = true;
 		}

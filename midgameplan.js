@@ -1,4 +1,4 @@
-import { outputLog, lookForProcess, HOME } from "utils/script_tools.js";
+import { outputLog, isProcessRunning, HOME } from "utils/script_tools.js";
 import { buildAugMap } from "utils/augs.js";
 import { listPreferredAugs, promptForAugs, handleNeuroflux } from "FastAugmentMe.js";
 import { upgradeHome, growHackingXP, joinFactions } from "utils/gameplan.js";
@@ -126,7 +126,7 @@ function endGameTrigger(ns) {
  */
 async function setUpGame(ns) {
 	// Make sure gangs is running
-	if (!lookForProcess(ns, HOME, "gangs.js")) {
+	if (!isProcessRunning(ns, HOME, "gangs.js")) {
 		await outputLog(ns, MID_LOG, "Starting gangs script...");
 		ns.exec("gangs.js", HOME);
 	}
@@ -141,17 +141,17 @@ async function setUpGame(ns) {
 	await outputLog(ns, MID_LOG, "Re-evaluating hacking scripts");
 	growHackingXP(ns);
 	// Make sure bladeburners is running
-	if (!lookForProcess(ns, HOME, "bladeburners.js")) {
+	if (!isProcessRunning(ns, HOME, "bladeburners.js")) {
 		await outputLog(ns, MID_LOG, "Starting Bladeburners script...")
 		ns.exec("bladeburner.js", HOME, 1, "--quiet");
 	}
 	// Make sure corporations are running
-	if (!lookForProcess(ns, HOME, "corporations.js", "--daemon")) {
+	if (!isProcessRunning(ns, HOME, "corporations.js", "--daemon")) {
 		await outputLog(ns, MID_LOG, "Starting Corporations script...")
 		ns.exec("WIP/corporations.js", HOME, 1, "--daemon");
 	}
 	// Stonks?
-	if (!lookForProcess(ns, HOME, "stocks.js") && hasStockAccess(ns)) {
+	if (!isProcessRunning(ns, HOME, "stocks.js") && hasStockAccess(ns)) {
 		await outputLog(ns, MID_LOG, "Running Stocks script");
 		ns.exec("stocks.js", HOME);
 	}

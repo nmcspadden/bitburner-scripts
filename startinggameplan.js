@@ -4,13 +4,13 @@ import { upgradeHome } from "utils/gameplan.js";
 
 /**
  * Starting game plan (32 GB only)
- * 1. Gym until 100 of each stat
+ * 1. Gym until 80 of each stat
  * 2. Start mugging until we have enough money for the next RAM upgrade
  * 3. Spin up the earlygameplan.js
  */
 
 export const START_LOG = "startinggameplan.log.txt";
-const MIN_STAT = 100;
+const MIN_STAT = 80;
 
 /** @param {import(".").NS} ns **/
 export async function main(ns) {

@@ -1,7 +1,7 @@
 import { buildAugMap, findMyFactionsWithAug } from "utils/augs.js";
 import { donationAmountForRep, workUntilDonate, calculateBribeNeededForRep } from "utils/repNeededForFavor.js";
 import { locateServer } from "utils/networkmap.js";
-import { outputLog, lookForProcess, HOME } from "utils/script_tools.js";
+import { outputLog, isProcessRunning, HOME } from "utils/script_tools.js";
 import { growHackingXP } from "utils/gameplan.js";
 import { numFormat } from "utils/format.js";
 
@@ -54,17 +54,17 @@ export async function main(ns) {
 async function setUpGame(ns) {
 	/* Game Setup Scripts */
 	// Make sure gangs is running
-	if (!lookForProcess(ns, HOME, "gangs.js")) {
+	if (!isProcessRunning(ns, HOME, "gangs.js")) {
 		await logprint(ns, "Starting gangs script...");
 		ns.exec("gangs.js", HOME);
 	}
 	// Make sure bladeburners is running
-	if (!lookForProcess(ns, HOME, "bladeburners.js")) {
+	if (!isProcessRunning(ns, HOME, "bladeburners.js")) {
 		await logprint(ns, "Starting Bladeburners script...")
 		ns.exec("bladeburner.js", HOME, 1, "--quiet");
 	}
 	// Make sure corporations are running
-	if (!lookForProcess(ns, HOME, "corporations.js")) {
+	if (!isProcessRunning(ns, HOME, "corporations.js")) {
 		await logprint(ns, "Starting Corporations script...")
 		ns.exec("WIP/corporations.js", HOME);
 	}

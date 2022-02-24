@@ -44,7 +44,7 @@ export function maxThreads(ns, script, host, threshold = 100) {
  * @param {array} args List of args to also validate; if the only value of this is "*" then match any args
  * @returns True if we found the script running, false otherwise
 */
-export function lookForProcess(ns, host, script, args = []) {
+export function isProcessRunning(ns, host, script, args = []) {
 	/* Example ns.ps() output:
 	[
 		{"filename":"gangs.js","threads":1,"args":[],"pid":2},

@@ -1,5 +1,5 @@
 import { commitKarmaFocusedCrime, GANG_KARMA } from "utils/crimes.js";
-import { lookForProcess, checkSForBN, outputLog, HOME } from "utils/script_tools.js";
+import { isProcessRunning, checkSForBN, outputLog, HOME } from "utils/script_tools.js";
 import { upgradeHome, growHackingXP } from "utils/gameplan.js";
 
 /**
@@ -95,7 +95,7 @@ async function upgradingLoop(ns) {
 	let home_stats = [home_ram, 2]; // RAM, then Cores; the cores are actually irrelevant
 	while (home_stats[0] <= 1000) {
 		// Make sure gangs is running
-		if (!lookForProcess(ns, HOME, "gangs.js")) ns.exec("gangs.js", HOME)
+		if (!isProcessRunning(ns, HOME, "gangs.js")) ns.exec("gangs.js", HOME)
 		// See if we can upgrade our home
 		ns.print("Looking at home upgrades...");
 		home_stats = upgradeHome(ns);
