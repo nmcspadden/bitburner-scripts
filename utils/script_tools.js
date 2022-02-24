@@ -41,7 +41,7 @@ export function maxThreads(ns, script, host, threshold = 100) {
  * @param {NS} ns 
  * @param {string} host Name of server to execute on
  * @param {string} script Name of script to search for
- * @param {array} args List of args to also validate
+ * @param {array} args List of args to also validate; if the only value of this is "*" then match any args
  * @returns True if we found the script running, false otherwise
 */
 export function lookForProcess(ns, host, script, args = []) {
@@ -52,13 +52,8 @@ export function lookForProcess(ns, host, script, args = []) {
 	]
 	*/
 	let process_list = ns.ps(host);
-	for (let process of process_list) {
-		if (process["filename"].includes(script) && (compareArrays(args, process["args"]))) {
-			// ns.tprint("Found match!");
-			return true
-		}
-	}
-	return false
+	if (args == "*") return process_list.some(proc => proc["filename"].includes("script"))
+	return process_list.some(proc => (proc["filename"].includes(script) && compareArrays(args, process["args"])))
 }
 
 /** Check to see if we're in a BN or own its source file
