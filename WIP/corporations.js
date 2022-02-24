@@ -24,13 +24,27 @@ const CITY_LIST = [
 
 /** @param {import("../.").NS} ns **/
 export async function main(ns) {
-  let player = ns.getPlayer();
-  if (!player.hasCorporation) {
-    if (player.money > 150e9) {
-      await bootstrapCorp(ns);
-    } else {
-      ns.exit();
+	const flagdata = ns.flags([
+		["daemon", false],
+		["-d", false],
+    ["help", false]
+	])
+	if (flagdata.help) {
+		ns.tprint(
+			`Use -d or --daemon to sit and wait until we can establish a corporation. Otherwise, exit if we can't.`
+		);
+		return
+	}
+  // If daemon mode, then wait until we have enough money to bootstrap
+  if (!ns.getPlayer().hasCorporation && (flagdata.daemon || flagdata.d)) {
+    while (ns.getPlayer().money < 151e9) {
+      ns.print("Waiting for $150b to bootstrap the corporation...");
+      await ns.sleep(30000);
     }
+    await bootstrapCorp(ns);
+  } else if (!ns.getPlayer().hasCorporation) {
+    ns.print("No corporation detected, not in daemon mode, exiting.");
+    return
   }
   ns.disableLog("ALL");
   ns.tail();
