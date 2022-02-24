@@ -1,12 +1,15 @@
 /** @param {import("../.").NS} ns **/
 export async function main(ns) {
-    let augs = getUsefulAugs(ns);
-    for (const aug of augs) {
-        let money = ns.getServerMoneyAvailable("home");
-        ns.tprint("Aug: " + aug.name + " Cost: " + aug.cost);
-        if (money > aug["cost"]) {
-            ns.tprint(`Buying ${aug["name"]} for ${aug["cost"]}`);
-            let did_buy = ns.sleeve.purchaseSleeveAug(0, aug["name"]);
+    let numsleeves = ns.sleeve.getNumSleeves();
+    for (let i = 0; i < numsleeves; i++) {
+        let augs = getUsefulAugs(ns);
+        for (const aug of augs) {
+            let money = ns.getServerMoneyAvailable("home");
+            ns.tprint("Aug: " + aug.name + " Cost: " + aug.cost);
+            if (money > aug["cost"]) {
+                let did_buy = ns.sleeve.purchaseSleeveAug(0, aug["name"]);
+                if (did_buy) ns.tprint(`Buying ${aug["name"]} for ${aug["cost"]}`);
+            }
         }
     }
 }
@@ -15,11 +18,9 @@ export async function main(ns) {
  * Get augs that sleeves will care about
  * @param {import("../.").NS} ns 
  */
-function getUsefulAugs(ns) {
-    let numsleeves = ns.sleeve.getNumSleeves();
-    if (numsleeves == 0) return
+function getUsefulAugs(ns, index) {
     ns.tprint("Getting all sleeve augs");
-    let augs_to_buy = ns.sleeve.getSleevePurchasableAugs(0);
+    let augs_to_buy = ns.sleeve.getSleevePurchasableAugs(index);
     // There are some augs that are just useless on sleeves, like Red Pill and hacknet augs
     ns.tprint("Total aug length: " + augs_to_buy.length);
     ns.tprint(augs_to_buy);
