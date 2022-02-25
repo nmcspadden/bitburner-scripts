@@ -190,6 +190,10 @@ export async function bootstrapCorp(ns) {
     // Level each upgrade twice
     const DESIRED_LEVEL = 2;
     for (let i = 0; i < DESIRED_LEVEL - ns.corporation.getUpgradeLevel(upgrade); i++) {
+      while (ns.corporation.getCorporation().funds < ns.corporation.getUpgradeLevelCost(upgrade)) {
+        ns.print("Waiting for sufficient funds to upgrade...");
+        await ns.sleep(5000);
+      }
       ns.corporation.levelUpgrade(upgrade);
       did_upgrade = true;
     }
