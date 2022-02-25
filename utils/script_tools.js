@@ -53,7 +53,7 @@ export function isProcessRunning(ns, host, script, args = []) {
 	*/
 	let process_list = ns.ps(host);
 	if (args == "*") return process_list.some(proc => proc["filename"].includes("script"))
-	return process_list.some(proc => (proc["filename"].includes(script) && compareArrays(args, process["args"])))
+	return process_list.some(proc => (proc["filename"].includes(script) && compareArrays(args, proc["args"])))
 }
 
 /** Find a matching script on any host's process list
@@ -72,7 +72,7 @@ export function findMatchingProcess(ns, host, script, args = []) {
 	*/
 	let process_list = ns.ps(host);
 	if (args == "*") return process_list.some(proc => proc["filename"].includes("script"))
-	return process_list.find(proc => (proc["filename"].includes(script) && compareArrays(args, process["args"])))
+	return process_list.find(proc => (proc["filename"].includes(script) && compareArrays(args, proc["args"])))
 }
 
 /** Check to see if we're in a BN or own its source file
