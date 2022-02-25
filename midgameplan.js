@@ -94,6 +94,14 @@ async function buyAugmentLoop(ns, aug_map) {
 			home_ram = home_stats[0];
 			growHackingXP(ns);
 		}
+		// Make sure corporations are running
+		if (
+			!isProcessRunning(ns, HOME, "corporations.js", "--daemon") &&
+			(ns.getServerMaxRam(HOME) > ns.getScriptRam('corporations.js'))
+		) {
+			await outputLog(ns, MID_LOG, "Starting Corporations script...")
+			ns.exec("WIP/corporations.js", HOME, 1, "--daemon");
+		}
 		// If we have lots of money, see if we can buy darkweb programs
 		ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
 		// Create new network map
@@ -135,7 +143,10 @@ async function setUpGame(ns) {
 		ns.exec("bladeburner.js", HOME, 1, "--quiet");
 	}
 	// Make sure corporations are running
-	if (!isProcessRunning(ns, HOME, "corporations.js", "--daemon")) {
+	if (
+		!isProcessRunning(ns, HOME, "corporations.js", "--daemon") &&
+		(ns.getServerMaxRam(HOME) > ns.getScriptRam('corporations.js'))
+	) {
 		await outputLog(ns, MID_LOG, "Starting Corporations script...")
 		ns.exec("WIP/corporations.js", HOME, 1, "--daemon");
 	}
