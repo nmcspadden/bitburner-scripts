@@ -84,7 +84,7 @@ export function joinFactions(ns) {
  * @param {import(".").NS} ns 
  * @returns True if we meet Daedalus requirements: hacking >= 2500, combat stats >= 1500
 **/
-function endGameTrigger(ns) {
+export function endGameTrigger(ns) {
 	// return true if hacking level >= 2500 (to join Daedalus), or ALL combat stats >= 1500
 	let player = ns.getPlayer()
 	return (player.hacking >= 2500) || ((player.strength >= 1500) && (player.defense >= 1500) && (player.dexterity >= 1500) && (player.agility >= 1500))
