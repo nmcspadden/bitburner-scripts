@@ -362,7 +362,7 @@ export async function bootstrapCorp(ns) {
   }
   // Upgrade warehouses
   await updateDivision(ns, FIRST_INDUSTRY, FIRST_DIVISION, { ...DEFAULT_INDUSTRY_SETTINGS, warehouse: 2000 });
-  // Now do the loop?
+  // Now get any remaining investment offers and go public!
 }
 
 /**
@@ -372,7 +372,7 @@ export async function bootstrapCorp(ns) {
  * @param {string} division Name of division
  * @param {string} city Name of city
  */
- async function improveCorp(ns, division, city) {
+async function improveCorp(ns, division, city) {
   /*
   1. Buy Wilson Analytics
   2. if AdvertInc. is cheaper than +15 Aevum, buy that
@@ -397,19 +397,8 @@ export async function bootstrapCorp(ns) {
   } else if (ns.corporation.getCorporation().funds > ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE)) {
     ns.print("Expanding office size by " + EXPANSION_SIZE);
     ns.corporation.upgradeOfficeSize(division, city, EXPANSION_SIZE);
-    ns.print(`Hiring employees for ${city} office`);
-    office = ns.corporation.getOffice(division, city);
-    // Hire employees until we're at cap
-    while (office.employees.length < office.size) {
-      ns.corporation.hireEmployee(division, city);
-      office = ns.corporation.getOffice(division, city);
-    }
-    // To assign employees, divide the total number by 5; then assign each batch to one job, then the next, etc.
-    // Subtract one from Business and add one to Research & Dev from each batch
-    ns.print("Assigning employees to jobs");
-    await assignEmployees(ns, office.employees, division, city);
+    await hireAndFill(ns, division, city);
   }
-
 }
 
 /**
@@ -425,7 +414,7 @@ function buyScientificResearch(ns, division) {
   }
   // Try to get TA1+2 together with a nice cushion
   if (
-    (ns.corporation.getDivision(division).research >= 140000) && 
+    (ns.corporation.getDivision(division).research >= 140000) &&
     !ns.corporation.hasResearched(division, MARKET_TA1) &&
     !ns.corporation.hasResearched(division, MARKET_TA2)
   ) {
@@ -550,34 +539,10 @@ const updateDivision = async (ns, industry, division, settings = DEFAULT_INDUSTR
         await ns.sleep(FAST_INTERVAL);
     }
 
-    // Hire new employees if we need to
-    if (ns.corporation.getOffice(division, city).employees.length < finalSize) {
-      ns.print(`${city}: Hiring up to ${finalSize} employees`);
-      while (ns.corporation.getOffice(division, city).employees.length < finalSize) {
-        // Hire 3 employees for each city
-        ns.corporation.hireEmployee(division, city);
-        updateSpread = true;
-      }
-    }
+    // Hire more people and assign jobs
+    await hireAndFill(ns, division, city);
 
-    // Assign Employees
-    // Spread priority is "City" > "All" > {} so we can set individual city assignments
-    if (updateSpread) {
-      let employees = [
-        ...ns.corporation.getOffice(division, city).employees.map(employee => ns.corporation.getEmployee(division, city, employee))
-      ];
-      ns.print(`${city}: Assigning jobs to employees`);
-      let jobSpread = settings.jobs[city] ?
-        settings.jobs[city] :
-        settings.jobs["All"] ?
-          settings.jobs["All"] :
-          {}; // Shouldn't happen
-      await assignJobs(ns, employees, division, city, jobSpread);
-    } else {
-      ns.print(`${city}: No need to update spread`);
-    }
-
-    // Buy warehourse
+    // Buy warehouse
     if (!ns.corporation.hasWarehouse(division, city)) {
       ns.print(`${city}: Buying Warehouse`);
       ns.corporation.purchaseWarehouse(division, city);
@@ -595,6 +560,35 @@ const updateDivision = async (ns, industry, division, settings = DEFAULT_INDUSTR
     ns.print(`${city}: Enabling Smart Supply for ${division}`);
     ns.corporation.setSmartSupply(division, city, true);
     await ns.sleep(100);
+  }
+}
+
+async function hireAndFill(ns, division, city) {
+  // Hire new employees if we need to
+  if (ns.corporation.getOffice(division, city).employees.length < finalSize) {
+    ns.print(`${city}: Hiring up to ${finalSize} employees`);
+    while (ns.corporation.getOffice(division, city).employees.length < finalSize) {
+      // Hire 3 employees for each city
+      ns.corporation.hireEmployee(division, city);
+      updateSpread = true;
+    }
+  }
+
+  // Assign Employees
+  // Spread priority is "City" > "All" > {} so we can set individual city assignments
+  if (updateSpread) {
+    let employees = [
+      ...ns.corporation.getOffice(division, city).employees.map(employee => ns.corporation.getEmployee(division, city, employee))
+    ];
+    ns.print(`${city}: Assigning jobs to employees`);
+    let jobSpread = settings.jobs[city] ?
+      settings.jobs[city] :
+      settings.jobs["All"] ?
+        settings.jobs["All"] :
+        {}; // Shouldn't happen
+    await assignJobs(ns, employees, division, city, jobSpread);
+  } else {
+    ns.print(`${city}: No need to update spread`);
   }
 }
 
