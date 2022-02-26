@@ -597,13 +597,14 @@ async function hireAndFill(ns, division, city, size, settings = DEFAULT_INDUSTRY
     let employees = [
       ...ns.corporation.getOffice(division, city).employees.map(employee => ns.corporation.getEmployee(division, city, employee))
     ];
-    ns.print(`${city}: Assigning jobs to employees`);
+    ns.print(`${city}: Assigning jobs to ${employees.length} employees`);
     let jobSpread = settings.jobs[city] ?
       settings.jobs[city] :
       settings.jobs["All"] ?
         settings.jobs["All"] :
         {}; // Shouldn't happen
     await assignJobs(ns, employees, division, city, jobSpread);
+    // TODO: Something isn't working here; we end up with unfilled positions and it's not clear why
   } else {
     ns.print(`${city}: No need to update spread`);
   }
