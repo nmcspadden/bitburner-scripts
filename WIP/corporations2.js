@@ -183,8 +183,10 @@ async function corpLoop(ns, division_type) {
     }
     product_names = ns.corporation.getDivision(division).products;
     // Now actual corp development:
-    ns.print("Evaluating potential improvements to Aevum");
-    await improveCorp(ns, division, "Aevum");
+    ns.print("Evaluating potential improvements to all offices...");
+    for (const city of CITIES) {
+      await improveCorp(ns, division, city);
+    }
     // Check we if we need to buy research
     buyScientificResearch(ns, division);
     ns.print("Sleeping for 5 seconds");
@@ -225,7 +227,7 @@ export async function bootstrapCorp(ns) {
     counter = 1;
     while (ns.corporation.getUpgradeLevel(upgrade) < 2) {
       if (ns.corporation.getCorporation().funds >= ns.corporation.getUpgradeLevelCost(upgrade))
-      ns.corporation.levelUpgrade(upgrade);
+        ns.corporation.levelUpgrade(upgrade);
       else {
         if (counter % 10 === 0)
           ns.print(`Waiting for funds to upgrade ${upgrade}`);
@@ -365,24 +367,33 @@ async function improveCorp(ns, division, city) {
   4. For each other city, increase size to be Aevum-60 
   5. Check for R&D we should upgrade for
   */
-  let office = ns.corporation.getOffice(division, city);
   // Can we afford Wilson Analytics?
   let wilson_cost = ns.corporation.getUpgradeLevelCost(WILSON);
   if (ns.corporation.getCorporation().funds >= wilson_cost) {
     ns.print(`Upgrading ${WILSON} for $${numFormat(wilson_cost)}`);
     ns.corporation.levelUpgrade(WILSON);
   }
-  // Compare AdVert vs. expanding Aevum - go with whichever is cheaper
+  const PRIME_CITY = "Aevum";
   const EXPANSION_SIZE = 15;
-  let advert_cost = ns.corporation.getHireAdVertCost(division);
-  let aevum_exp_cost = ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE);
-  if ((advert_cost < aevum_exp_cost) && advert_cost < ns.corporation.getCorporation().funds) {
-    ns.print(`Hiring AdVert for ${numFormat(advert_cost)}`);
-    ns.corporation.hireAdVert(division);
-  } else if (ns.corporation.getCorporation().funds > ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE)) {
-    ns.print("Expanding office size by " + EXPANSION_SIZE);
-    ns.corporation.upgradeOfficeSize(division, city, EXPANSION_SIZE);
-    await hireAndFill(ns, division, city, EXPANSION_SIZE);
+  if (city == PRIME_CITY) {
+    // Compare AdVert vs. expanding Aevum - go with whichever is cheaper
+    let advert_cost = ns.corporation.getHireAdVertCost(division);
+    let expansion_cost = ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE);
+    if ((advert_cost < expansion_cost) && advert_cost < ns.corporation.getCorporation().funds) {
+      ns.print(`Hiring AdVert for ${numFormat(advert_cost)}`);
+      ns.corporation.hireAdVert(division);
+    } else if (ns.corporation.getCorporation().funds > ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE)) {
+      ns.print(`${city}: Expanding office size by ${EXPANSION_SIZE}`);
+      ns.corporation.upgradeOfficeSize(division, city, EXPANSION_SIZE);
+      await hireAndFill(ns, division, city, EXPANSION_SIZE);
+    }
+  } else if (ns.corporation.getOffice(division, city).size < (ns.corporation.getOffice(division, PRIME_CITY).size - 60)) {
+    // If the other cities are more than 60 behind Aevum, expand them
+    if (ns.corporation.getCorporation().funds > ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE)) {
+      ns.print(`${city}: Expanding office size by ${EXPANSION_SIZE}`);
+      ns.corporation.upgradeOfficeSize(division, city, EXPANSION_SIZE);
+      await hireAndFill(ns, division, city, ns.corporation.getOffice(division, city).size);
+    }
   }
 }
 
@@ -567,7 +578,7 @@ const updateDivision = async (ns, industry, division, settings = DEFAULT_INDUSTR
  * @param {import("../.").NS} ns 
  * @param {string} division Name of division
  * @param {string} city Name of city
- * @param {number} size Number of employees to hire and fill
+ * @param {number} size Number of employees to hire and fill into
  * @param {object} settings Desired settings for spreading employees
  */
 async function hireAndFill(ns, division, city, size, settings = DEFAULT_INDUSTRY_SETTINGS) {
@@ -576,12 +587,10 @@ async function hireAndFill(ns, division, city, size, settings = DEFAULT_INDUSTRY
   if (ns.corporation.getOffice(division, city).employees.length < size) {
     ns.print(`${city}: Hiring up to ${size} employees`);
     while (ns.corporation.getOffice(division, city).employees.length < size) {
-      // Hire 3 employees for each city
       ns.corporation.hireEmployee(division, city);
       updateSpread = true;
     }
   }
-
   // Assign Employees
   // Spread priority is "City" > "All" > {} so we can set individual city assignments
   if (updateSpread) {
