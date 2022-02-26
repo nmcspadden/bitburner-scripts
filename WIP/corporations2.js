@@ -127,14 +127,18 @@ const DEFAULT_INDUSTRY_SETTINGS = {
 export async function main(ns) {
   ns.disableLog('sleep');
   ns.tail();
-  const { corporation } = ns;
   ns.print('*** Starting Corporation Management');
   let player;
-  while (!((player = ns.getPlayer()).hasCorporation)) {
-    if (player.money > 150e9 && corporation.createCorporation(CORP_NAME, true)) {
+  // Either I don't have a corp, or it isn't public yet
+  while (
+    !((player = ns.getPlayer()).hasCorporation) ||
+    !(ns.corporation.getCorporation().public)
+  ) {
+    if (!player.hasCorporation && player.money > 150e9) {
+      ns.createCorporation(CORP_NAME, true)
       ns.print("Created our corporation, now bootstrapping!");
+    } else {
       await bootstrapCorp(ns);
-      break;
     }
     await ns.sleep(SLOW_INTERVAL);
   }
@@ -179,8 +183,10 @@ async function corpLoop(ns, division_type) {
     }
     product_names = ns.corporation.getDivision(division).products;
     // Now actual corp development:
-    ns.print("Evaluating potential improvements to Aevum");
-    await improveCorp(ns, division, "Aevum");
+    ns.print("Evaluating potential improvements to all offices...");
+    for (const city of CITIES) {
+      await improveCorp(ns, division, city);
+    }
     // Check we if we need to buy research
     buyScientificResearch(ns, division);
     ns.print("Sleeping for 5 seconds");
@@ -195,8 +201,8 @@ async function corpLoop(ns, division_type) {
 export async function bootstrapCorp(ns) {
   let counter, offer;
   // Buy Smart Supply - Should have money
-  while (!corporation.hasUnlockUpgrade(SMART_SUPPLY)) {
-    corporation.unlockUpgrade(SMART_SUPPLY);
+  while (!ns.corporation.hasUnlockUpgrade(SMART_SUPPLY)) {
+    ns.corporation.unlockUpgrade(SMART_SUPPLY);
     await ns.sleep(FAST_INTERVAL);
   }
 
@@ -210,18 +216,18 @@ export async function bootstrapCorp(ns) {
   }
 
   // Cities set up, buy 1 AdVert
-  if (corporation.getHireAdVertCount(FIRST_DIVISION) < 1) {
+  if (ns.corporation.getHireAdVertCount(FIRST_DIVISION) < 1) {
     // Buy one level of AdVert
     ns.print("Buying one round of AdVert");
-    corporation.hireAdVert(FIRST_DIVISION);
+    ns.corporation.hireAdVert(FIRST_DIVISION);
   }
 
   for (const upgrade of UPGRADES) {
     // Level each upgrade twice
     counter = 1;
-    while (corporation.getUpgradeLevel(upgrade) < 2) {
-      if (corporation.getCorporation().funds >= corporation.getUpgradeLevelCost(upgrade))
-        corporation.levelUpgrade(upgrade);
+    while (ns.corporation.getUpgradeLevel(upgrade) < 2) {
+      if (ns.corporation.getCorporation().funds >= ns.corporation.getUpgradeLevelCost(upgrade))
+        ns.corporation.levelUpgrade(upgrade);
       else {
         if (counter % 10 === 0)
           ns.print(`Waiting for funds to upgrade ${upgrade}`);
@@ -229,7 +235,7 @@ export async function bootstrapCorp(ns) {
         counter++
       }
     }
-    ns.print(`${upgrade} is now level ${corporation.getUpgradeLevel(upgrade)}`);
+    ns.print(`${upgrade} is now level ${ns.corporation.getUpgradeLevel(upgrade)}`);
   }
 
   for (const city of CITIES) {
@@ -241,7 +247,7 @@ export async function bootstrapCorp(ns) {
   while (minimumMorale(ns, FIRST_DIVISION) < SETTING_MORALE_MIN) await ns.sleep(10000);
 
   ns.print("*** Time to find investors!");
-  offer = corporation.getInvestmentOffer();
+  offer = ns.corporation.getInvestmentOffer();
   if (offer.round > 1) {
     ns.print('Looks like we already accepted an offer');
   } else {
@@ -361,25 +367,49 @@ async function improveCorp(ns, division, city) {
   4. For each other city, increase size to be Aevum-60 
   5. Check for R&D we should upgrade for
   */
-  let office = ns.corporation.getOffice(division, city);
   // Can we afford Wilson Analytics?
   let wilson_cost = ns.corporation.getUpgradeLevelCost(WILSON);
   if (ns.corporation.getCorporation().funds >= wilson_cost) {
     ns.print(`Upgrading ${WILSON} for $${numFormat(wilson_cost)}`);
     ns.corporation.levelUpgrade(WILSON);
   }
-  // Compare AdVert vs. expanding Aevum - go with whichever is cheaper
+  const PRIME_CITY = "Aevum";
   const EXPANSION_SIZE = 15;
-  let advert_cost = ns.corporation.getHireAdVertCost(division);
-  let aevum_exp_cost = ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE);
-  if ((advert_cost < aevum_exp_cost) && advert_cost < ns.corporation.getCorporation().funds) {
-    ns.print(`Hiring AdVert for ${numFormat(advert_cost)}`);
-    ns.corporation.hireAdVert(division);
-  } else if (ns.corporation.getCorporation().funds > ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE)) {
-    ns.print("Expanding office size by " + EXPANSION_SIZE);
-    ns.corporation.upgradeOfficeSize(division, city, EXPANSION_SIZE);
-    await hireAndFill(ns, division, city);
+  if (city == PRIME_CITY) {
+    // Compare AdVert vs. expanding Aevum - go with whichever is cheaper
+    let advert_cost = ns.corporation.getHireAdVertCost(division);
+    let expansion_cost = ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE);
+    if ((advert_cost < expansion_cost) && advert_cost < ns.corporation.getCorporation().funds) {
+      ns.print(`Hiring AdVert for ${numFormat(advert_cost)}`);
+      ns.corporation.hireAdVert(division);
+    } else if (ns.corporation.getCorporation().funds > ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE)) {
+      ns.print(`${city}: Expanding office size by ${EXPANSION_SIZE}`);
+      ns.corporation.upgradeOfficeSize(division, city, EXPANSION_SIZE);
+      await hireAndFill(ns, division, city, EXPANSION_SIZE);
+    }
+  } else if (ns.corporation.getOffice(division, city).size < (ns.corporation.getOffice(division, PRIME_CITY).size - 60)) {
+    // If the other cities are more than 60 behind Aevum, expand them
+    if (ns.corporation.getCorporation().funds > ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE)) {
+      ns.print(`${city}: Expanding office size by ${EXPANSION_SIZE}`);
+      ns.corporation.upgradeOfficeSize(division, city, EXPANSION_SIZE);
+      await hireAndFill(ns, division, city, ns.corporation.getOffice(division, city).size);
+    }
   }
+}
+
+async function seekInvestmentOffer(ns, minimum) {
+  let offer = ns.corporation.getInvestmentOffer();
+  ns.print(`Starting offer: $${numFormat(offer.funds)}`)
+  let counter = 1;
+  while ((offer = ns.corporation.getInvestmentOffer()).funds < minimum) {
+    if (counter % 30 === 0) {
+      ns.print(`Waited ${counter} loops for first offer above $${numFormat(minimum)}. Most recent offer: $${numFormat(offer.funds)}`);
+    }
+    await ns.sleep(1000);
+    counter++;
+  }
+  ns.print(`Accepting investment offer for $${numFormat(offer.funds)}!`);
+  ns.corporation.acceptInvestmentOffer();
 }
 
 /**
@@ -520,7 +550,7 @@ const updateDivision = async (ns, industry, division, settings = DEFAULT_INDUSTR
     }
 
     // Hire more people and assign jobs
-    await hireAndFill(ns, division, city, size);
+    await hireAndFill(ns, division, city, finalSize, settings);
 
     // Buy warehouse
     if (!ns.corporation.hasWarehouse(division, city)) {
@@ -543,54 +573,24 @@ const updateDivision = async (ns, industry, division, settings = DEFAULT_INDUSTR
   }
 }
 
-async function hireAndFill(ns, division, city, size) {
-  // Hire new employees if we need to
-  if (ns.corporation.getOffice(division, city).employees.length < size) {
-    ns.print(`${city}: Hiring up to ${size} employees`);
-    while (ns.corporation.getOffice(division, city).employees.length < size) {
-      // Hire 3 employees for each city
-      ns.corporation.hireEmployee(division, city);
-      updateSpread = true;
-    }
-  }
-
-  // Assign Employees
-  // Spread priority is "City" > "All" > {} so we can set individual city assignments
-  if (updateSpread) {
-    let employees = [
-      ...ns.corporation.getOffice(division, city).employees.map(employee => ns.corporation.getEmployee(division, city, employee))
-    ];
-    ns.print(`${city}: Assigning jobs to employees`);
-    let jobSpread = settings.jobs[city] ?
-      settings.jobs[city] :
-      settings.jobs["All"] ?
-        settings.jobs["All"] :
-        {}; // Shouldn't happen
-    await assignJobs(ns, employees, division, city, jobSpread);
-  } else {
-    ns.print(`${city}: No need to update spread`);
-  }
-}
-
 /**
  * Hire employees and assign jobs
  * @param {import("../.").NS} ns 
  * @param {string} division Name of division
  * @param {string} city Name of city
- * @param {number} size Number of employees to hire and fill
+ * @param {number} size Number of employees to hire and fill into
+ * @param {object} settings Desired settings for spreading employees
  */
-async function hireAndFill(ns, division, city, size) {
+async function hireAndFill(ns, division, city, size, settings = DEFAULT_INDUSTRY_SETTINGS) {
   let updateSpread = false;
   // Hire new employees if we need to
   if (ns.corporation.getOffice(division, city).employees.length < size) {
     ns.print(`${city}: Hiring up to ${size} employees`);
     while (ns.corporation.getOffice(division, city).employees.length < size) {
-      // Hire 3 employees for each city
       ns.corporation.hireEmployee(division, city);
       updateSpread = true;
     }
   }
-
   // Assign Employees
   // Spread priority is "City" > "All" > {} so we can set individual city assignments
   if (updateSpread) {
