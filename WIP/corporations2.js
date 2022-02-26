@@ -161,7 +161,7 @@ async function corpLoop(ns, division_type) {
     product_names.forEach(prod => {
       ns.corporation.sellProduct(division, "Aevum", prod, "MAX", "MP", true);
       // At some point, we'll need this check, but for now, leaving it commented
-      // if (ns.corporation.hasResearched(MARKET_TA2)) ns.corporation.setProductMarketTA2(division, prod, true);
+      // if (ns.corporation.hasResearched(division, MARKET_TA2)) ns.corporation.setProductMarketTA2(division, prod, true);
       ns.corporation.setProductMarketTA2(division, prod, true);
     });
     // Do we have less than the max number of products?
@@ -419,15 +419,15 @@ export async function bootstrapCorp(ns) {
  */
 function buyScientificResearch(ns, division) {
   // See if we hit the threshold for the R&D Lab
-  if ((ns.corporation.getDivision(division).research >= 10000) && !ns.corporation.hasResearched(HIGH_TECH_LAB)) {
+  if ((ns.corporation.getDivision(division).research >= 10000) && !ns.corporation.hasResearched(division, HIGH_TECH_LAB)) {
     ns.print("Researching the " + HIGH_TECH_LAB);
     ns.corporation.research(division, HIGH_TECH_LAB);
   }
   // Try to get TA1+2 together with a nice cushion
   if (
     (ns.corporation.getDivision(division).research >= 140000) && 
-    !ns.corporation.hasResearched(MARKET_TA1) &&
-    !ns.corporation.hasResearched(MARKET_TA2)
+    !ns.corporation.hasResearched(division, MARKET_TA1) &&
+    !ns.corporation.hasResearched(division, MARKET_TA2)
   ) {
     ns.print("Buying Market-TA 1 + 2");
     ns.corporation.research(division, MARKET_TA1);
