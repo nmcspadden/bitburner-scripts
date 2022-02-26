@@ -6,6 +6,8 @@ const FIRST_INDUSTRY = 'Agriculture';
 const FIRST_DIVISION = 'Rich Table';
 const SECOND_INDUSTRY = 'Tobacco';
 const SECOND_DIVISION = 'Fire Sticks';
+const TOBACCO_PRFX = "Tobacco-v";
+
 
 const SLOW_INTERVAL = 5000;
 const FAST_INTERVAL = 1000;
@@ -33,6 +35,8 @@ const UPGRADES = [
   "Nuoptimal Nootropic Injector Implants",
   "Smart Factories"
 ];
+const WILSON = "Wilson Analytics";
+const PRODUCT_CAPACITY_UPGRADE = "uPgrade: Capacity.I";
 
 // Settings
 const SETTING_MORALE_MIN = 99.00;
@@ -121,7 +125,7 @@ export async function main(ns) {
   ns.disableLog('sleep');
   ns.tail();
   const { corporation } = ns;
-  ns.print('Starting Corp Script');
+  ns.print('*** Starting Corporation Management');
   let counter, offer, player;
   while (!((player = ns.getPlayer()).hasCorporation)) {
     if (player.money > 150e9 && corporation.createCorporation(CORP_NAME, true)) {
@@ -290,17 +294,13 @@ export async function main(ns) {
   ns.print("*** TIME TO CREATE PRODUCTS!");
   // Create product!
   ns.print("Creating our first Tobacco product!");
-  // The bootstrap is finished once we have 3 products in play
-  corp = ns.corporation.getCorporation();
-  let product_names = ns.corporation.getDivision(DIVISION).products;
-  // Our ending condition
+  let product_names = ns.corporation.getDivision(SECOND_DIVISION).products;
   if (product_names.length == 0) {
     ns.print("Developing new product");
-    let product_name = developNewProduct(ns, DIVISION);
-    ns.corporation.sellProduct(DIVISION, "Aevum", product_name, "MAX", "MP", true);
-    ns.corporation.setProductMarketTA2(DIVISION, product_name, true);
+    let product_name = developNewProduct(ns, SECOND_DIVISION);
+    ns.corporation.sellProduct(SECOND_DIVISION, "Aevum", product_name, "MAX", "MP", true);
+    ns.corporation.setProductMarketTA2(SECOND_DIVISION, product_name, true);
   }
-  // TODO: Come back and test this
   // Upgrade warehouses
   await updateDivision(ns, FIRST_INDUSTRY, FIRST_DIVISION, { ...DEFAULT_INDUSTRY_SETTINGS, warehouse: 2000 });
   // Now do the loop?
@@ -315,7 +315,7 @@ export async function main(ns) {
  * @returns {void}
 **/
 const assignJobs = async (ns, employees, division, city, positions) => {
-  ns.print(`Assigning ${employees.length} employees to jobs in ${city}.`);
+  ns.print(`${city}: Assigning ${employees.length} employees to jobs`);
   for (const position of POSITIONS) {
     if (positions[position]) {
       let emps = employees.sort((emp1, emp2) => prodScore(emp1, position) - prodScore(emp2, position)).splice(0, positions[position]);
@@ -389,7 +389,7 @@ const matsAtLevel = (ns, division, city, materialSetting) => {
  * @param {object} settings
  **/
 const updateDivision = async (ns, industry, division, settings = DEFAULT_INDUSTRY_SETTINGS) => {
-  while (!ns.corporation.getCorporation().divisions.includes(division)) {
+  while (!ns.corporation.getCorporation().divisions.some(div => div["name"].includes(division))) {
     ns.print('Creating Industry');
     ns.corporation.expandIndustry(industry, division);
     if (ns.corporation.getDivision(division))
@@ -423,7 +423,7 @@ const updateDivision = async (ns, industry, division, settings = DEFAULT_INDUSTR
 
     // Hire new employees if we need to
     if (ns.corporation.getOffice(division, city).employees.length < finalSize) {
-      ns.print(`Hiring up to ${finalSize} employees in ${city}`);
+      ns.print(`${city}: Hiring up to ${finalSize} employees`);
       while (ns.corporation.getOffice(division, city).employees.length < finalSize) {
         // Hire 3 employees for each city
         ns.corporation.hireEmployee(division, city);
@@ -437,7 +437,7 @@ const updateDivision = async (ns, industry, division, settings = DEFAULT_INDUSTR
       let employees = [
         ...ns.corporation.getOffice(division, city).employees.map(employee => ns.corporation.getEmployee(division, city, employee))
       ];
-      ns.print("Assigning jobs to employees");
+      ns.print(`${city}: Assigning jobs to employees`);
       let jobSpread = settings.jobs[city] ?
         settings.jobs[city] :
         settings.jobs["All"] ?
@@ -445,17 +445,17 @@ const updateDivision = async (ns, industry, division, settings = DEFAULT_INDUSTR
           {}; // Shouldn't happen
       await assignJobs(ns, employees, division, city, jobSpread);
     } else {
-      ns.print(`No need to update spread in ${city}`);
+      ns.print(`${city}: No need to update spread`);
     }
 
     // Buy warehourse
     if (!ns.corporation.hasWarehouse(division, city)) {
-      ns.print(`Buying Warehouse in ${city}`);
+      ns.print(`${city}: Buying Warehouse`);
       ns.corporation.purchaseWarehouse(division, city);
     }
 
     // Upgrade warehouse to settings.warehouse
-    ns.print(`Upgrading the warehouse to ${settings.warehouse}`);
+    ns.print(`${city}: Upgrading the warehouse to ${settings.warehouse}`);
     while (ns.corporation.getWarehouse(division, city).size < settings.warehouse) {
       if (ns.corporation.getCorporation().funds >= ns.corporation.getUpgradeWarehouseCost(division, city))
         ns.corporation.upgradeWarehouse(division, city);
@@ -463,7 +463,7 @@ const updateDivision = async (ns, industry, division, settings = DEFAULT_INDUSTR
     }
 
     // Enable Smart Supply
-    ns.print(`Enabling Smart Supply for ${division} in ${city}`);
+    ns.print(`${city}: Enabling Smart Supply for ${division}`);
     ns.corporation.setSmartSupply(division, city, true);
     await ns.sleep(100);
   }
@@ -476,7 +476,7 @@ const updateDivision = async (ns, industry, division, settings = DEFAULT_INDUSTR
  * @param {object} materials
  **/
 const updateMaterials = async (ns, division, city, materials) => {
-  ns.print(`Updating materials in ${city}`);
+  ns.print(`${city}: Updating materials`);
   let counter = 1;
   while (!matsAtLevel(ns, division, city, materials)) {
     ns.corporation.buyMaterial(
@@ -505,13 +505,13 @@ const updateMaterials = async (ns, division, city, materials) => {
     );
     // Wait for a tick - can't use 10 seconds becaue bonus times breaks the timing
     if (counter % 200 === 0) // 200 loops should be ~10 seconds
-      ns.print(`Currently ${ns.corporation.getMaterial(FIRST_DIVISION, city, MATERIAL_HARDWARE).qty} hardware in ${city}`);
+      ns.print(`${city}: Currently ${ns.corporation.getMaterial(FIRST_DIVISION, city, MATERIAL_HARDWARE).qty} hardware`);
     counter++;
     await ns.sleep(50);
   }
-  ns.print("Setting materials back down to 0 purchasing");
+  ns.print(`${city}: Setting materials back down to 0 purchasing`);
   ns.corporation.buyMaterial(division, city, MATERIAL_HARDWARE, 0);
-  ns.corporation.buyMaterial(division, city, ROBOTS, 0);
+  ns.corporation.buyMaterial(division, city, MATERIAL_ROBOTS, 0);
   ns.corporation.buyMaterial(division, city, MATERIAL_AI_CORES, 0);
   ns.corporation.buyMaterial(division, city, MATERIAL_REAL_ESTATE, 0);
 }
@@ -524,4 +524,57 @@ const getEvenSpread = (population) => {
     "Research & Development": Math.floor(population / 5) + (population % 5),
     Management: (population / 5)
   }
+}
+
+/**
+ * Create a new iteratively-named product
+ * @param {import("../.").NS} ns
+ * @param {string} division The division we're building in
+ * @returns {string} Name of new product
+ */
+function developNewProduct(ns, division) {
+  let new_product_name = nextProductName(ns, division);
+  ns.print("Creating new product: " + new_product_name);
+  // new product in numerical order, with 1b each of design and marketing investment.
+  ns.corporation.makeProduct(division, "Aevum", new_product_name, 1000000000, 1000000000);
+  return new_product_name
+}
+
+/**
+ * Calculate the next product name
+ * @param {import("../.").NS} ns
+ * @param {string} division The division we're building in
+ * @returns the next product name
+ */
+function nextProductName(ns, division) {
+  let product_names = ns.corporation.getDivision(division).products.sort((a, b) => a - b);
+  let last_version = 1;
+  // If there are existing products, try to figure out the last one
+  if (product_names.length > 0) {
+    let last_char = product_names.slice(-1)[0].slice(9);
+    // if the last character is a number (not NaN), use it for evaluation
+    if (!isNaN(last_char)) last_version = Number(last_char);
+  }
+  return TOBACCO_PRFX + (last_version + 1);
+}
+
+/**
+ * Discontinue the oldest product (based on name)
+ * @param {import("../.").NS} 
+ * @param {*} division The division we're building in
+ */
+async function discontinueOldestProduct(ns, division) {
+  let product_names = ns.corporation.getDivision(division).products.sort((a, b) => a - b);
+  // ns.print("Product names: " + product_names);
+  // Safety net, don't discontinue if we have no products
+  if (product_names.length == 0) return
+  // Sell all of it at MP to get rid of all inventory
+  ns.print(`Selling off ${product_names[0]}`);
+  ns.corporation.setProductMarketTA2(division, product_names[0], false);
+  ns.corporation.sellProduct(division, "Aevum", product_names[0], "MAX", "MP", true);
+  ns.print("Waiting 10 seconds...");
+  await ns.sleep(10000); // wait 20 seconds for two ticks to sell all inventory
+  ns.print("Discontinuing product");
+  // Now discontinue once we're done selling
+  ns.corporation.discontinueProduct(division, product_names[0]);
 }
