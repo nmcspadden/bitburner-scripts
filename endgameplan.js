@@ -136,7 +136,7 @@ async function grindForRedPill(ns) {
 
 /** 
  * Find the world daemon and hack it!.
- * @param {NS} ns 
+ * @param {import(".").NS} ns 
 **/
 async function hackThePlanet(ns) {
 	if (!ns.getOwnedAugmentations().includes(TheRedPill)) return
@@ -157,6 +157,7 @@ async function hackThePlanet(ns) {
 		await ns.sleep(1000);
 	}
 	ns.exec("utils/networkmap.js", HOME);
+	await ns.sleep(1000);
 	let should_end_bitnode = await ns.prompt(`Backdoor the ${WORLD} and end the bitnode?`);
 	if (should_end_bitnode) {
 		await ns.installBackdoor();
