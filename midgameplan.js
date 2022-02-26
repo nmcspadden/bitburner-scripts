@@ -100,7 +100,7 @@ async function buyAugmentLoop(ns, aug_map) {
 			(ns.getServerMaxRam(HOME) > ns.getScriptRam('corporations.js'))
 		) {
 			await outputLog(ns, MID_LOG, "Starting Corporations script...")
-			ns.exec("WIP/corporations.js", HOME, 1, "--daemon");
+			ns.exec("WIP/corporations2.js", HOME);
 		}
 		// If we have lots of money, see if we can buy darkweb programs
 		ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
