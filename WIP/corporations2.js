@@ -37,6 +37,9 @@ const UPGRADES = [
 ];
 const WILSON = "Wilson Analytics";
 const PRODUCT_CAPACITY_UPGRADE = "uPgrade: Capacity.I";
+const HIGH_TECH_LAB = "Hi-Tech R&D Laboratory";
+const MARKET_TA1 = "Market-TA.I";
+const MARKET_TA2 = "Market-TA.II";
 
 // Settings
 const SETTING_MORALE_MIN = 99.00;
@@ -126,15 +129,71 @@ export async function main(ns) {
   ns.tail();
   const { corporation } = ns;
   ns.print('*** Starting Corporation Management');
-  let counter, offer, player;
+  let player;
   while (!((player = ns.getPlayer()).hasCorporation)) {
     if (player.money > 150e9 && corporation.createCorporation(CORP_NAME, true)) {
-      ns.print('Corp Established');
+      ns.print("Created our corporation, now bootstrapping!");
+      await bootstrapCorp(ns);
       break;
     }
     await ns.sleep(SLOW_INTERVAL);
   }
+  // Now the corp loop
+  // We are making the assumption right now that we're only developing Tobacco
+  await corpLoop(ns, SECOND_INDUSTRY);
+}
 
+/**
+ * Loop through the corporation activities
+ * @param {import("../.").NS} ns 
+ * @param {string} division TYPE of division ("Tobacco")
+ */
+async function corpLoop(ns, division_type) {
+  let corp = ns.corporation.getCorporation();
+  // Find the name of the division corresponding to the type
+  let division = corp.divisions.find(div => div.type == division_type).name;
+  let product_names = ns.corporation.getDivision(division).products;
+  // The default max number of products is 3, but can be 4 with research
+  let max_number_of_products = 3;
+  if (ns.corporation.hasResearched(division, PRODUCT_CAPACITY_UPGRADE)) max_number_of_products += 1
+  while (true) {
+    // Sell initial products at MAX / MP, then set to TA.II 
+    product_names.forEach(prod => {
+      ns.corporation.sellProduct(division, "Aevum", prod, "MAX", "MP", true);
+      // At some point, we'll need this check, but for now, leaving it commented
+      // if (ns.corporation.hasResearched(MARKET_TA2)) ns.corporation.setProductMarketTA2(division, prod, true);
+      ns.corporation.setProductMarketTA2(division, prod, true);
+    });
+    // Do we have less than the max number of products?
+    while (product_names.length < max_number_of_products) {
+      // develop more products
+      developNewProduct(ns, division);
+      product_names = ns.corporation.getDivision(division).products;
+    }
+    // Are any products in dev progress?
+    let in_dev = product_names.find(prod => ns.corporation.getProduct(division, prod).developmentProgress < 100);
+    if (in_dev) ns.print("In development product: " + in_dev)
+    // If nothing is in development, then we should sell off + discontinue the oldest one
+    if (!in_dev) {
+      await discontinueOldestProduct(ns, division);
+    }
+    product_names = ns.corporation.getDivision(division).products;
+    // Now actual corp development:
+    ns.print("Evaluating potential improvements to Aevum");
+    await improveCorp(ns, division, "Aevum");
+    // Check we if we need to buy research
+    buyScientificResearch(ns, division);
+    ns.print("Sleeping for 5 seconds");
+    await ns.sleep(5000); // sleep for 5 seconds  
+  }
+}
+
+/**
+ * Bootstrap a corp
+ * @param {import("../.").NS} ns 
+ */
+export async function bootstrapCorp(ns) {
+  let counter, offer;
   // Buy Smart Supply - Should have money
   while (!corporation.hasUnlockUpgrade(SMART_SUPPLY)) {
     corporation.unlockUpgrade(SMART_SUPPLY);
@@ -304,6 +363,76 @@ export async function main(ns) {
   // Upgrade warehouses
   await updateDivision(ns, FIRST_INDUSTRY, FIRST_DIVISION, { ...DEFAULT_INDUSTRY_SETTINGS, warehouse: 2000 });
   // Now do the loop?
+}
+
+/**
+ * Improve the corp overall with research, unlocks, hiring
+ * @param {import("../.").NS} ns 
+ * @param {*} corp Corporation object
+ * @param {string} division Name of division
+ * @param {string} city Name of city
+ */
+ async function improveCorp(ns, division, city) {
+  /*
+  1. Buy Wilson Analytics
+  2. if AdvertInc. is cheaper than +15 Aevum, buy that
+  3. Otherwise, buy +15 Aevum, hire new employees, re-assign 3 to each of the 5 roles (2 to biz, 4 to research)
+  4. For each other city, increase size to be Aevum-60 
+  5. Check for R&D we should upgrade for
+  */
+  let office = ns.corporation.getOffice(division, city);
+  // Can we afford Wilson Analytics?
+  let wilson_cost = ns.corporation.getUpgradeLevelCost(WILSON);
+  if (ns.corporation.getCorporation().funds >= wilson_cost) {
+    ns.print(`Upgrading ${WILSON} for $${numFormat(wilson_cost)}`);
+    ns.corporation.levelUpgrade(WILSON);
+  }
+  // Compare AdVert vs. expanding Aevum - go with whichever is cheaper
+  const EXPANSION_SIZE = 15;
+  let advert_cost = ns.corporation.getHireAdVertCost(division);
+  let aevum_exp_cost = ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE);
+  if ((advert_cost < aevum_exp_cost) && advert_cost < ns.corporation.getCorporation().funds) {
+    ns.print(`Hiring AdVert for ${numFormat(advert_cost)}`);
+    ns.corporation.hireAdVert(division);
+  } else if (ns.corporation.getCorporation().funds > ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE)) {
+    ns.print("Expanding office size by " + EXPANSION_SIZE);
+    ns.corporation.upgradeOfficeSize(division, city, EXPANSION_SIZE);
+    ns.print(`Hiring employees for ${city} office`);
+    office = ns.corporation.getOffice(division, city);
+    // Hire employees until we're at cap
+    while (office.employees.length < office.size) {
+      ns.corporation.hireEmployee(division, city);
+      office = ns.corporation.getOffice(division, city);
+    }
+    // To assign employees, divide the total number by 5; then assign each batch to one job, then the next, etc.
+    // Subtract one from Business and add one to Research & Dev from each batch
+    ns.print("Assigning employees to jobs");
+    await assignEmployees(ns, office.employees, division, city);
+  }
+
+}
+
+/**
+ * Buy scientific research
+ * @param {import("../.").NS}  ns
+ * @param {string} division Name of division
+ */
+function buyScientificResearch(ns, division) {
+  // See if we hit the threshold for the R&D Lab
+  if ((ns.corporation.getDivision(division).research >= 10000) && !ns.corporation.hasResearched(HIGH_TECH_LAB)) {
+    ns.print("Researching the " + HIGH_TECH_LAB);
+    ns.corporation.research(division, HIGH_TECH_LAB);
+  }
+  // Try to get TA1+2 together with a nice cushion
+  if (
+    (ns.corporation.getDivision(division).research >= 140000) && 
+    !ns.corporation.hasResearched(MARKET_TA1) &&
+    !ns.corporation.hasResearched(MARKET_TA2)
+  ) {
+    ns.print("Buying Market-TA 1 + 2");
+    ns.corporation.research(division, MARKET_TA1);
+    ns.corporation.research(division, MARKET_TA2);
+  }
 }
 
 /**
