@@ -382,21 +382,6 @@ async function improveCorp(ns, division, city) {
   }
 }
 
-async function seekInvestmentOffer(ns, minimum) {
-  let offer = ns.getInvestmentOffer();
-  ns.print(`Starting offer: $${numFormat(offer.funds)}`)
-  counter = 1;
-  while ((offer = ns.getInvestmentOffer()).funds < minimum) {
-    if (counter % 30 === 0) {
-      ns.print(`Waited ${counter} loops for first offer above $${numFormat(minimum)}. Most recent offer: $${numFormat(offer.funds)}`);
-    }
-    await ns.sleep(1000);
-    counter++;
-  }
-  ns.print(`Accepting investment offer for $${numFormat(offer.funds)}!`);
-  ns.acceptInvestmentOffer();
-}
-
 /**
  * Buy scientific research
  * @param {import("../.").NS}  ns
@@ -555,6 +540,35 @@ const updateDivision = async (ns, industry, division, settings = DEFAULT_INDUSTR
     ns.print(`${city}: Enabling Smart Supply for ${division}`);
     ns.corporation.setSmartSupply(division, city, true);
     await ns.sleep(100);
+  }
+}
+
+async function hireAndFill(ns, division, city, size) {
+  // Hire new employees if we need to
+  if (ns.corporation.getOffice(division, city).employees.length < size) {
+    ns.print(`${city}: Hiring up to ${size} employees`);
+    while (ns.corporation.getOffice(division, city).employees.length < size) {
+      // Hire 3 employees for each city
+      ns.corporation.hireEmployee(division, city);
+      updateSpread = true;
+    }
+  }
+
+  // Assign Employees
+  // Spread priority is "City" > "All" > {} so we can set individual city assignments
+  if (updateSpread) {
+    let employees = [
+      ...ns.corporation.getOffice(division, city).employees.map(employee => ns.corporation.getEmployee(division, city, employee))
+    ];
+    ns.print(`${city}: Assigning jobs to employees`);
+    let jobSpread = settings.jobs[city] ?
+      settings.jobs[city] :
+      settings.jobs["All"] ?
+        settings.jobs["All"] :
+        {}; // Shouldn't happen
+    await assignJobs(ns, employees, division, city, jobSpread);
+  } else {
+    ns.print(`${city}: No need to update spread`);
   }
 }
 
