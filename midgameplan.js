@@ -96,8 +96,8 @@ async function buyAugmentLoop(ns, aug_map) {
 		}
 		// Make sure corporations are running
 		if (
-			!isProcessRunning(ns, HOME, "corporations.js", "--daemon") &&
-			(ns.getServerMaxRam(HOME) > ns.getScriptRam('corporations.js'))
+			!isProcessRunning(ns, HOME, "corporations2.js") &&
+			(ns.getServerMaxRam(HOME) > ns.getScriptRam('WIP/corporations2.js'))
 		) {
 			await outputLog(ns, MID_LOG, "Starting Corporations script...")
 			ns.exec("WIP/corporations2.js", HOME);
@@ -144,11 +144,11 @@ async function setUpGame(ns) {
 	}
 	// Make sure corporations are running
 	if (
-		!isProcessRunning(ns, HOME, "corporations.js", "--daemon") &&
-		(ns.getServerMaxRam(HOME) > ns.getScriptRam('corporations.js'))
+		!isProcessRunning(ns, HOME, "corporations2.js") &&
+		(ns.getServerMaxRam(HOME) > ns.getScriptRam('WIP/corporations2.js'))
 	) {
 		await outputLog(ns, MID_LOG, "Starting Corporations script...")
-		ns.exec("WIP/corporations.js", HOME, 1, "--daemon");
+		ns.exec("WIP/corporations2.js", HOME);
 	}
 	// Stonks?
 	if (!isProcessRunning(ns, HOME, "stocks.js") && hasStockAccess(ns)) {
