@@ -6,8 +6,9 @@ export const NETWORK_MAP = 'network_map.json';
 /** 
  * Create a network map in JSON format
  * @param {import("../.").NS} ns 
+ * @param {boolean} hack True if we should run scripts on servers
 **/
-export async function createNetworkMap(ns) {
+export async function createNetworkMap(ns, hack = true) {
 	const my_hack_level = ns.getHackingLevel();
 	const scanHost = (host, myParent, currentData = {}) => {
 		const myConnections = ns.scan(host);
@@ -52,47 +53,49 @@ export async function createNetworkMap(ns) {
 
 	// Recursively build the map
 	const data = scanHost(HOME, HOME);
-	// Now make 'em all grow
+	// Now make 'em all grow if we want to
 	const SERVERGROWER = "serverGrower.js";
 	const BASICHACK = "basicHack.js";
-	for (const node of Object.keys(data)) {
-		let script = SERVERGROWER;
-		// skip home, and don't try to hack servers we haven't rooted
-		if (node == HOME) continue
-		// If we've grown the server completely, do a hacking script instead
-		// TODO: Don't bother on servers with low money (darkweb)
-		if (
-			(ns.getServerMoneyAvailable(node) > 0) && 
-			(ns.getServerMoneyAvailable(node) == data[node].maxMoney) &&
-			(data[node]["hackLevel"] <= my_hack_level)
-		) {
-			// Kill servergrower if we're switching to basicHack
-			ns.kill(SERVERGROWER, node);
-			script = BASICHACK;
+	if (hack) {
+		for (const node of Object.keys(data)) {
+			let script = SERVERGROWER;
+			// skip home, and don't try to hack servers we haven't rooted
+			if (node == HOME) continue
+			// If we've grown the server completely, do a hacking script instead
+			// TODO: Don't bother on servers with low money (darkweb)
+			if (
+				(ns.getServerMoneyAvailable(node) > 0) &&
+				(ns.getServerMoneyAvailable(node) == data[node].maxMoney) &&
+				(data[node]["hackLevel"] <= my_hack_level)
+			) {
+				// Kill servergrower if we're switching to basicHack
+				ns.kill(SERVERGROWER, node);
+				script = BASICHACK;
+			}
+			// If we have root access, check to see if the server is already running the process
+			// Or check to see if we have the process running on home targeting it
+			if (!data[node]["root"]) continue
+			let already_running_home = false;
+			let already_running_target = false;
+			if (isProcessRunning(ns, node, script)) {
+				// ns.tprint(`${node} already running ${script}`);
+				already_running_home = true;
+			}
+			if (isProcessRunning(ns, HOME, script, [node])) {
+				// ns.tprint(`${node} already targeted by home with ${script}`);
+				already_running_target = true;
+			}
+			if (!(already_running_home || already_running_target)) {
+				// ns.tprint(`Attempting to run ${script} on ${node}`);
+				await ns.scp(script, node);
+				// Don't attempt to run the scripts on home if we're at 32GB or less,
+				// or it interferes with startinggameplan
+				let run_on_home = true;
+				if (data["home"].maxRAM <= 32) run_on_home = false;
+				maximizeScriptUse(ns, script, node, 100, run_on_home);
+			}
+			// TODO: backdoor the faction servers to replace joinFactions.js
 		}
-		// If we have root access, check to see if the server is already running the process
-		// Or check to see if we have the process running on home targeting it
-		if (!data[node]["root"]) continue
-		let already_running_home = false;
-		let already_running_target = false;
-		if (isProcessRunning(ns, node, script)) {
-			// ns.tprint(`${node} already running ${script}`);
-			already_running_home = true;
-		}
-		if (isProcessRunning(ns, HOME, script, [node])) {
-			// ns.tprint(`${node} already targeted by home with ${script}`);
-			already_running_target = true;
-		}
-		if (!(already_running_home || already_running_target)) {
-			// ns.tprint(`Attempting to run ${script} on ${node}`);
-			await ns.scp(script, node);
-			// Don't attempt to run the scripts on home if we're at 32GB or less,
-			// or it interferes with startinggameplan
-			let run_on_home = true;
-			if (data["home"].maxRAM <= 32) run_on_home = false;
-			maximizeScriptUse(ns, script, node, 100, run_on_home);
-		}
-		// TODO: backdoor the faction servers to replace joinFactions.js
 	}
 	await ns.write(NETWORK_MAP, JSON.stringify(data, null, 2), 'w');
 }
@@ -100,15 +103,17 @@ export async function createNetworkMap(ns) {
 /** @param {NS} ns **/
 export async function main(ns) {
 	const argData = ns.flags([
-		['daemon', false]
+		['daemon', false],
+		["hack", false]
 	]);
 	if (argData.daemon) {
 		while (true) {
-			await createNetworkMap(ns);
-			await ns.sleep(30000);
+			await createNetworkMap(ns, false);
+			// Re-evaluate network map every minute
+			await ns.sleep(60000);
 		}
 	} else {
-		await createNetworkMap(ns);
+		await createNetworkMap(ns, argData.hack);
 	}
 }
 
