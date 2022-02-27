@@ -1,4 +1,5 @@
 import { numFormat } from "utils/format.js";
+import { checkSForBN } from "utils/script_tools.js";
 
 // Names
 const CORP_NAME = 'VIP Champagne';
@@ -129,18 +130,23 @@ export async function main(ns) {
   ns.tail();
   ns.print('*** Starting Corporation Management');
   let player;
+  let should_self_fund = true
+  if (checkSForBN(3)) should_self_fund = false;
   // Either I don't have a corp, or it isn't public yet
   while (
     !((player = ns.getPlayer()).hasCorporation) ||
     !(ns.corporation.getCorporation().public)
   ) {
-    if (!player.hasCorporation && player.money > 150e9) {
-      ns.createCorporation(CORP_NAME, true)
-      ns.print("Created our corporation, now bootstrapping!");
+    if (!player.hasCorporation) {
+      if (should_self_fund && player.money > 150e9) {
+        ns.corporation.createCorporation(CORP_NAME, should_self_fund);
+        ns.print("Created our corporation, now bootstrapping!");
+      }
     } else {
       await bootstrapCorp(ns);
     }
-    await ns.sleep(SLOW_INTERVAL);
+    ns.print("Waiting for enough money to bootstrap a corporation...");
+    await ns.sleep(30000);
   }
   // Now the corp loop
   // We are making the assumption right now that we're only developing Tobacco
@@ -267,15 +273,15 @@ export async function bootstrapCorp(ns) {
 
   // Upgrade Smart stuff to level 10 each
   ns.print("Upgrading Smart Factories + Smart Storage");
-  while (corporation.getUpgradeLevel(UPGRADE_SMART_STORAGE) < SETTING_SMART_FIRST_LEVEL ||
-    corporation.getUpgradeLevel(UPGRADE_SMART_FACTORIES) < SETTING_SMART_FIRST_LEVEL) {
+  while (ns.corporation.getUpgradeLevel(UPGRADE_SMART_STORAGE) < SETTING_SMART_FIRST_LEVEL ||
+  ns.corporation.getUpgradeLevel(UPGRADE_SMART_FACTORIES) < SETTING_SMART_FIRST_LEVEL) {
     let upgradeList = [UPGRADE_SMART_FACTORIES, UPGRADE_SMART_STORAGE];
     for (const upgrade of upgradeList) {
-      for (let i = 1; i <= SETTING_SMART_FIRST_LEVEL - corporation.getUpgradeLevel(upgrade); i++) {
-        corporation.levelUpgrade(upgrade);
+      for (let i = 1; i <= SETTING_SMART_FIRST_LEVEL - ns.corporation.getUpgradeLevel(upgrade); i++) {
+        ns.corporation.levelUpgrade(upgrade);
       }
-      if (corporation.getUpgradeLevel(upgrade) === SETTING_SMART_FIRST_LEVEL) {
-        ns.print(`${upgrade} is now level ${corporation.getUpgradeLevel(upgrade)}`);
+      if (ns.corporation.getUpgradeLevel(upgrade) === SETTING_SMART_FIRST_LEVEL) {
+        ns.print(`${upgrade} is now level ${ns.corporation.getUpgradeLevel(upgrade)}`);
         upgradeList = upgradeList.filter(upg => upg !== upgrade);
       } else {
         ns.print(`${upgrade} not fully upgraded. Sleeping.`);
