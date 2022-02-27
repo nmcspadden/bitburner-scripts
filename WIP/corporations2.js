@@ -348,10 +348,11 @@ export async function bootstrapCorp(ns) {
   // Upgrade warehouses
   await updateDivision(ns, FIRST_INDUSTRY, FIRST_DIVISION, { ...DEFAULT_INDUSTRY_SETTINGS, warehouse: 2000 });
   // Now get any remaining investment offers and go public!
+  ns.print("Looking for investors again; hoping for at least $150t")
   while (offer = ns.corporation.getInvestmentOffer().round <= 4) {
     // Demand at least $150t
     await seekInvestmentOffer(ns, 150e12);
-    await ns.sleep(FAST_INTERVAL);
+    await ns.sleep(30000);
   }
   // Go public!
   let went_public = ns.corporation.goPublic(0);
