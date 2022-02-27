@@ -24,12 +24,13 @@ export function maximizeScriptUse(ns, script, host, threshold = 100, run_on_home
 }
 
 /** Calculate maximum possible threads to run a script on a host
- * @param {NS} ns 
+ * @param {import("../.").NS} ns 
  * @param {string} script Name of script to evaluate and run
  * @param {string} host Name of server to execute on
  * @param {number} threshold Max percent of RAM to consume (default 100)
 */
 export function maxThreads(ns, script, host, threshold = 100) {
+	// ns.tprint(`${host} Max ram: ${ ns.getServerMaxRam(host)}, used ram: ${ ns.getServerUsedRam(host)}`);
 	let current_ram = ns.getServerMaxRam(host) - ns.getServerUsedRam(host);
 	// ns.tprint(`${host} current RAM: ${current_ram}`);
 	let script_cost = ns.getScriptRam(script);

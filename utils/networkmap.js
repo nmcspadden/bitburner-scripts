@@ -1,5 +1,4 @@
-import { maximizeScriptUse, isProcessRunning, HOME } from "utils/script_tools.js";
-import { SERVER_GROWN_FILE } from "serverGrower.js";
+import { maximizeScriptUse, isProcessRunning, HOME, maxThreads } from "utils/script_tools.js";
 
 export const NETWORK_MAP = 'network_map.json';
 
@@ -175,6 +174,46 @@ export function crackServer(ns, server) {
 		}
 	}
 	return ns.hasRootAccess(server)
+}
+
+/**
+ * Grow a target server from all other servers
+ * @param {import("../.").NS} ns 
+ * @param {string} target 
+ */
+export async function growTargetServer(ns, target) {
+	const SCRIPT = 'serverGrower.js';
+	// Run the same script on all servers except exclusions
+	let network_map = await readNetworkMap(ns);
+	for (const server of Object.keys(network_map)) {
+		if (server == HOME) continue
+		if (network_map[server].maxRAM < 1) continue
+		await ns.scp(SCRIPT, server);
+		let threads = maxThreads(ns, SCRIPT, server, 100);
+		if (threads > 0) {
+			// Kill it first before recalculating usage
+			ns.kill(SCRIPT, server);
+			ns.exec(SCRIPT, server, threads, target);
+		}
+	}
+}
+
+export async function findOptimal(ns) {
+	let optimalServer = "foodnstuff";
+	let optimalVal = 0;
+	let currVal;
+	let currTime;
+	let network_map = await readNetworkMap(ns);
+	for (const server of Object.keys(network_map)) {
+		currVal = network_map[server].maxMoney;
+		currTime = ns.getWeakenTime(server) + ns.getGrowTime(server) + network_map[server].hackTime;
+		currVal /= currTime;
+		if (currVal >= optimalVal) {
+			optimalVal = currVal;
+			optimalServer = server;
+		}
+	}
+	return optimalServer;
 }
 
 /**
