@@ -305,7 +305,7 @@ export async function bootstrapCorp(ns) {
   await ns.sleep(20000);
 
   ns.print("*** GO FIND MORE INVESTORS!");
-  offer = corporation.getInvestmentOffer();
+  offer = ns.corporation.getInvestmentOffer();
   if (offer.round > 2) {
     ns.print('Looks like we already accepted an offer');
   } else {
