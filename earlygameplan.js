@@ -14,6 +14,9 @@ export async function main(ns) {
 	ns.toast("Starting early game plan!", "info", null);
 	ns.disableLog("ALL"); // Disable the log
 	ns.tail(); // Open a window to view the status of the script
+	// Create new network map
+	ns.print("Running network mapping daemon...");
+	ns.exec("utils/networkmap.js", HOME, 1, "--daemon");
 	// Start crimes until we can do homicides to get to the gang karma, also upgrade home
 	await outputLog(ns, EARLY_LOG, "Starting crime + upgrade loop...");
 	await crimeWhileUpgradingLoop(ns);
@@ -101,9 +104,6 @@ async function upgradingLoop(ns) {
 		home_stats = upgradeHome(ns);
 		// If we have lots of money, see if we can buy darkweb programs
 		ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
-		// Create new network map
-		ns.print("Generating updated network map...");
-		ns.exec("utils/networkmap.js", HOME);
 		// Spin up hacking XP tools, only if we got more RAM
 		if (home_stats[0] > home_ram) {
 			ns.print("Re-evalauting hacking XP scripts");

@@ -26,7 +26,6 @@ import { hasStockAccess } from "stocks";
 */
 
 export const MID_LOG = "midgameplan.log.txt";
-const TheRedPill = "The Red Pill";
 
 /** @param {import(".").NS} ns **/
 export async function main(ns) {
@@ -104,9 +103,6 @@ async function buyAugmentLoop(ns, aug_map) {
 		}
 		// If we have lots of money, see if we can buy darkweb programs
 		ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
-		// Create new network map
-		await outputLog(ns, MID_LOG, "Generating updated network map...");
-		ns.exec("utils/networkmap.js", HOME);
 		// Run contract solver
 		await outputLog(ns, MID_LOG, "Checking for contracts...");
 		ns.exec("contractSolver.js", HOME, 1, "--quiet");
@@ -123,6 +119,11 @@ async function buyAugmentLoop(ns, aug_map) {
  * @returns the aug_map built by buildAugMap()
  */
 async function setUpGame(ns) {
+	// Ensure network map is up to date
+	if (!isProcessRunning(ns, 'home', 'networkmap.js', ['--daemon'])) {
+		await outputLog(ns, MID_LOG, "Running network mapping daemon...");
+		ns.exec("utils/networkmap.js", HOME, 1, "--daemon");
+	}
 	// Make sure gangs is running
 	if (!isProcessRunning(ns, HOME, "gangs.js")) {
 		await outputLog(ns, MID_LOG, "Starting gangs script...");
@@ -130,9 +131,6 @@ async function setUpGame(ns) {
 	}
 	// Try to buy more darkweb programs
 	ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
-	// Create new network map
-	await outputLog(ns, MID_LOG, "Generating updated network map...");
-	ns.exec("utils/networkmap.js", HOME);
 	// Build the aug map first
 	let aug_map = await buildAugMap(ns);
 	// Evaluate hacking scripts again

@@ -53,6 +53,11 @@ export async function main(ns) {
  */
 async function setUpGame(ns) {
 	/* Game Setup Scripts */
+	// Ensure network map is up to date
+	if (!isProcessRunning(ns, 'home', 'networkmap.js', ['--daemon'])) {
+		await outputLog(ns, MID_LOG, "Running network mapping daemon...");
+		ns.exec("utils/networkmap.js", HOME, 1, "--daemon");
+	}
 	// Make sure gangs is running
 	if (!isProcessRunning(ns, HOME, "gangs.js")) {
 		await logprint(ns, "Starting gangs script...");
@@ -71,10 +76,7 @@ async function setUpGame(ns) {
 	// Try to buy more darkweb programs
 	ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
 	// Build the aug map
-	let aug_map = await buildAugMap(ns);
-	// Create new network map
-	await logprint(ns, "Generating updated network map...");
-	ns.exec("utils/networkmap.js", HOME);
+	await buildAugMap(ns);
 	// Evaluate hacking scripts again
 	await logprint(ns, "Re-evaluating hacking scripts");
 	growHackingXP(ns);
