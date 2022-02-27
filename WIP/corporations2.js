@@ -347,6 +347,11 @@ export async function bootstrapCorp(ns) {
   }
   // Upgrade warehouses
   await updateDivision(ns, FIRST_INDUSTRY, FIRST_DIVISION, { ...DEFAULT_INDUSTRY_SETTINGS, warehouse: 2000 });
+  // Wait until our product is done developing
+  ns.print("Waiting until product finishes developing...");
+  while (product_names.some(prod => ns.corporation.getProduct(SECOND_DIVISION, prod).developmentProgress < 100)) {
+    await ns.sleep(30000);
+  }
   // Now get any remaining investment offers and go public!
   ns.print("Looking for investors again; hoping for at least $150t")
   while (offer = ns.corporation.getInvestmentOffer().round <= 4) {
@@ -404,6 +409,11 @@ async function improveCorp(ns, division, city) {
   }
 }
 
+/**
+ * Buy scientific research
+ * @param {import("../.").NS}  ns
+ * @param {number} minimum Minimum desired amount for the offer
+ */
 async function seekInvestmentOffer(ns, minimum) {
   let offer = ns.corporation.getInvestmentOffer();
   ns.print(`Starting offer: $${numFormat(offer.funds)}`)
@@ -411,6 +421,10 @@ async function seekInvestmentOffer(ns, minimum) {
   while ((offer = ns.corporation.getInvestmentOffer()).funds < minimum) {
     if (counter % 30 === 0) {
       ns.print(`Waited ${counter} loops for first offer above $${numFormat(minimum)}. Most recent offer: $${numFormat(offer.funds)}`);
+    }
+    if (counter > 300) {
+      let should_accept_anyway = await ns.prompt(`It's been a while; accept the $${numFormat(offer.funds)} offer?`);
+      if (should_accept_anyway) break;
     }
     await ns.sleep(1000);
     counter++;
