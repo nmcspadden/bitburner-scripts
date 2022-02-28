@@ -368,7 +368,7 @@ export async function bootstrapCorp(ns) {
   let went_public = ns.corporation.goPublic(0);
   if (went_public) {
     ns.print("🎉🎉🎉 WE HAVE IPO!!!");
-    ns.corporation.issueDividends(10);
+    ns.corporation.issueDividends(0.1);
   }
 }
 
