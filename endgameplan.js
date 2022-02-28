@@ -25,7 +25,6 @@ export const END_LOG = "endgameplan.log.txt";
 const TheRedPill = "The Red Pill";
 const FAVOR_TO_DONATE = 150;
 const WORLD = "w0r1d_d43m0n";
-const CORP_BRIBE_RATIO = 1000000000; // corp rep bribes are divided by 1e9 
 
 /** @param {NS} ns **/
 export async function main(ns) {
@@ -55,13 +54,13 @@ async function setUpGame(ns) {
 	/* Game Setup Scripts */
 	// Ensure network map is up to date
 	if (!isProcessRunning(ns, 'home', 'networkmap.js', ['--daemon'])) {
-		await outputLog(ns, MID_LOG, "Running network mapping daemon...");
+		await outputLog(ns, END_LOG, "Running network mapping daemon...");
 		ns.exec("utils/networkmap.js", HOME, 1, "--daemon");
 	}
 	// Make sure gangs is running
 	if (!isProcessRunning(ns, HOME, "gangs.js")) {
 		await logprint(ns, "Starting gangs script...");
-		ns.exec("gangs.js", HOME);
+		ns.exec("gangs.js", HOME, 1, "--quiet");
 	}
 	// Make sure bladeburners is running
 	if (!isProcessRunning(ns, HOME, "bladeburners.js")) {
@@ -69,9 +68,9 @@ async function setUpGame(ns) {
 		ns.exec("bladeburner.js", HOME, 1, "--quiet");
 	}
 	// Make sure corporations are running
-	if (!isProcessRunning(ns, HOME, "corporations.js")) {
+	if (!isProcessRunning(ns, HOME, "corporations2.js")) {
 		await logprint(ns, "Starting Corporations script...")
-		ns.exec("WIP/corporations.js", HOME);
+		ns.exec("WIP/corporations2.js", HOME);
 	}
 	// Try to buy more darkweb programs
 	ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
@@ -97,13 +96,6 @@ async function grindForRedPill(ns) {
 	// First, find the faction with the red pill
 	// In BN2, this is your gang; everywhere else, it's Daedalus
 	let factions_w_red_pill = findMyFactionsWithAug(ns, TheRedPill, player);
-	/* DEV CHECK */
-	ns.print(`Have corp: ${player.hasCorporation}, corp money: ${numFormat(ns.corporation.getCorporation().funds)}, raw corp money: ${ns.corporation.getCorporation().funds}`);
-	let money_needed = donationAmountForRep(ns, factions_w_red_pill[0], red_pill_req);
-	let corp_money_needed = calculateBribeNeededForRep(ns, factions_w_red_pill[0], red_pill_req);
-	ns.print(`Raw corp money needed: ${corp_money_needed}`);
-	ns.print(`Need to donate $${numFormat(money_needed)} or bribe $${numFormat(corp_money_needed)} to earn ${numFormat(red_pill_req)} rep`);
-	/* END DEV */
 	while (factions_w_red_pill.length == 0) {
 		ns.print("You don't currently belong to any factions with " + TheRedPill);
 		factions_w_red_pill = findMyFactionsWithAug(ns, TheRedPill, player);
@@ -132,7 +124,7 @@ async function grindForRedPill(ns) {
 			ns.print("Installing The Red Pill!");
 			ns.installAugmentations('endgameplan.js');
 		}
-		await ns.sleep(250);
+		await ns.sleep(60000);
 	}
 }
 
