@@ -150,7 +150,9 @@ export async function main(ns) {
   }
   // Now the corp loop
   // We are making the assumption right now that we're only developing Tobacco
-  await corpLoop(ns, SECOND_INDUSTRY);
+  while (true) {
+    await corpLoop(ns, SECOND_INDUSTRY);
+  }
 }
 
 /**
@@ -166,38 +168,34 @@ async function corpLoop(ns, division_type) {
   // The default max number of products is 3, but can be 4 with research
   let max_number_of_products = 3;
   if (ns.corporation.hasResearched(division, PRODUCT_CAPACITY_UPGRADE)) max_number_of_products += 1
-  while (true) {
-    // Sell initial products at MAX / MP, then set to TA.II 
-    product_names.forEach(prod => {
-      ns.corporation.sellProduct(division, "Aevum", prod, "MAX", "MP", true);
-      // At some point, we'll need this check, but for now, leaving it commented
-      // if (ns.corporation.hasResearched(division, MARKET_TA2)) ns.corporation.setProductMarketTA2(division, prod, true);
-      ns.corporation.setProductMarketTA2(division, prod, true);
-    });
-    // Do we have less than the max number of products?
-    while (product_names.length < max_number_of_products) {
-      // develop more products
-      developNewProduct(ns, division);
-      product_names = ns.corporation.getDivision(division).products;
-    }
-    // Are any products in dev progress?
-    let in_dev = product_names.find(prod => ns.corporation.getProduct(division, prod).developmentProgress < 100);
-    if (in_dev) ns.print("In development product: " + in_dev)
-    // If nothing is in development, then we should sell off + discontinue the oldest one
-    if (!in_dev) {
-      await discontinueOldestProduct(ns, division);
-    }
-    product_names = ns.corporation.getDivision(division).products;
-    // Now actual corp development:
-    ns.print("Evaluating potential improvements to all offices...");
-    for (const city of CITIES) {
-      await improveCorp(ns, division, city);
-    }
-    // Check we if we need to buy research
-    buyScientificResearch(ns, division);
-    ns.print("Sleeping for 5 seconds");
-    await ns.sleep(5000); // sleep for 5 seconds  
+  // Sell initial products at MAX / MP, then set to TA.II 
+  product_names.forEach(prod => {
+    ns.corporation.sellProduct(division, "Aevum", prod, "MAX", "MP", true);
+    // At some point, we'll need this check, but for now, leaving it commented
+    // if (ns.corporation.hasResearched(division, MARKET_TA2)) ns.corporation.setProductMarketTA2(division, prod, true);
+    ns.corporation.setProductMarketTA2(division, prod, true);
+  });
+  // Do we have less than the max number of products?
+  while (ns.corporation.getDivision(division).products.length < max_number_of_products) {
+    // develop more products
+    developNewProduct(ns, division);
   }
+  // Are any products in dev progress?
+  let in_dev = ns.corporation.getDivision(division).products.find(prod => ns.corporation.getProduct(division, prod).developmentProgress < 100);
+  if (in_dev) ns.print("In development product: " + in_dev)
+  // If nothing is in development, then we should sell off + discontinue the oldest one
+  if (!in_dev) {
+    await discontinueOldestProduct(ns, division);
+  }
+  // Now actual corp development:
+  ns.print("Evaluating potential improvements to all offices...");
+  for (const city of CITIES) {
+    await improveCorp(ns, division, city);
+  }
+  // Check we if we need to buy research
+  buyScientificResearch(ns, division);
+  ns.print("Sleeping for 5 seconds");
+  await ns.sleep(5000); // sleep for 5 seconds  
 }
 
 /**
@@ -274,7 +272,7 @@ export async function bootstrapCorp(ns) {
   // Upgrade Smart stuff to level 10 each
   ns.print("Upgrading Smart Factories + Smart Storage");
   while (ns.corporation.getUpgradeLevel(UPGRADE_SMART_STORAGE) < SETTING_SMART_FIRST_LEVEL ||
-  ns.corporation.getUpgradeLevel(UPGRADE_SMART_FACTORIES) < SETTING_SMART_FIRST_LEVEL) {
+    ns.corporation.getUpgradeLevel(UPGRADE_SMART_FACTORIES) < SETTING_SMART_FIRST_LEVEL) {
     let upgradeList = [UPGRADE_SMART_FACTORIES, UPGRADE_SMART_STORAGE];
     for (const upgrade of upgradeList) {
       for (let i = 1; i <= SETTING_SMART_FIRST_LEVEL - ns.corporation.getUpgradeLevel(upgrade); i++) {
@@ -346,11 +344,18 @@ export async function bootstrapCorp(ns) {
     ns.corporation.setProductMarketTA2(SECOND_DIVISION, product_name, true);
   }
   // Upgrade warehouses
+  ns.print("Upgrading warehouses to new levels");
   await updateDivision(ns, FIRST_INDUSTRY, FIRST_DIVISION, { ...DEFAULT_INDUSTRY_SETTINGS, warehouse: 2000 });
-  // Wait until our product is done developing
-  ns.print("Waiting until product finishes developing...");
+  // TODO: Expand Aevum to 60
+
+  // Get 3 products out there
+  ns.print("Executing main corp loop until we have 3 products");
+  while (ns.corporation.getDivision(SECOND_DIVISION).products.length < 3) {
+    await corpLoop(ns, SECOND_INDUSTRY);
+  }
   while (product_names.some(prod => ns.corporation.getProduct(SECOND_DIVISION, prod).developmentProgress < 100)) {
-    await ns.sleep(30000);
+    ns.print("Waiting until no products are in development...");
+    await ns.sleep(60000);
   }
   // Now get any remaining investment offers and go public!
   ns.print("Looking for investors again; hoping for at least $150t")
@@ -361,7 +366,10 @@ export async function bootstrapCorp(ns) {
   }
   // Go public!
   let went_public = ns.corporation.goPublic(0);
-  if (went_public) ns.print("🎉🎉🎉 WE HAVE IPO!!!");
+  if (went_public) {
+    ns.print("🎉🎉🎉 WE HAVE IPO!!!");
+    ns.corporation.issueDividends(10);
+  }
 }
 
 /**
@@ -625,7 +633,6 @@ async function hireAndFill(ns, division, city, size, settings = DEFAULT_INDUSTRY
         settings.jobs["All"] :
         {}; // Shouldn't happen
     await assignJobs(ns, employees, division, city, jobSpread);
-    // TODO: Something isn't working here; we end up with unfilled positions and it's not clear why
   } else {
     ns.print(`${city}: No need to update spread`);
   }
