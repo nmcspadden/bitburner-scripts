@@ -103,8 +103,13 @@ export async function createNetworkMap(ns, hack = true) {
 export async function main(ns) {
 	const argData = ns.flags([
 		['daemon', false],
-		["hack", false]
+		["hack", false],
+		["optimal", false]
 	]);
+	if (argData.optimal) {
+		ns.tprint("Optimal server: " + await findOptimal(ns));
+		return
+	}
 	if (argData.daemon) {
 		while (true) {
 			await createNetworkMap(ns, false);
@@ -198,6 +203,11 @@ export async function growTargetServer(ns, target) {
 	}
 }
 
+/**
+ * Find the most optimal server we can hack
+ * @param {import("../.").NS} ns 
+ * @returns {string} Name of server
+ */
 export async function findOptimal(ns) {
 	let optimalServer = "foodnstuff";
 	let optimalVal = 0;
@@ -208,7 +218,7 @@ export async function findOptimal(ns) {
 		currVal = network_map[server].maxMoney;
 		currTime = ns.getWeakenTime(server) + ns.getGrowTime(server) + network_map[server].hackTime;
 		currVal /= currTime;
-		if (currVal >= optimalVal) {
+		if (network_map[server].root && (currVal >= optimalVal)) {
 			optimalVal = currVal;
 			optimalServer = server;
 		}
