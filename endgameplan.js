@@ -150,8 +150,12 @@ async function hackThePlanet(ns) {
 		growHackingXP(ns);
 		await ns.sleep(1000);
 	}
-	ns.exec("utils/networkmap.js", HOME);
-	await ns.sleep(1000);
+	while (!ns.hasRootAccess(WORLD)) {
+		// Try to buy more darkweb programs
+		ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
+		ns.exec("utils/networkmap.js", HOME);
+		await ns.sleep(1000);
+	}
 	let should_end_bitnode = await ns.prompt(`Backdoor the ${WORLD} and end the bitnode?`);
 	if (should_end_bitnode) {
 		await ns.installBackdoor();
