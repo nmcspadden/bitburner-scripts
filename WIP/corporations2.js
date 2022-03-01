@@ -349,13 +349,11 @@ export async function bootstrapCorp(ns) {
   }
   // Upgrade Wilson Analytics while we have > $3t
   ns.print("Leveling up Wilson Analytics...");
-  while (ns.corporation.getCorporation().funds > 3e12) {
-    if (ns.corporation.getCorporation().funds >= wilson_cost) {
-      ns.print(`Upgrading ${WILSON} for $${numFormat(wilson_cost)}`);
-      ns.corporation.levelUpgrade(WILSON);
-    }  
+  while ((ns.corporation.getCorporation().funds > 3e12) && (ns.corporation.getCorporation().funds >= ns.corporation.getUpgradeLevelCost(WILSON))) {
+    ns.print(`Upgrading ${WILSON} for $${numFormat(ns.corporation.getUpgradeLevelCost(WILSON))}`);
+    ns.corporation.levelUpgrade(WILSON);
   }
-  ns.print("Wilson Analytics is now at " + ns.corporation.getUpgradeLevel(WILSON));
+  ns.print("Wilson Analytics is now at level " + ns.corporation.getUpgradeLevel(WILSON));
   // Level upgrades to 20
   ns.print("Upgrading Employee-focused upgrades to level " + SETTING_UPGRADES_SECOND_LEVEL);
   for (const upgrade of UPGRADES) {
