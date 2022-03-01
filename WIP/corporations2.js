@@ -60,6 +60,7 @@ const SETTING_FIRST_MATERIALS = {
   [MATERIAL_AI_CORES]: 75,
   [MATERIAL_REAL_ESTATE]: 27000
 };
+const SETTING_UPGRADES_SECOND_LEVEL = 20; // Upgrade the first 4 UPGRADES to 20
 const SETTING_SECOND_MATERIALS = {
   [MATERIAL_HARDWARE]: 2800,
   [MATERIAL_ROBOTS]: 96,
@@ -182,9 +183,10 @@ async function corpLoop(ns, division_type) {
   }
   // Are any products in dev progress?
   let in_dev = ns.corporation.getDivision(division).products.find(prod => ns.corporation.getProduct(division, prod).developmentProgress < 100);
-  if (in_dev) ns.print("In development product: " + in_dev)
-  // If nothing is in development, then we should sell off + discontinue the oldest one
-  if (!in_dev) {
+  if (in_dev) {
+    ns.print("In development product: " + in_dev);
+  } else {
+    // If nothing is in development, then we should sell off + discontinue the oldest one
     await discontinueOldestProduct(ns, division);
   }
   // Now actual corp development:
@@ -320,8 +322,10 @@ export async function bootstrapCorp(ns) {
   }
   ns.print(`Done with ${FIRST_DIVISION}!`);
 
+  /* EXPAND TO FIRST PRODUCT! */
   // Start Division 2
   ns.print(`Creating ${SECOND_DIVISION} in the ${SECOND_INDUSTRY} Industry`);
+  // Set Aevum to 30, all other offices to 9 people, buy warehouses
   await updateDivision(ns, SECOND_INDUSTRY, SECOND_DIVISION, {
     ...DEFAULT_INDUSTRY_SETTINGS,
     employees: {
@@ -343,25 +347,77 @@ export async function bootstrapCorp(ns) {
     ns.corporation.sellProduct(SECOND_DIVISION, "Aevum", product_name, "MAX", "MP", true);
     ns.corporation.setProductMarketTA2(SECOND_DIVISION, product_name, true);
   }
-  // Upgrade warehouses
-  ns.print("Upgrading warehouses to new levels");
-  await updateDivision(ns, FIRST_INDUSTRY, FIRST_DIVISION, { ...DEFAULT_INDUSTRY_SETTINGS, warehouse: 2000 });
-  // TODO: Expand Aevum to 60
-
+  // Upgrade Wilson Analytics while we have > $3t
+  ns.print("Leveling up Wilson Analytics...");
+  while (ns.corporation.getCorporation().funds > 3e12) {
+    if (ns.corporation.getCorporation().funds >= wilson_cost) {
+      ns.print(`Upgrading ${WILSON} for $${numFormat(wilson_cost)}`);
+      ns.corporation.levelUpgrade(WILSON);
+    }  
+  }
+  ns.print("Wilson Analytics is now at " + ns.corporation.getUpgradeLevel(WILSON));
+  // Level upgrades to 20
+  ns.print("Upgrading Employee-focused upgrades to level " + SETTING_UPGRADES_SECOND_LEVEL);
+  for (const upgrade of UPGRADES) {
+    // ignore Smart Factories/Smart Warehouses for this
+    if (upgrade.includes("Smart")) continue
+    while (ns.corporation.getUpgradeLevel(upgrade) < SETTING_UPGRADES_SECOND_LEVEL) {
+      for (let i = 1; i <= SETTING_UPGRADES_SECOND_LEVEL - ns.corporation.getUpgradeLevel(upgrade); i++) {
+        ns.corporation.levelUpgrade(upgrade);
+        await ns.sleep(FAST_INTERVAL);
+      }
+      if (ns.corporation.getUpgradeLevel(upgrade) === SETTING_UPGRADES_SECOND_LEVEL) {
+        ns.print(`${upgrade} is now level ${ns.corporation.getUpgradeLevel(upgrade)}`);
+      } else {
+        ns.print(`${upgrade} not fully upgraded. Sleeping.`);
+      }
+      await ns.sleep(1000);
+    }
+  }
+  // Dump the rest of our funds into AdVert
+  ns.print("Spending the rest of the funds on AdVert");
+  while (ns.corporation.getHireAdVertCost(SECOND_DIVISION) < ns.corporation.getCorporation().funds) {
+    ns.print(`Hiring AdVert for ${numFormat(advert_cost)}`);
+    ns.corporation.hireAdVert(division);
+  }
   // Get 3 products out there
   ns.print("Executing main corp loop until we have 3 products");
   while (ns.corporation.getDivision(SECOND_DIVISION).products.length < 3) {
+    // Don't develop a new product until the old one is done
+    await waitForDevelopment(ns, SECOND_DIVISION);
+    developNewProduct(ns, SECOND_DIVISION);
+  }
+  // Finish developing any products before moving on to the next phase
+  await waitForDevelopment(ns, SECOND_DIVISION);
+
+  ns.print("Expand Aevum to 60 employees");
+  // Expand Aevum to 60
+  await updateDivision(ns, SECOND_INDUSTRY, SECOND_DIVISION, {
+    ...DEFAULT_INDUSTRY_SETTINGS,
+    employees: {
+      "All": SETTING_FIRST_UPGRADE_SIZE,
+      "Aevum": 60
+    },
+    jobs: {
+      "All": SETTING_FIRST_UPGRADE_SPREAD,
+      "Aevum": getEvenSpread(60)
+    }
+  });
+  // Loop the main corp loop until we can afford Market.TA1+2
+  ns.print("Beginning corporation loop until we have purchased Market-TA.1 + 2...")
+  while (
+    !ns.corporation.hasResearched(division, HIGH_TECH_LAB) &&
+    !ns.corporation.hasResearched(division, MARKET_TA1) &&
+    !ns.corporation.hasResearched(division, MARKET_TA2)
+  ) {
     await corpLoop(ns, SECOND_INDUSTRY);
   }
-  while (product_names.some(prod => ns.corporation.getProduct(SECOND_DIVISION, prod).developmentProgress < 100)) {
-    ns.print("Waiting until no products are in development...");
-    await ns.sleep(60000);
-  }
+
   // Now get any remaining investment offers and go public!
   ns.print("Looking for investors again; hoping for at least $150t")
   while (offer = ns.corporation.getInvestmentOffer().round <= 4) {
-    // Demand at least $150t
-    await seekInvestmentOffer(ns, 150e12);
+    // Demand at least $800t
+    await seekInvestmentOffer(ns, 800e12);
     await ns.sleep(30000);
   }
   // Go public!
@@ -434,7 +490,7 @@ async function seekInvestmentOffer(ns, minimum) {
       let should_accept_anyway = await ns.prompt(`It's been a while; accept the $${numFormat(offer.funds)} offer?`);
       if (should_accept_anyway) break;
     }
-    await ns.sleep(1000);
+    await ns.sleep(10000);
     counter++;
   }
   ns.print(`Accepting investment offer for $${numFormat(offer.funds)}!`);
@@ -476,7 +532,7 @@ const assignJobs = async (ns, employees, division, city, positions) => {
   ns.print(`${city}: Assigning ${employees.length} employees to jobs`);
   for (const position of POSITIONS) {
     if (positions[position]) {
-      let emps = employees.sort((emp1, emp2) => prodScore(emp1, position) - prodScore(emp2, position)).splice(0, positions[position]);
+      let emps = employees.sort((emp1, emp2) => prodScore(emp2, position) - prodScore(emp1, position)).splice(0, positions[position]);
       for (const emp of emps) {
         if (emp.pos !== position) {
           await ns.corporation.assignJob(division, city, emp.name, position)
@@ -746,4 +802,18 @@ async function discontinueOldestProduct(ns, division) {
   ns.print("Discontinuing product");
   // Now discontinue once we're done selling
   ns.corporation.discontinueProduct(division, product_names[0]);
+}
+
+/**
+ * Wait until there are no products in development
+ * @param {import("../.").NS} 
+ * @param {*} division The division we're building in
+ */
+async function waitForDevelopment(ns, division) {
+  let product;
+  while ((product = ns.corporation.getDivision(division).products.find(prod => ns.corporation.getProduct(division, prod).developmentProgress < 100))) {
+    ns.print("Waiting 60 seconds until no products are in development...");
+    await ns.sleep(60000);
+  }
+  ns.print(`${product} development complete.`);
 }
