@@ -459,16 +459,21 @@ async function improveCorp(ns, division, city) {
     } else if (ns.corporation.getCorporation().funds > ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE)) {
       ns.print(`${city}: Expanding office size by ${EXPANSION_SIZE}`);
       ns.corporation.upgradeOfficeSize(division, city, EXPANSION_SIZE);
-      await hireAndFill(ns, division, city, EXPANSION_SIZE);
     }
   } else if (ns.corporation.getOffice(division, city).size < (ns.corporation.getOffice(division, PRIME_CITY).size - 60)) {
     // If the other cities are more than 60 behind Aevum, expand them
     if (ns.corporation.getCorporation().funds > ns.corporation.getOfficeSizeUpgradeCost(division, city, EXPANSION_SIZE)) {
       ns.print(`${city}: Expanding office size by ${EXPANSION_SIZE}`);
       ns.corporation.upgradeOfficeSize(division, city, EXPANSION_SIZE);
-      await hireAndFill(ns, division, city, ns.corporation.getOffice(division, city).size);
     }
   }
+  await hireAndFill(ns, division, city, {
+    ...DEFAULT_INDUSTRY_SETTINGS,
+    jobs: {
+      "All": getEvenSpread(ns.corporation.getOffice(division, city).size),
+      PRIME_CITY: getEvenSpread(ns.corporation.getOffice(division, PRIME_CITY).size)
+    }
+  });
 }
 
 /**
@@ -633,7 +638,7 @@ const updateDivision = async (ns, industry, division, settings = DEFAULT_INDUSTR
     }
 
     // Hire more people and assign jobs
-    await hireAndFill(ns, division, city, finalSize, settings);
+    await hireAndFill(ns, division, city, settings);
 
     // Buy warehouse
     if (!ns.corporation.hasWarehouse(division, city)) {
@@ -664,19 +669,20 @@ const updateDivision = async (ns, industry, division, settings = DEFAULT_INDUSTR
  * @param {number} size Number of employees to hire and fill into
  * @param {object} settings Desired settings for spreading employees
  */
-async function hireAndFill(ns, division, city, size, settings = DEFAULT_INDUSTRY_SETTINGS) {
+async function hireAndFill(ns, division, city, settings = DEFAULT_INDUSTRY_SETTINGS) {
+  ns.print(`Hire and fill: ${division}, ${city}`)
   let updateSpread = false;
   // Hire new employees if we need to
-  if (ns.corporation.getOffice(division, city).employees.length < size) {
-    ns.print(`${city}: Hiring up to ${size} employees`);
-    while (ns.corporation.getOffice(division, city).employees.length < size) {
+  if (ns.corporation.getOffice(division, city).employees.length < ns.corporation.getOffice(division, city).size) {
+    ns.print(`${city}: Hiring up to ${ns.corporation.getOffice(division, city).size - ns.corporation.getOffice(division, city).employees.length} employees`);
+    while (ns.corporation.getOffice(division, city).employees.length < ns.corporation.getOffice(division, city).size) {
       ns.corporation.hireEmployee(division, city);
       updateSpread = true;
     }
   }
   // Assign Employees
   // Spread priority is "City" > "All" > {} so we can set individual city assignments
-  if (updateSpread) {
+  if (updateSpread || anyUnassignedEmployees(ns, division, city)) {
     let employees = [
       ...ns.corporation.getOffice(division, city).employees.map(employee => ns.corporation.getEmployee(division, city, employee))
     ];
@@ -687,8 +693,6 @@ async function hireAndFill(ns, division, city, size, settings = DEFAULT_INDUSTRY
         settings.jobs["All"] :
         {}; // Shouldn't happen
     await assignJobs(ns, employees, division, city, jobSpread);
-  } else {
-    ns.print(`${city}: No need to update spread`);
   }
 }
 
@@ -804,7 +808,7 @@ async function discontinueOldestProduct(ns, division) {
 
 /**
  * Wait until there are no products in development
- * @param {import("../.").NS} 
+ * @param {import("../.").NS} ns
  * @param {*} division The division we're building in
  */
 async function waitForDevelopment(ns, division) {
@@ -814,4 +818,15 @@ async function waitForDevelopment(ns, division) {
     await ns.sleep(60000);
   }
   ns.print(`${product} development complete.`);
+}
+
+/**
+ * Return true if any employees in an office are unassigned
+ * @param {import("../.").NS} ns 
+ * @param {string} division 
+ * @param {string} city 
+ * @returns True if any any employees are unassigned
+ */
+function anyUnassignedEmployees(ns, division, city) {
+  return ns.corporation.getOffice(division, city).employees.some(emp => ns.corporation.getEmployee(division, city, emp).pos == "Unassigned")
 }
