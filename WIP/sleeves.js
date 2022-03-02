@@ -1,5 +1,43 @@
+import { checkSForBN } from "utils/script_tools.js";
+import { gamePhase } from "utils/gameplan.js";
+import { CRIMES } from "utils/crimes.js";
+
+/*
+1. In Early game phase during karma grind, sleeves should be performing highest success % crime
+2. Once Homicide is > 33%, only do that
+3. Once gang is formed, they should passively try to hack
+4. If have factions < 150 Favor, work for them (starting with closest rep to favor amount)
+5. If I'm working out a gym or taking a course, do that instead
+*/
+
+const TASK_RECOVERY = "Recovery";
+const TASK_CRIME = "Crime";
+const TASK_GYM = "Gym";
+
+const GYM_POWERHOUSE = "Powerhouse Gym";
+
+const STR_MIN = 100;
+const DEF_MIN = 100;
+const DEX_MIN = 100;
+const AGI_MIN = 100;
+
+const CRIME_HOMICIDE = "Homicide";
+
 /** @param {import("../.").NS} ns **/
 export async function main(ns) {
+    // If we don't have SF10, bail
+    if (!checkSForBN(ns, 10)) return
+    ns.disableLog("ALL");
+    ns.tail();
+    ns.print("** Starting sleeve daemon");
+    while (true) {
+        let numsleeves = ns.sleeve.getNumSleeves();
+        for (let i = 0; i < numsleeves; i++) {
+            sleeveTime(ns, i);
+        }
+        await ns.sleep(30000);
+    }
+
     let numsleeves = ns.sleeve.getNumSleeves();
     for (let i = 0; i < numsleeves; i++) {
         let augs = getUsefulAugs(ns);
@@ -39,3 +77,125 @@ function getUsefulAugs(ns, index) {
     ns.tprint("Total aug length: " + sorted_augs.length);
     return sorted_augs
 }
+
+/**
+ * Get augs that sleeves will care about
+ * @param {import("../.").NS} ns 
+ * @param {number} index Sleeve number
+ */
+function sleeveTime(ns, index) {
+    /*     while (true) {
+            // TODO: Check for Chaos
+            const sleepTime = canWork(ns) ? await workContractOrOp(ns) : rest(ns);
+            output(ns, TERMINAL, `Sleeping for ${ns.tFormat(sleepTime)}`);
+            await ns.sleep(sleepTime);
+            checkSkills(ns);
+        }
+        What a working Sleeve looks like:
+        {"task":"Crime","crime":"Homicide","location":"11250","gymStatType":"","factionWorkType":"None"}
+        Idle sleeve:
+        {"task":"Idle","crime":"","location":"","gymStatType":"","factionWorkType":"None"}
+    }*/
+    let stats = ns.sleeve.getSleeveStats(index);
+    let sleeve_task = ns.sleeve.getTask(index);
+    // Reduce Shock to 97 first
+    if (stats.shock > 97 && (sleeve_task.task != TASK_RECOVERY)) {
+        ns.print(`Sleeve ${index}: Shock is >97, setting to Shock Recovery`);
+        ns.sleeve.setToShockRecovery(index);
+        return
+    }
+    // Am I in a gang yet?
+    if (checkSForBN(ns, 2) && !ns.gang.inGang()) {
+        // Before starting any crimes, we want to get our stats to 100/100/60/60
+        if ((stats.strength < STR_MIN) && (sleeve_task.task != TASK_GYM)) {
+            ns.print(`Sleeve ${index}: Strength is <${STR_MIN}, working out at the gym`);
+            ns.sleeve.setToGymWorkout(index, GYM_POWERHOUSE, "Train Strength");
+            return
+        }
+        if ((stats.defense < DEF_MIN) && (sleeve_task.task != TASK_GYM)) {
+            ns.print(`Sleeve ${index}: Defense is <${DEF_MIN}, working out at the gym`);
+            ns.sleeve.setToGymWorkout(index, GYM_POWERHOUSE, "Train Defense");
+            return
+        }
+        if ((stats.dexterity < DEX_MIN) && (sleeve_task.task != TASK_GYM)) {
+            ns.print(`Sleeve ${index}: Dexterity is <${DEX_MIN}, working out at the gym`);
+            ns.sleeve.setToGymWorkout(index, GYM_POWERHOUSE, "Train Dexterity");
+            return
+        }
+        if ((stats.agility < AGI_MIN) && (sleeve_task.task != TASK_GYM)) {
+            ns.print(`Sleeve ${index}: Agility is <${AGI_MIN}, working out at the gym`);
+            ns.sleeve.setToGymWorkout(index, GYM_POWERHOUSE, "Train Agility");
+            return
+        }
+        // Start committing homicide!
+        if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != CRIME_HOMICIDE)) {
+            ns.print(`Sleeve ${index}: Committing homicide at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(CRIME_HOMICIDE), ns.sleeve.getSleeveStats(index)), '0.00%')}% chance`)
+            ns.sleeve.setToCommitCrime(index, CRIME_HOMICIDE);
+        }
+    }
+    // What do I do after the gang is done?
+}
+
+/**
+ * Get augs that sleeves will care about
+ * @param {import("../.").NS} ns , index
+ * @param {number} index Sleeve number
+ * @returns {string} Name of the best crime to commit
+ */
+function calculateBestSleeveCrime(ns, index) {
+    const best_crime = CRIMES
+        .map(crime => {
+            return {
+                name: crime,
+                chance: getCrimeSuccessChance(ns.getCrimeStats(crime), ns.sleeve.getSleeveStats(index)),
+                karma: ns.getCrimeStats(crime).karma
+            };
+        })
+        .reduce((a, b) => (a.chance > b.chance ? a : b));
+    return best_crime.name
+}
+
+
+/**
+ * Get augs that sleeves will care about
+ * @param {CrimeStats} Crime Generated by ns.getCrimeStats("Mug")
+ * @param {SleeveStats} P Generated by ns.sleeve.getSleeveStats(i)
+ */
+function getCrimeSuccessChance(Crime, P) {
+    let chance =
+        Crime.hacking_success_weight * P.hacking +
+        Crime.strength_success_weight * P.strength +
+        Crime.defense_success_weight * P.defense +
+        Crime.dexterity_success_weight * P.dexterity +
+        Crime.agility_success_weight * P.agility +
+        Crime.charisma_success_weight * P.charisma;
+    chance /= 975; //CONSTANTS.MaxSkillLevel
+    chance /= Crime.difficulty;
+    return chance;
+}
+
+/*
+What crimeStats looks like:
+{
+    "difficulty": 0.2,
+    "karma": 0.25,
+    "kills": 0,
+    "money": 36000,
+    "name": "Mug",
+    "time": 4000,
+    "type": "mug someone",
+    "hacking_success_weight": 0,
+    "strength_success_weight": 1.5,
+    "defense_success_weight": 0.5,
+    "dexterity_success_weight": 1.5,
+    "agility_success_weight": 0.5,
+    "charisma_success_weight": 0,
+    "hacking_exp": 0,
+    "strength_exp": 3,
+    "defense_exp": 3,
+    "dexterity_exp": 3,
+    "agility_exp": 3,
+    "charisma_exp": 0,
+    "intelligence_exp": 0
+}
+*/

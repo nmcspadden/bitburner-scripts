@@ -670,7 +670,6 @@ const updateDivision = async (ns, industry, division, settings = DEFAULT_INDUSTR
  * @param {object} settings Desired settings for spreading employees
  */
 async function hireAndFill(ns, division, city, settings = DEFAULT_INDUSTRY_SETTINGS) {
-  ns.print(`Hire and fill: ${division}, ${city}`)
   let updateSpread = false;
   // Hire new employees if we need to
   if (ns.corporation.getOffice(division, city).employees.length < ns.corporation.getOffice(division, city).size) {
