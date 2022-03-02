@@ -190,7 +190,7 @@ async function buyRedPillNow(ns, faction, red_pill_req) {
 		ns.print("Not enough rep to buy The Red Pill");
 		return
 	}
-	let should_buy = await ns.prompt(`Buy ${TheRedPill} from ${faction}}?`);
+	let should_buy = await ns.prompt(`Buy ${TheRedPill} from ${faction}?`);
 	if (should_buy) {
 		let did_buy = ns.purchaseAugmentation(faction, TheRedPill);
 		if (did_buy) {
@@ -202,6 +202,8 @@ async function buyRedPillNow(ns, faction, red_pill_req) {
 				ns.exit();
 			}
 		}
+	} else {
+		ns.exit();
 	}
 }
 
@@ -243,6 +245,6 @@ async function bribeToBuy(ns, faction, red_pill_req) {
 		if (did_bribe) ns.print("Bribed successfully!");
 	} else if (in_corp) {
 		// Not enough money, but we can wait it out
-		ns.print(`Need: $${numFormat(corp_money_needed)}, corp currently has: $${corp_funds}`);
+		ns.print(`Need: $${numFormat(corp_money_needed)}, corp currently has: $${numFormat(corp_funds)}`);
 	}
 }
