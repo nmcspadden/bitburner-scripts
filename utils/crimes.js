@@ -1,3 +1,5 @@
+import { numFormat } from "utils/format.js";
+
 export const CRIMES = [
 	"heist",
 	"assassination",
@@ -93,13 +95,10 @@ export async function main(ns) {
 		// Only commit specific crimes
 		crimes = flagdata.crimes;
 	}
-	// First, work out a bit to build up stats
-	const MIN_STAT = 30;
-	await workoutAllUntil(ns, MIN_STAT);
 	// Disable the log
 	ns.disableLog("ALL");
-
 	ns.tail(); // Open a window to view the status of the script
+	ns.print("Risk Value = Money Earned * Odds of Success(P(A) / ~P(A)) / Time taken");
 	let timeout = 250; // In ms - too low of a time will result in a lockout/hang
 
 	while (true) {
@@ -126,9 +125,9 @@ export async function main(ns) {
 
 		ns.commitCrime(bestCrime[0]);
 		ns.print(
-			`Crime: ${bestCrime[0]} Risk Value: ${bestCrime[1].toPrecision(3)} Cash to Earn: \$${ns
+			`Crime: ${bestCrime[0]}; Risk Value: ${bestCrime[1].toPrecision(3)}; Cash to Earn: \$${numFormat(ns
 				.getCrimeStats(bestCrime[0])
-				.money.toPrecision(4)}; Current karma: ${ns.heart.break()}`
+				.money)}; Current karma: ${ns.heart.break()}`
 		);
 	}
 }
