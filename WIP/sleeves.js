@@ -101,7 +101,7 @@ function sleeveTime(ns, index) {
     // Reduce Shock to 97 first
     if (stats.shock > 97 && (sleeve_task.task != TASK_RECOVERY)) {
         ns.print(`Sleeve ${index}: Shock is >97, setting to Shock Recovery`);
-        ns.sleeve.setToShockRecovery(index);
+        shockRecovery(ns, index);
         return
     }
     // Am I in a gang yet?
@@ -130,7 +130,7 @@ function sleeveTime(ns, index) {
         // Start committing homicide!
         if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != CRIME_HOMICIDE)) {
             ns.print(`Sleeve ${index}: Committing homicide at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(CRIME_HOMICIDE), readSleeveStats(ns, index)), '0.00%')}% chance`)
-            ns.sleeve.setToCommitCrime(index, CRIME_HOMICIDE);
+            commitSleeveCrime(ns, index, CRIME_HOMICIDE);
         }
     }
     // What do I do after the gang is done?
@@ -195,10 +195,19 @@ function readSleeveTask(ns, index) {
 
 /* Sleeve actions */
 function workOutAtGym(ns, index, gym, stat) {
-	if (!Number.isInteger(index)) return {}
+	if (!Number.isInteger(index)) return false
     return ns.exec('sleeves/workout.js', HOME, 1, index, gym, stat);
 }
 
+function commitSleeveCrime(ns, index, crime) {
+	if (!Number.isInteger(index)) return false
+    return ns.exec('sleeves/commitCrime.js', HOME, 1, index, crime);
+}
+
+function shockRecovery(ns, index) {
+	if (!Number.isInteger(index)) return false
+    return ns.exec('sleeves/shockRecovery.js', HOME, 1, index);
+}
 /*
 What crimeStats looks like:
 {
