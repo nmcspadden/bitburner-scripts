@@ -96,8 +96,8 @@ function sleeveTime(ns, index) {
         Idle sleeve:
         {"task":"Idle","crime":"","location":"","gymStatType":"","factionWorkType":"None"}
     }*/
-    let stats = readSleeveStats(index);
-    let sleeve_task = ns.sleeve.readSleeveTask(index);
+    let stats = readSleeveStats(ns, index);
+    let sleeve_task = readSleeveTask(ns, index);
     // Reduce Shock to 97 first
     if (stats.shock > 97 && (sleeve_task.task != TASK_RECOVERY)) {
         ns.print(`Sleeve ${index}: Shock is >97, setting to Shock Recovery`);
@@ -109,27 +109,27 @@ function sleeveTime(ns, index) {
         // Before starting any crimes, we want to get our stats to 100/100/60/60
         if ((stats.strength < STR_MIN) && (sleeve_task.task != TASK_GYM)) {
             ns.print(`Sleeve ${index}: Strength is <${STR_MIN}, working out at the gym`);
-            ns.sleeve.setToGymWorkout(index, GYM_POWERHOUSE, "Train Strength");
+            workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Strength");
             return
         }
         if ((stats.defense < DEF_MIN) && (sleeve_task.task != TASK_GYM)) {
             ns.print(`Sleeve ${index}: Defense is <${DEF_MIN}, working out at the gym`);
-            ns.sleeve.setToGymWorkout(index, GYM_POWERHOUSE, "Train Defense");
+            workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Defense");
             return
         }
         if ((stats.dexterity < DEX_MIN) && (sleeve_task.task != TASK_GYM)) {
             ns.print(`Sleeve ${index}: Dexterity is <${DEX_MIN}, working out at the gym`);
-            ns.sleeve.setToGymWorkout(index, GYM_POWERHOUSE, "Train Dexterity");
+            workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Dexterity");
             return
         }
         if ((stats.agility < AGI_MIN) && (sleeve_task.task != TASK_GYM)) {
             ns.print(`Sleeve ${index}: Agility is <${AGI_MIN}, working out at the gym`);
-            ns.sleeve.setToGymWorkout(index, GYM_POWERHOUSE, "Train Agility");
+            workOutAtGymt(ns, index, GYM_POWERHOUSE, "Train Agility");
             return
         }
         // Start committing homicide!
         if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != CRIME_HOMICIDE)) {
-            ns.print(`Sleeve ${index}: Committing homicide at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(CRIME_HOMICIDE), readSleeveStats(index)), '0.00%')}% chance`)
+            ns.print(`Sleeve ${index}: Committing homicide at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(CRIME_HOMICIDE), readSleeveStats(ns, index)), '0.00%')}% chance`)
             ns.sleeve.setToCommitCrime(index, CRIME_HOMICIDE);
         }
     }
@@ -147,7 +147,7 @@ function calculateBestSleeveCrime(ns, index) {
         .map(crime => {
             return {
                 name: crime,
-                chance: getCrimeSuccessChance(ns.getCrimeStats(crime),readSleeveStats(index)),
+                chance: getCrimeSuccessChance(ns.getCrimeStats(crime),readSleeveStats(ns, index)),
                 karma: ns.getCrimeStats(crime).karma
             };
         })
@@ -174,6 +174,7 @@ function getCrimeSuccessChance(Crime, P) {
     return chance;
 }
 
+/* Retrieve data about sleeves */
 function readNumSleeves(ns) {
 	let data = ns.read(FILE_NUM_SLEEVES);
 	if (!data) return -1
@@ -191,6 +192,13 @@ function readSleeveTask(ns, index) {
     ns.exec('sleeves/getTask.js', HOME, 1, index);
 	return JSON.parse(ns.read(FILE_SLEEVE_TASK(index)));
 }
+
+/* Sleeve actions */
+function workOutAtGym(ns, index, gym, stat) {
+	if (!Number.isInteger(index)) return {}
+    return ns.exec('sleeves/workout.js', HOME, 1, index, gym, stat);
+}
+
 /*
 What crimeStats looks like:
 {
