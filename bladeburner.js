@@ -279,13 +279,21 @@ export async function handleBladeburner(ns) {
 export async function main(ns) {
     const flagdata = ns.flags([
         ["quiet", false],
-        ["tail", false]
+        ["tail", false],
+        ["daemon", false]
     ])
     TERMINAL = !(flagdata.quiet || flagdata.tail);
     // Don't print to terminal or otherwise make any log messages
     if (!TERMINAL) ns.disableLog("ALL")
     // Only open a tail window if we want it
     if (flagdata.tail) ns.tail()
+    if (flagdata.daemon) {
+        // In Daemon mode, we wait for it.
+        while (!ns.bladeburner.joinBladeburnerDivision()) {
+            ns.print("Not yet able to join Bladeburner. Sleeping for 60 seconds...");
+            await ns.sleep(60000);
+        }
+    }
     if (!ns.bladeburner.joinBladeburnerDivision()) {
         ns.print("Not in bladeburner; exiting.");
         return
