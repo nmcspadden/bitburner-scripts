@@ -134,6 +134,13 @@ function sleeveTime(ns, index) {
         }
     }
     // What do I do after the gang is done?
+    // Crimes!
+    let best_crime = calculateBestSleeveCrime(ns, index);
+    // Start committing homicide!
+    if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != best_crime)) {
+        ns.print(`Sleeve ${index}: Committing ${best_crime} at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(best_crime), readSleeveStats(ns, index)), '0.00%')}% chance`)
+        commitSleeveCrime(ns, index, best_crime);
+    }
 }
 
 /**
@@ -147,7 +154,7 @@ function calculateBestSleeveCrime(ns, index) {
         .map(crime => {
             return {
                 name: crime,
-                chance: getCrimeSuccessChance(ns.getCrimeStats(crime),readSleeveStats(ns, index)),
+                chance: getCrimeSuccessChance(ns.getCrimeStats(crime), readSleeveStats(ns, index)),
                 karma: ns.getCrimeStats(crime).karma
             };
         })
@@ -176,36 +183,36 @@ function getCrimeSuccessChance(Crime, P) {
 
 /* Retrieve data about sleeves */
 function readNumSleeves(ns) {
-	let data = ns.read(FILE_NUM_SLEEVES);
-	if (!data) return -1
-	return Number(ns.read(FILE_NUM_SLEEVES));
+    let data = ns.read(FILE_NUM_SLEEVES);
+    if (!data) return -1
+    return Number(ns.read(FILE_NUM_SLEEVES));
 }
 
 function readSleeveStats(ns, index) {
-	if (!Number.isInteger(index)) return {}
+    if (!Number.isInteger(index)) return {}
     ns.exec('sleeves/getStats.js', HOME, 1, index);
-	return JSON.parse(ns.read(FILE_SLEEVE_STATS(index)));
+    return JSON.parse(ns.read(FILE_SLEEVE_STATS(index)));
 }
 
 function readSleeveTask(ns, index) {
-	if (!Number.isInteger(index)) return {}
+    if (!Number.isInteger(index)) return {}
     ns.exec('sleeves/getTask.js', HOME, 1, index);
-	return JSON.parse(ns.read(FILE_SLEEVE_TASK(index)));
+    return JSON.parse(ns.read(FILE_SLEEVE_TASK(index)));
 }
 
 /* Sleeve actions */
 function workOutAtGym(ns, index, gym, stat) {
-	if (!Number.isInteger(index)) return false
+    if (!Number.isInteger(index)) return false
     return ns.exec('sleeves/workout.js', HOME, 1, index, gym, stat);
 }
 
 function commitSleeveCrime(ns, index, crime) {
-	if (!Number.isInteger(index)) return false
+    if (!Number.isInteger(index)) return false
     return ns.exec('sleeves/commitCrime.js', HOME, 1, index, crime);
 }
 
 function shockRecovery(ns, index) {
-	if (!Number.isInteger(index)) return false
+    if (!Number.isInteger(index)) return false
     return ns.exec('sleeves/shockRecovery.js', HOME, 1, index);
 }
 /*
