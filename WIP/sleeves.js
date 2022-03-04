@@ -10,6 +10,9 @@ import { CRIMES } from "utils/crimes.js";
 5. If I'm working out a gym or taking a course, do that instead
 */
 
+export const FILE_NUM_SLEEVES = "/sleeves/results/NumSleeves.txt";
+export const FILE_SLEEVE_STATS = (index) => `/sleeves/results/Sleeve${index}-stats.txt`;
+
 const TASK_RECOVERY = "Recovery";
 const TASK_CRIME = "Crime";
 const TASK_GYM = "Gym";
@@ -84,13 +87,7 @@ function getUsefulAugs(ns, index) {
  * @param {number} index Sleeve number
  */
 function sleeveTime(ns, index) {
-    /*     while (true) {
-            // TODO: Check for Chaos
-            const sleepTime = canWork(ns) ? await workContractOrOp(ns) : rest(ns);
-            output(ns, TERMINAL, `Sleeping for ${ns.tFormat(sleepTime)}`);
-            await ns.sleep(sleepTime);
-            checkSkills(ns);
-        }
+    /*
         What a working Sleeve looks like:
         {"task":"Crime","crime":"Homicide","location":"11250","gymStatType":"","factionWorkType":"None"}
         Idle sleeve:
@@ -174,6 +171,17 @@ function getCrimeSuccessChance(Crime, P) {
     return chance;
 }
 
+function readNumSleeves(ns) {
+	let data = ns.read(FILE_NUM_SLEEVES);
+	if (!data) return -1
+	return Number(ns.read(FILE_NUM_SLEEVES));
+}
+
+function readSleeveStats(ns, index) {
+	if (!Number.isInteger(index)) return {}
+	ns.tprint(FILE_SLEEVE_STATS(index));
+	return JSON.parse(ns.read(FILE_SLEEVE_STATS(index)));
+}
 /*
 What crimeStats looks like:
 {
