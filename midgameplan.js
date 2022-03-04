@@ -54,9 +54,13 @@ async function buyAugmentLoop(ns, aug_map) {
 	let augs_to_buy = [].concat(
 		await listPreferredAugs(ns, aug_map, "combat", false),
 		await listPreferredAugs(ns, aug_map, "hack", false),
-		await listPreferredAugs(ns, aug_map, "bladeburners", false),
 		await listPreferredAugs(ns, aug_map, "faction", false),
 	);
+	if (ns.bladeburner.joinBladeburnerDivision()) {
+		augs_to_buy = augs_to_buy.concat(
+			await listPreferredAugs(ns, aug_map, "bladeburners", false)
+		)
+	}
 	let original_aug_length = augs_to_buy.length;
 	let purchased_augs = 0;
 	await outputLog(ns, MID_LOG, `There are ${original_aug_length} augs to purchase`);
@@ -126,7 +130,7 @@ async function setUpGame(ns) {
 	// Make sure gangs is running
 	if (!isProcessRunning(ns, HOME, "gangs.js")) {
 		await outputLog(ns, MID_LOG, "Starting gangs script...");
-		ns.exec("gangs.js", HOME);
+		ns.exec("gangs.js", HOME, 1, "--quiet");
 	}
 	// Try to buy more darkweb programs
 	ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
