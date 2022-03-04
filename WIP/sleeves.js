@@ -1,4 +1,4 @@
-import { checkSForBN } from "utils/script_tools.js";
+import { checkSForBN, HOME } from "utils/script_tools.js";
 import { gamePhase } from "utils/gameplan.js";
 import { CRIMES } from "utils/crimes.js";
 
@@ -12,6 +12,7 @@ import { CRIMES } from "utils/crimes.js";
 
 export const FILE_NUM_SLEEVES = "/sleeves/results/NumSleeves.txt";
 export const FILE_SLEEVE_STATS = (index) => `/sleeves/results/Sleeve${index}-stats.txt`;
+export const FILE_SLEEVE_TASK = (index) => `/sleeves/results/Sleeve${index}-task.txt`;
 
 const TASK_RECOVERY = "Recovery";
 const TASK_CRIME = "Crime";
@@ -33,53 +34,55 @@ export async function main(ns) {
     ns.disableLog("ALL");
     ns.tail();
     ns.print("** Starting sleeve daemon");
+    // Map out the number of sleeves we have
+    ns.exec('sleeves/getNumSleeves.js', HOME);
+    let numsleeves = readNumSleeves(ns);
     while (true) {
-        let numsleeves = ns.sleeve.getNumSleeves();
         for (let i = 0; i < numsleeves; i++) {
             sleeveTime(ns, i);
         }
         await ns.sleep(30000);
     }
 
-    let numsleeves = ns.sleeve.getNumSleeves();
-    for (let i = 0; i < numsleeves; i++) {
-        let augs = getUsefulAugs(ns);
-        for (const aug of augs) {
-            let money = ns.getServerMoneyAvailable("home");
-            ns.tprint("Aug: " + aug.name + " Cost: " + aug.cost);
-            if (money > aug["cost"]) {
-                let did_buy = ns.sleeve.purchaseSleeveAug(0, aug["name"]);
-                if (did_buy) ns.tprint(`Buying ${aug["name"]} for ${aug["cost"]}`);
-            }
-        }
-    }
+    // let numsleeves = ns.sleeve.getNumSleeves();
+    // for (let i = 0; i < numsleeves; i++) {
+    //     let augs = getUsefulAugs(ns);
+    //     for (const aug of augs) {
+    //         let money = ns.getServerMoneyAvailable("home");
+    //         ns.tprint("Aug: " + aug.name + " Cost: " + aug.cost);
+    //         if (money > aug["cost"]) {
+    //             let did_buy = ns.sleeve.purchaseSleeveAug(0, aug["name"]);
+    //             if (did_buy) ns.tprint(`Buying ${aug["name"]} for ${aug["cost"]}`);
+    //         }
+    //     }
+    // }
 }
 
 /**
  * Get augs that sleeves will care about
  * @param {import("../.").NS} ns 
  */
-function getUsefulAugs(ns, index) {
-    ns.tprint("Getting all sleeve augs");
-    let augs_to_buy = ns.sleeve.getSleevePurchasableAugs(index);
-    // There are some augs that are just useless on sleeves, like Red Pill and hacknet augs
-    ns.tprint("Total aug length: " + augs_to_buy.length);
-    ns.tprint(augs_to_buy);
-    ns.tprint("Sorting sleeves");
-    let sorted_augs = augs_to_buy.
-        filter(aug => !(
-            aug["name"].includes("Hacknet") ||
-            aug["name"].includes("Pill") ||
-            aug["name"].includes("Neuroreceptor Management") ||
-            aug["name"].includes("CashRoot"))
-        ).
-        sort(
-            (a, b) => a["cost"] - b["cost"]
-        ).reverse();
-    ns.tprint(sorted_augs);
-    ns.tprint("Total aug length: " + sorted_augs.length);
-    return sorted_augs
-}
+// function getUsefulAugs(ns, index) {
+//     ns.tprint("Getting all sleeve augs");
+//     let augs_to_buy = ns.sleeve.getSleevePurchasableAugs(index);
+//     // There are some augs that are just useless on sleeves, like Red Pill and hacknet augs
+//     ns.tprint("Total aug length: " + augs_to_buy.length);
+//     ns.tprint(augs_to_buy);
+//     ns.tprint("Sorting sleeves");
+//     let sorted_augs = augs_to_buy.
+//         filter(aug => !(
+//             aug["name"].includes("Hacknet") ||
+//             aug["name"].includes("Pill") ||
+//             aug["name"].includes("Neuroreceptor Management") ||
+//             aug["name"].includes("CashRoot"))
+//         ).
+//         sort(
+//             (a, b) => a["cost"] - b["cost"]
+//         ).reverse();
+//     ns.tprint(sorted_augs);
+//     ns.tprint("Total aug length: " + sorted_augs.length);
+//     return sorted_augs
+// }
 
 /**
  * Get augs that sleeves will care about
@@ -93,8 +96,8 @@ function sleeveTime(ns, index) {
         Idle sleeve:
         {"task":"Idle","crime":"","location":"","gymStatType":"","factionWorkType":"None"}
     }*/
-    let stats = ns.sleeve.getSleeveStats(index);
-    let sleeve_task = ns.sleeve.getTask(index);
+    let stats = readSleeveStats(index);
+    let sleeve_task = ns.sleeve.readSleeveTask(index);
     // Reduce Shock to 97 first
     if (stats.shock > 97 && (sleeve_task.task != TASK_RECOVERY)) {
         ns.print(`Sleeve ${index}: Shock is >97, setting to Shock Recovery`);
@@ -126,7 +129,7 @@ function sleeveTime(ns, index) {
         }
         // Start committing homicide!
         if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != CRIME_HOMICIDE)) {
-            ns.print(`Sleeve ${index}: Committing homicide at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(CRIME_HOMICIDE), ns.sleeve.getSleeveStats(index)), '0.00%')}% chance`)
+            ns.print(`Sleeve ${index}: Committing homicide at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(CRIME_HOMICIDE), readSleeveStats(index)), '0.00%')}% chance`)
             ns.sleeve.setToCommitCrime(index, CRIME_HOMICIDE);
         }
     }
@@ -144,7 +147,7 @@ function calculateBestSleeveCrime(ns, index) {
         .map(crime => {
             return {
                 name: crime,
-                chance: getCrimeSuccessChance(ns.getCrimeStats(crime), ns.sleeve.getSleeveStats(index)),
+                chance: getCrimeSuccessChance(ns.getCrimeStats(crime),readSleeveStats(index)),
                 karma: ns.getCrimeStats(crime).karma
             };
         })
@@ -179,8 +182,14 @@ function readNumSleeves(ns) {
 
 function readSleeveStats(ns, index) {
 	if (!Number.isInteger(index)) return {}
-	ns.tprint(FILE_SLEEVE_STATS(index));
+    ns.exec('sleeves/getStats.js', HOME, 1, index);
 	return JSON.parse(ns.read(FILE_SLEEVE_STATS(index)));
+}
+
+function readSleeveTask(ns, index) {
+	if (!Number.isInteger(index)) return {}
+    ns.exec('sleeves/getTask.js', HOME, 1, index);
+	return JSON.parse(ns.read(FILE_SLEEVE_TASK(index)));
 }
 /*
 What crimeStats looks like:
