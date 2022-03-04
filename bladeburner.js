@@ -286,7 +286,9 @@ export async function main(ns) {
     if (!TERMINAL) ns.disableLog("ALL")
     // Only open a tail window if we want it
     if (flagdata.tail) ns.tail()
-    // TODO: add in safety check to make sure we're part of Bladeburner
-    // and/or have minimum stats to join it
+    if (!ns.bladeburner.joinBladeburnerDivision()) {
+        ns.print("Not in bladeburner; exiting.");
+        return
+    }
     await handleBladeburner(ns);
 }
