@@ -128,7 +128,6 @@ const DEFAULT_INDUSTRY_SETTINGS = {
 /** @param {import("../.").NS}  ns **/
 export async function main(ns) {
   ns.disableLog('sleep');
-  ns.tail();
   ns.print('*** Starting Corporation Management');
   let player;
   let should_self_fund = true
@@ -144,14 +143,16 @@ export async function main(ns) {
         ns.print("Created our corporation, now bootstrapping!");
       }
     } else {
+      ns.tail();
       await bootstrapCorp(ns);
     }
     ns.print("Waiting for enough money to bootstrap a corporation...");
-    await ns.sleep(30000);
+    await ns.sleep(300000);
   }
   // Now the corp loop
   // We are making the assumption right now that we're only developing Tobacco
   while (true) {
+    ns.tail();
     await corpLoop(ns, SECOND_INDUSTRY);
   }
 }
