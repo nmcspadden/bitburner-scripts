@@ -83,7 +83,6 @@ export function findMatchingProcess(ns, host, script, args = []) {
 */
 export async function checkSForBN(ns, source) {
 	let current_bn = ns.getPlayer().bitNodeN;
-	let sf = await checkSourceFile(ns, source);
 	return ((source == current_bn) || await checkSourceFile(ns, source));
 }
 
@@ -96,7 +95,6 @@ export async function checkSourceFile(ns, source) {
 	// Output looks sorta like this:
 	// [{"n":1,"lvl":3},{"n":4,"lvl":3},{"n":2,"lvl":1},{"n":5,"lvl":1},{"n":6,"lvl":1}]
 	let sfmap = await readSourceFilesMap(ns);
-	// ns.tprint(JSON.stringify(sfmap, null, 2));
 	return sfmap.some(file => file["n"] == Number(source))
 }
 
