@@ -131,7 +131,8 @@ export async function main(ns) {
   ns.print('*** Starting Corporation Management');
   let player;
   let should_self_fund = true
-  if (checkSForBN(3)) should_self_fund = false;
+  if (ns.getPlayer().bitNodeN == 3) should_self_fund = false;
+  ns.print(should_self_fund);
   // Either I don't have a corp, or it isn't public yet
   while (
     !((player = ns.getPlayer()).hasCorporation) ||
@@ -141,6 +142,8 @@ export async function main(ns) {
       if (should_self_fund && player.money > 150e9) {
         ns.corporation.createCorporation(CORP_NAME, should_self_fund);
         ns.print("Created our corporation, now bootstrapping!");
+        ns.tail();
+        await bootstrapCorp(ns);  
       }
     } else {
       ns.tail();
@@ -376,7 +379,7 @@ export async function bootstrapCorp(ns) {
   // Dump the rest of our funds into AdVert
   ns.print("Spending the rest of the funds on AdVert");
   while (ns.corporation.getHireAdVertCost(SECOND_DIVISION) < ns.corporation.getCorporation().funds) {
-    ns.print(`Hiring AdVert for ${numFormat(advert_cost)}`);
+    ns.print(`Hiring AdVert for ${numFormat(ns.corporation.getHireAdVertCost(SECOND_DIVISION))}`);
     ns.corporation.hireAdVert(division);
   }
   // Get 3 products out there
