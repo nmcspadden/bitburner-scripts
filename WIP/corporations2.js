@@ -380,7 +380,7 @@ export async function bootstrapCorp(ns) {
   ns.print("Spending the rest of the funds on AdVert");
   while (ns.corporation.getHireAdVertCost(SECOND_DIVISION) < ns.corporation.getCorporation().funds) {
     ns.print(`Hiring AdVert for ${numFormat(ns.corporation.getHireAdVertCost(SECOND_DIVISION))}`);
-    ns.corporation.hireAdVert(division);
+    ns.corporation.hireAdVert(SECOND_DIVISION);
   }
   // Get 3 products out there
   ns.print("Executing main corp loop until we have 3 products");
