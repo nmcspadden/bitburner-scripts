@@ -408,9 +408,9 @@ export async function bootstrapCorp(ns) {
   // Loop the main corp loop until we can afford Market.TA1+2
   ns.print("Beginning corporation loop until we have purchased Market-TA.1 + 2...")
   while (
-    !ns.corporation.hasResearched(division, HIGH_TECH_LAB) &&
-    !ns.corporation.hasResearched(division, MARKET_TA1) &&
-    !ns.corporation.hasResearched(division, MARKET_TA2)
+    !ns.corporation.hasResearched(SECOND_DIVISION, HIGH_TECH_LAB) &&
+    !ns.corporation.hasResearched(SECOND_DIVISION, MARKET_TA1) &&
+    !ns.corporation.hasResearched(SECOND_DIVISION, MARKET_TA2)
   ) {
     await corpLoop(ns, SECOND_INDUSTRY);
   }
