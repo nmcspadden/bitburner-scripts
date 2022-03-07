@@ -38,7 +38,7 @@ export function upgradeHome(ns) {
 **/
 export function growHackingXP(ns) {
 	// Run this to 75% of total RAM
-	maximizeScriptUse(ns, HACKSCRIPT, HOME, 75);
+	maximizeScriptUse(ns, 'growHackingXP.js', HOME, 75);
 }
 
 /** 
