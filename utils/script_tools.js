@@ -39,7 +39,7 @@ export function maxThreads(ns, script, host, threshold = 100) {
 }
 
 /** Look for a matching script on any host's process list
- * @param {NS} ns 
+ * @param {import("../.").NS} ns 
  * @param {string} host Name of server to execute on
  * @param {string} script Name of script to search for
  * @param {array} args List of args to also validate; if the only value of this is "*" then match any args
@@ -58,7 +58,7 @@ export function isProcessRunning(ns, host, script, args = []) {
 }
 
 /** Find a matching script on any host's process list
- * @param {NS} ns 
+ * @param {import("../.").NS} ns 
  * @param {string} host Name of server to execute on
  * @param {string} script Name of script to search for
  * @param {array} args List of args to also validate; if the only value of this is "*" then match any args
@@ -77,7 +77,7 @@ export function findMatchingProcess(ns, host, script, args = []) {
 }
 
 /** Check to see if we're in a BN or own its source file
- * @param {NS} ns 
+ * @param {import("../.").NS} ns 
  * @param {number} source Source to file to check for validation of
  * @returns True if we own the source file or are in that bitnode
 */
@@ -87,7 +87,7 @@ export async function checkSForBN(ns, source) {
 }
 
 /** Check to see if we own a source file
- * @param {NS} ns 
+ * @param {import("../.").NS} ns 
  * @param {number} source Source to file to check for validation of
  * @returns True if we own the source file
 */
@@ -99,14 +99,14 @@ export async function checkSourceFile(ns, source) {
 }
 
 /** Check all source files and write to disk
- * @param {NS} ns 
+ * @param {import("../.").NS} ns 
 */
 export async function mapSourceFiles(ns) {
 	await ns.write(SF_MAP, JSON.stringify(ns.getOwnedSourceFiles(), null, 2), "w");
 }
 
 /** Read written source file map
- * @param {NS} ns 
+ * @param {import("../.").NS} ns 
  * @returns Object equivalent to ns.getOwnedSourceFiles() output
 */
 export async function readSourceFilesMap(ns) {
@@ -129,7 +129,7 @@ export function compareArrays(array1, array2) {
 
 /** 
  * Write a message to print + log
- * @param {import(".").NS} ns 
+ * @param {import("../.").NS} ns 
  * @param {string} logfile File to append to
  * @param {string} msg Message to write
 **/
@@ -140,10 +140,27 @@ export async function outputLog(ns, logfile, msg) {
 
 /** 
  * Write a message to either print or terminal
- * @param {import(".").NS} ns 
+ * @param {import("../.").NS} ns 
  * @param {boolean} terminal If true, output to terminal; otherwise print to log
  * @param {string} msg Message to write
 **/
 export function output(ns, terminal = true, msg) {
 	terminal ? ns.tprint(msg) : ns.print(msg)
+}
+
+/** 
+ * Write a message to either print or terminal
+ * @param {import("../.").NS} ns 
+ * @param {Number} pid Process pid to watch
+ * @param {Number} retries Number of times to try (default 1000);
+**/
+export async function waitForPid(ns, pid, retries = 1000) {
+	ns.disableLog("sleep");
+    // Wait for the PID to stop running (cheaper than e.g. deleting (rm) a possibly pre-existing file and waiting for it to be recreated)
+    for (var retries = 0; retries < 1000; retries++) {
+        if (!ns.isRunning(pid)) break; // Script is done running
+        // if (verbose && retries % 100 === 0) ns.print(`Waiting for pid ${pid} to complete... (${retries})`);
+        await ns.sleep(10);
+    }
+	ns.enableLog("sleep");
 }

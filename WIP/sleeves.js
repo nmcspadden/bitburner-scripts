@@ -1,4 +1,4 @@
-import { checkSForBN, HOME } from "utils/script_tools.js";
+import { checkSForBN, HOME, waitForPid } from "utils/script_tools.js";
 import { gamePhase } from "utils/gameplan.js";
 import { CRIMES } from "utils/crimes.js";
 
@@ -40,7 +40,7 @@ export async function main(ns) {
     ns.print(`We have ${numsleeves} sleeves`);
     while (numsleeves > 0) {
         for (let i = 0; i < numsleeves; i++) {
-            sleeveTime(ns, i);
+            await sleeveTime(ns, i);
         }
         await ns.sleep(30000);
     }
@@ -90,15 +90,17 @@ export async function main(ns) {
  * @param {import("../.").NS} ns 
  * @param {number} index Sleeve number
  */
-function sleeveTime(ns, index) {
+async function sleeveTime(ns, index) {
     /*
         What a working Sleeve looks like:
         {"task":"Crime","crime":"Homicide","location":"11250","gymStatType":"","factionWorkType":"None"}
         Idle sleeve:
         {"task":"Idle","crime":"","location":"","gymStatType":"","factionWorkType":"None"}
     }*/
-    let stats = readSleeveStats(ns, index);
-    let sleeve_task = readSleeveTask(ns, index);
+    ns.print(`Sleeve ${index}: Reading stats`);
+    let stats = await readSleeveStats(ns, index);
+    ns.print(`Sleeve ${index}: Checking current task`);
+    let sleeve_task = await readSleeveTask(ns, index);
     // Reduce Shock to 97 first
     if (stats.shock > 97 && (sleeve_task.task != TASK_RECOVERY)) {
         ns.print(`Sleeve ${index}: Shock is >97, setting to Shock Recovery`);
@@ -130,18 +132,19 @@ function sleeveTime(ns, index) {
         }
         // Start committing homicide!
         if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != CRIME_HOMICIDE)) {
-            ns.print(`Sleeve ${index}: Committing homicide at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(CRIME_HOMICIDE), readSleeveStats(ns, index)), '0.00%')}% chance`)
+            // ns.print(`Sleeve ${index}: Committing homicide at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(CRIME_HOMICIDE), readSleeveStats(ns, index)), '0.00%')}% chance`)
+            ns.print(`Sleeve ${index}: Committing homicide`);
             commitSleeveCrime(ns, index, CRIME_HOMICIDE);
         }
     }
     // What do I do after the gang is done?
     // Crimes!
-    let best_crime = calculateBestSleeveCrime(ns, index);
-    // Start committing homicide!
-    if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != best_crime)) {
-        ns.print(`Sleeve ${index}: Committing ${best_crime} at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(best_crime), readSleeveStats(ns, index)), '0.00%')}% chance`)
-        commitSleeveCrime(ns, index, best_crime);
-    }
+    // let best_crime = calculateBestSleeveCrime(ns, index);
+    // // Start committing homicide!
+    // if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != best_crime)) {
+    //     ns.print(`Sleeve ${index}: Committing ${best_crime} at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(best_crime), readSleeveStats(ns, index)), '0.00%')}% chance`)
+    //     commitSleeveCrime(ns, index, best_crime);
+    // }
 }
 
 /**
@@ -150,18 +153,18 @@ function sleeveTime(ns, index) {
  * @param {number} index Sleeve number
  * @returns {string} Name of the best crime to commit
  */
-function calculateBestSleeveCrime(ns, index) {
-    const best_crime = CRIMES
-        .map(crime => {
-            return {
-                name: crime,
-                chance: getCrimeSuccessChance(ns.getCrimeStats(crime), readSleeveStats(ns, index)),
-                karma: ns.getCrimeStats(crime).karma
-            };
-        })
-        .reduce((a, b) => (a.chance > b.chance ? a : b));
-    return best_crime.name
-}
+// function calculateBestSleeveCrime(ns, index) {
+//     const best_crime = CRIMES
+//         .map(crime => {
+//             return {
+//                 name: crime,
+//                 chance: getCrimeSuccessChance(ns.getCrimeStats(crime), readSleeveStats(ns, index)),
+//                 karma: ns.getCrimeStats(crime).karma
+//             };
+//         })
+//         .reduce((a, b) => (a.chance > b.chance ? a : b));
+//     return best_crime.name
+// }
 
 
 /**
@@ -183,21 +186,37 @@ function getCrimeSuccessChance(Crime, P) {
 }
 
 /* Retrieve data about sleeves */
+/**
+ * Get the number of sleeves
+ * @param {import("../.").NS} ns
+ */
 function readNumSleeves(ns) {
     let data = ns.read(FILE_NUM_SLEEVES);
     if (!data) return -1
     return Number(ns.read(FILE_NUM_SLEEVES));
 }
 
-function readSleeveStats(ns, index) {
+/**
+ * Get sleeve stats
+ * @param {import("../.").NS} ns
+ * @param {Number} index Index of sleeve
+ */
+async function readSleeveStats(ns, index) {
     if (!Number.isInteger(index)) return {}
-    ns.exec('sleeves/getStats.js', HOME, 1, index);
+    let pid = ns.exec('sleeves/getStats.js', HOME, 1, index);
+    await waitForPid(ns, pid);
     return JSON.parse(ns.read(FILE_SLEEVE_STATS(index)));
 }
 
-function readSleeveTask(ns, index) {
+/**
+ * Get sleeve stats
+ * @param {import("../.").NS} ns
+ * @param {Number} index Index of sleeve
+ */
+async function readSleeveTask(ns, index) {
     if (!Number.isInteger(index)) return {}
-    ns.exec('sleeves/getTask.js', HOME, 1, index);
+    let pid = ns.exec('sleeves/getTask.js', HOME, 1, index);
+    await waitForPid(ns, pid);
     return JSON.parse(ns.read(FILE_SLEEVE_TASK(index)));
 }
 
