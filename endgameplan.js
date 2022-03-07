@@ -145,10 +145,11 @@ async function hackThePlanet(ns) {
 		ns.connect(step);
 	}
 	ns.print("Checking to see if we have the required hacking level...");
+	growHackingXP(ns);
 	while (ns.getPlayer().hacking < ns.getServerRequiredHackingLevel(WORLD)) {
 		// Wait for our hacking level to increase more
-		growHackingXP(ns);
-		await ns.sleep(1000);
+		ns.print("Waiting 10 seconds for hacking levl to increase...");
+		await ns.sleep(10000);
 	}
 	while (!ns.hasRootAccess(WORLD)) {
 		// Try to buy more darkweb programs

@@ -37,13 +37,6 @@ export function upgradeHome(ns) {
  * @param {import("../.").NS} ns
 **/
 export function growHackingXP(ns) {
-	let HACKSCRIPT;
-	if (ns.getHackingLevel() <= 300) {
-		HACKSCRIPT = "growHackingXP.js";
-	} else {
-		// TODO: Figure out which server to hack
-		HACKSCRIPT = "basicHack.js";
-	}
 	// Run this to 75% of total RAM
 	maximizeScriptUse(ns, HACKSCRIPT, HOME, 75);
 }
