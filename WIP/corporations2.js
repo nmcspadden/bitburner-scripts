@@ -132,7 +132,6 @@ export async function main(ns) {
   let player;
   let should_self_fund = true
   if (ns.getPlayer().bitNodeN == 3) should_self_fund = false;
-  ns.print(should_self_fund);
   // Either I don't have a corp, or it isn't public yet
   while (
     !((player = ns.getPlayer()).hasCorporation) ||
@@ -154,6 +153,7 @@ export async function main(ns) {
   }
   // Now the corp loop
   // We are making the assumption right now that we're only developing Tobacco
+  ns.print("We are public, managing the corporation...");
   while (true) {
     ns.tail();
     await corpLoop(ns, SECOND_INDUSTRY);
