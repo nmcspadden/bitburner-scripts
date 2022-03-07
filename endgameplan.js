@@ -139,11 +139,6 @@ async function hackThePlanet(ns) {
 		ns.print("The World daemon was not calculated correctly :(");
 		ns.exit();
 	}
-	ns.print(`Path to ${WORLD}: ${daemon_path.join(" -> ")}`);
-	for (const step of daemon_path) {
-		// ns.print("Connecting to: " + step)
-		ns.connect(step);
-	}
 	ns.print("Checking to see if we have the required hacking level...");
 	growHackingXP(ns);
 	while (ns.getPlayer().hacking < ns.getServerRequiredHackingLevel(WORLD)) {
@@ -156,6 +151,11 @@ async function hackThePlanet(ns) {
 		ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
 		ns.exec("utils/networkmap.js", HOME);
 		await ns.sleep(1000);
+	}
+	ns.print(`Path to ${WORLD}: ${daemon_path.join(" -> ")}`);
+	for (const step of daemon_path) {
+		// ns.print("Connecting to: " + step)
+		ns.connect(step);
 	}
 	let should_end_bitnode = await ns.prompt(`Backdoor the ${WORLD} and end the bitnode?`);
 	if (should_end_bitnode) {
