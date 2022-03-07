@@ -111,10 +111,10 @@ export async function mapSourceFiles(ns) {
 */
 export async function readSourceFilesMap(ns) {
 	const SF_MAP_LOCAL = SF_MAP + ".txt";
-	// If we don't have a source file map yet, make one
-	if (ns.ls('home', SF_MAP_LOCAL).length == 0) {
-		await mapSourceFiles(ns);
-	}
+	// // If we don't have a source file map yet, make one
+	// if (ns.ls('home', SF_MAP_LOCAL).length == 0) {
+	// 	await mapSourceFiles(ns);
+	// }
 	return JSON.parse(ns.read(SF_MAP_LOCAL));
 }
 

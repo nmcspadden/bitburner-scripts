@@ -37,7 +37,8 @@ export async function main(ns) {
     // Map out the number of sleeves we have
     ns.exec('sleeves/getNumSleeves.js', HOME);
     let numsleeves = readNumSleeves(ns);
-    while (true) {
+    ns.print(`We have ${numsleeves} sleeves`);
+    while (numsleeves > 0) {
         for (let i = 0; i < numsleeves; i++) {
             sleeveTime(ns, i);
         }
@@ -124,7 +125,7 @@ function sleeveTime(ns, index) {
         }
         if ((stats.agility < AGI_MIN) && (sleeve_task.task != TASK_GYM)) {
             ns.print(`Sleeve ${index}: Agility is <${AGI_MIN}, working out at the gym`);
-            workOutAtGymt(ns, index, GYM_POWERHOUSE, "Train Agility");
+            workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Agility");
             return
         }
         // Start committing homicide!

@@ -31,6 +31,9 @@ export async function main(ns) {
     // Create network map
     ns.tprint("Creating network map");
     ns.exec("utils/networkmap.js", HOME);
+    // Check if we have any sleeves
+    ns.tprint("Checking for sleeves...");
+    ns.exec("sleeves/getNumSleeves.js", HOME);
     // We start at 32 GB RAM
     if (home_ram <= 32) {
         ns.tprint("Starting game plan");
