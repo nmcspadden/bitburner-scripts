@@ -148,7 +148,7 @@ async function hackThePlanet(ns) {
 	growHackingXP(ns);
 	while (ns.getPlayer().hacking < ns.getServerRequiredHackingLevel(WORLD)) {
 		// Wait for our hacking level to increase more
-		ns.print("Waiting 10 seconds for hacking levl to increase...");
+		ns.print("Waiting 10 seconds for hacking level to increase...");
 		await ns.sleep(10000);
 	}
 	while (!ns.hasRootAccess(WORLD)) {
