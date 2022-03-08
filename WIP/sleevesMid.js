@@ -160,7 +160,7 @@ function calculateBestSleeveCrime(ns, index) {
                 name: crime,
                 chance: getCrimeSuccessChance(ns.getCrimeStats(crime), readSleeveStats(ns, index)),
                 karma: ns.getCrimeStats(crime).karma,
-                monkey: ns.getCrimeStats(crime).money
+                money: ns.getCrimeStats(crime).money
             };
         })
         // To only filter by chance:
