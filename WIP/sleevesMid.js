@@ -137,6 +137,9 @@ function sleeveTime(ns, index) {
         ns.print(`Sleeve ${index}: Sync level is at ${ns.nFormat(stats.sync/100, '0.00%')}%, still synchronizing`)
         return
     }
+    // Do we have a faction with NF, but we don't currently have enough rep to buy it?
+    // If so, let's work for that faction.
+    // TODO: Add in 'pick NF faction' logic
     // Otherwise, commit a crime to make money
     let best_crime = calculateBestSleeveCrime(ns, index);
     // Start committing crimes!

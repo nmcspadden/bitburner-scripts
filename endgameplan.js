@@ -4,6 +4,7 @@ import { locateServer } from "utils/networkmap.js";
 import { outputLog, isProcessRunning, HOME } from "utils/script_tools.js";
 import { growHackingXP } from "utils/gameplan.js";
 import { numFormat } from "utils/format.js";
+import { hasStockAccess } from "stocks";
 
 /**
  * End-Gameplan
@@ -57,6 +58,11 @@ async function setUpGame(ns) {
 		await outputLog(ns, END_LOG, "Running network mapping daemon...");
 		ns.exec("utils/networkmap.js", HOME, 1, "--daemon");
 	}
+	// Active sleeves, if we have any
+	if (!isProcessRunning(ns, HOME, "sleevesMid.js")) {
+		await logprint(ns, "Activating sleeves, if we have any");
+		ns.exec('WIP/sleevesMid.js', HOME);
+	}
 	// Make sure gangs is running
 	if (!isProcessRunning(ns, HOME, "gangs.js")) {
 		await logprint(ns, "Starting gangs script...");
@@ -79,6 +85,11 @@ async function setUpGame(ns) {
 	// Evaluate hacking scripts again
 	await logprint(ns, "Re-evaluating hacking scripts");
 	growHackingXP(ns);
+	// Stonks?
+	if (!isProcessRunning(ns, HOME, "stocks.js") && hasStockAccess(ns)) {
+		await logprint(ns, "Running Stocks script");
+		ns.exec("stocks.js", HOME);
+	}
 	await logprint(ns, "Sleeping for 10 seconds");
 	await ns.sleep(10000);
 }
