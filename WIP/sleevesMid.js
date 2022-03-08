@@ -140,7 +140,7 @@ function sleeveTime(ns, index) {
     // Otherwise, commit a crime to make money
     let best_crime = calculateBestSleeveCrime(ns, index);
     // Start committing crimes!
-    if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != best_crime)) {
+    if ((sleeve_task.task != TASK_CRIME) || (sleeve_task.crime != best_crime)) {
         ns.print(`Sleeve ${index}: Committing ${best_crime} at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(best_crime), readSleeveStats(ns, index)), '0.00%')}% chance`)
         commitSleeveCrime(ns, index, best_crime);
         return
@@ -164,20 +164,20 @@ function calculateBestSleeveCrime(ns, index) {
             };
         })
         // To only filter by chance:
-        // .reduce((a, b) => (a.chance > b.chance ? a : b));
+        .reduce((a, b) => (a.chance > b.chance ? a : b));
         // To filter by both chance + money:
-        .reduce(
-            (a, b) => {
-                let real_a_chance = 0;
-                let real_b_chance = 0;
-                if (a.chance > 100) real_a_chance = 100
-                if (b.chance > 100) real_b_chance = 100
-                if (real_a_chance > real_b_chance) return a
-                // If they have the same chance, return whichever gives more money
-                if (a.money > b.money) return a
-                return b
-            }
-        )
+        // .reduce(
+        //     (a, b) => {
+        //         let real_a_chance = 0;
+        //         let real_b_chance = 0;
+        //         if (a.chance > 100) real_a_chance = 100
+        //         if (b.chance > 100) real_b_chance = 100
+        //         if (real_a_chance > real_b_chance) return a
+        //         // If they have the same chance, return whichever gives more money
+        //         if (a.money > b.money) return a
+        //         return b
+        //     }
+        // )
     return best_crime.name
 }
 
