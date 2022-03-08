@@ -130,7 +130,7 @@ async function setUpGame(ns) {
 	// Active sleeves, if we have any
 	if (!isProcessRunning(ns, HOME, "sleevesMid.js")) {
 		await outputLog(ns, MID_LOG, "Activating sleeves, if we have any");
-		ns.exec('sleevesMid.js', HOME);
+		ns.exec('WIP/sleevesMid.js', HOME);
 	}
 	// Make sure gangs is running
 	if (!isProcessRunning(ns, HOME, "gangs.js")) {
