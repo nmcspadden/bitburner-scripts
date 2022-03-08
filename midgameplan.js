@@ -26,6 +26,7 @@ import { hasStockAccess } from "stocks";
 */
 
 export const MID_LOG = "midgameplan.log.txt";
+const BB = "Bladeburners";
 
 /** @param {import(".").NS} ns **/
 export async function main(ns) {
@@ -194,7 +195,7 @@ async function isCheapestAugReasonable(ns, auglist, aug_map) {
                 repreq: aug_map[aug].repreq,
             };
         })
-		.filter(aug => !aug_map[aug.name].factions.includes("Bladeburner"))
+		.filter(aug => !aug_map[aug.name].factions.includes(BB))
         .reduce((a, b) => (a.cost < b.cost ? a : b))
 	ns.print("Cheapest aug " + cheapest_aug.name + " costs " + ns.nFormat(cheapest_aug.cost, '$0.00a'));
 	// If the cheapest aug is > 1 trillion, it's probably time to reset
