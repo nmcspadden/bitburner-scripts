@@ -197,6 +197,7 @@ async function isCheapestAugReasonable(ns, auglist, aug_map) {
         })
 		.filter(aug => !aug_map[aug.name].factions.includes(BB))
         .reduce((a, b) => (a.cost < b.cost ? a : b))
+	if (!cheapest_aug) return
 	ns.print("Cheapest aug " + cheapest_aug.name + " costs " + ns.nFormat(cheapest_aug.cost, '$0.00a'));
 	// If the cheapest aug is > 1 trillion, it's probably time to reset
 	// Except Q-Link, that shit's 25t to start with
