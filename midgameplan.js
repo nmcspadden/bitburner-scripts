@@ -127,6 +127,11 @@ async function setUpGame(ns) {
 		await outputLog(ns, MID_LOG, "Running network mapping daemon...");
 		ns.exec("utils/networkmap.js", HOME, 1, "--daemon");
 	}
+	// Active sleeves, if we have any
+	if (!isProcessRunning(ns, HOME, "sleevesMid.js")) {
+		await outputLog(ns, MID_LOG, "Activating sleeves, if we have any");
+		ns.exec('sleevesMid.js', HOME);
+	}
 	// Make sure gangs is running
 	if (!isProcessRunning(ns, HOME, "gangs.js")) {
 		await outputLog(ns, MID_LOG, "Starting gangs script...");
