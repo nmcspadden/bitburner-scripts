@@ -1,6 +1,5 @@
 import { workoutAllUntil, commitKarmaFocusedCrime } from "utils/crimes.js";
 import { outputLog, HOME } from "utils/script_tools.js";
-import { upgradeHome } from "utils/gameplan.js";
 
 /**
  * Starting game plan (32 GB only)
@@ -18,6 +17,8 @@ export async function main(ns) {
 	ns.toast("Starting beginning game plan!", "info", null);
 	ns.disableLog("ALL"); // Disable the log
 	ns.tail(); // Open a window to view the status of the script
+	await outputLog(ns, START_LOG, "Activating sleeves, if we have any");
+	ns.exec('sleeves.js', HOME);
 	await outputLog(ns, START_LOG, "Beginning workout");
 	await workoutAllUntil(ns, MIN_STAT);
 	await outputLog(ns, START_LOG, "Committing crimes while upgrading loop");
@@ -36,7 +37,7 @@ async function crimeWhileUpgradingLoop(ns) {
 		await ns.sleep(timeout); // Wait it out first
 		if (ns.isBusy()) continue;
 		// See if we can upgrade our home
-		upgradeHome(ns);
+		ns.exec('upgradeHome.js', HOME);
 		// Otherwise, commit crime!
 		commitKarmaFocusedCrime(ns);
 	}
