@@ -1,13 +1,9 @@
 import { checkSForBN, HOME, waitForPid } from "utils/script_tools.js";
-import { gamePhase } from "utils/gameplan.js";
-import { CRIMES } from "utils/crimes.js";
 
 /*
-1. In Early game phase during karma grind, sleeves should be performing highest success % crime
-2. Once Homicide is > 33%, only do that
-3. Once gang is formed, they should passively try to hack
-4. If have factions < 150 Favor, work for them (starting with closest rep to favor amount)
-5. If I'm working out a gym or taking a course, do that instead
+1. In Early game phase during karma grind, sleeves should work out
+2. Once stats are good enough, start committing homicide until the gang grind is done
+3. After that, we switch to sleevesMid.js
 */
 
 export const FILE_NUM_SLEEVES = "/sleeves/results/NumSleeves.txt";
@@ -38,55 +34,17 @@ export async function main(ns) {
     ns.exec('sleeves/getNumSleeves.js', HOME);
     let numsleeves = readNumSleeves(ns);
     ns.print(`We have ${numsleeves} sleeves`);
-    while (numsleeves > 0) {
+    while ((numsleeves > 0) && (ns.getServerMaxRam(HOME) <= 32)) {
         for (let i = 0; i < numsleeves; i++) {
             await sleeveTime(ns, i);
         }
         await ns.sleep(30000);
     }
-
-    // let numsleeves = ns.sleeve.getNumSleeves();
-    // for (let i = 0; i < numsleeves; i++) {
-    //     let augs = getUsefulAugs(ns);
-    //     for (const aug of augs) {
-    //         let money = ns.getServerMoneyAvailable("home");
-    //         ns.tprint("Aug: " + aug.name + " Cost: " + aug.cost);
-    //         if (money > aug["cost"]) {
-    //             let did_buy = ns.sleeve.purchaseSleeveAug(0, aug["name"]);
-    //             if (did_buy) ns.tprint(`Buying ${aug["name"]} for ${aug["cost"]}`);
-    //         }
-    //     }
-    // }
+    ns.print("We now have >32GB RAM, switch to SleevesMid.js");
 }
 
 /**
- * Get augs that sleeves will care about
- * @param {import("../.").NS} ns 
- */
-// function getUsefulAugs(ns, index) {
-//     ns.tprint("Getting all sleeve augs");
-//     let augs_to_buy = ns.sleeve.getSleevePurchasableAugs(index);
-//     // There are some augs that are just useless on sleeves, like Red Pill and hacknet augs
-//     ns.tprint("Total aug length: " + augs_to_buy.length);
-//     ns.tprint(augs_to_buy);
-//     ns.tprint("Sorting sleeves");
-//     let sorted_augs = augs_to_buy.
-//         filter(aug => !(
-//             aug["name"].includes("Hacknet") ||
-//             aug["name"].includes("Pill") ||
-//             aug["name"].includes("Neuroreceptor Management") ||
-//             aug["name"].includes("CashRoot"))
-//         ).
-//         sort(
-//             (a, b) => a["cost"] - b["cost"]
-//         ).reverse();
-//     ns.tprint(sorted_augs);
-//     ns.tprint("Total aug length: " + sorted_augs.length);
-//     return sorted_augs
-// }
-
-/**
- * Get augs that sleeves will care about
+ * Handle a sleeve's activity
  * @param {import("../.").NS} ns 
  * @param {number} index Sleeve number
  */
@@ -97,9 +55,7 @@ async function sleeveTime(ns, index) {
         Idle sleeve:
         {"task":"Idle","crime":"","location":"","gymStatType":"","factionWorkType":"None"}
     }*/
-    ns.print(`Sleeve ${index}: Reading stats`);
     let stats = await readSleeveStats(ns, index);
-    ns.print(`Sleeve ${index}: Checking current task`);
     let sleeve_task = await readSleeveTask(ns, index);
     // Reduce Shock to 97 first
     if (stats.shock > 97 && (sleeve_task.task != TASK_RECOVERY)) {
@@ -132,57 +88,12 @@ async function sleeveTime(ns, index) {
         }
         // Start committing homicide!
         if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != CRIME_HOMICIDE)) {
-            // ns.print(`Sleeve ${index}: Committing homicide at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(CRIME_HOMICIDE), readSleeveStats(ns, index)), '0.00%')}% chance`)
             ns.print(`Sleeve ${index}: Committing homicide`);
             commitSleeveCrime(ns, index, CRIME_HOMICIDE);
         }
     }
-    // What do I do after the gang is done?
-    // Crimes!
-    // let best_crime = calculateBestSleeveCrime(ns, index);
-    // // Start committing homicide!
-    // if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != best_crime)) {
-    //     ns.print(`Sleeve ${index}: Committing ${best_crime} at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(best_crime), readSleeveStats(ns, index)), '0.00%')}% chance`)
-    //     commitSleeveCrime(ns, index, best_crime);
-    // }
-}
-
-/**
- * Get augs that sleeves will care about
- * @param {import("../.").NS} ns , index
- * @param {number} index Sleeve number
- * @returns {string} Name of the best crime to commit
- */
-// function calculateBestSleeveCrime(ns, index) {
-//     const best_crime = CRIMES
-//         .map(crime => {
-//             return {
-//                 name: crime,
-//                 chance: getCrimeSuccessChance(ns.getCrimeStats(crime), readSleeveStats(ns, index)),
-//                 karma: ns.getCrimeStats(crime).karma
-//             };
-//         })
-//         .reduce((a, b) => (a.chance > b.chance ? a : b));
-//     return best_crime.name
-// }
-
-
-/**
- * Get augs that sleeves will care about
- * @param {CrimeStats} Crime Generated by ns.getCrimeStats("Mug")
- * @param {SleeveStats} P Generated by ns.sleeve.getSleeveStats(i)
- */
-function getCrimeSuccessChance(Crime, P) {
-    let chance =
-        Crime.hacking_success_weight * P.hacking +
-        Crime.strength_success_weight * P.strength +
-        Crime.defense_success_weight * P.defense +
-        Crime.dexterity_success_weight * P.dexterity +
-        Crime.agility_success_weight * P.agility +
-        Crime.charisma_success_weight * P.charisma;
-    chance /= 975; //CONSTANTS.MaxSkillLevel
-    chance /= Crime.difficulty;
-    return chance;
+    // Now switch to sleevesMid.js
+    // ns.spawn('sleevesMid.js', 1);
 }
 
 /* Retrieve data about sleeves */
