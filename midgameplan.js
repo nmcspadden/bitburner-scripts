@@ -203,7 +203,7 @@ async function isCheapestAugReasonable(ns, auglist, aug_map) {
 		(cheapest_aug != "QLink") && 
 		(cheapest_aug.cost >= 1e12) && 
 		(ns.getServerMoneyAvailable(HOME) < cheapest_aug.cost) &&
-		ns.getOwnedAugmentations(true).length > 0
+		(ns.getOwnedAugmentations(true).length - ns.getOwnedAugmentations(false).length) > 0
 	) {
 		ns.print("The cheapest aug costs more than $1t, and isn't QLink. You should reset.");
 		let should_reset = await ns.prompt("Install augmentations and reset?");
