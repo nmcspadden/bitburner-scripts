@@ -17,6 +17,7 @@ export const FILE_SLEEVE_TASK = (index) => `/sleeves/results/Sleeve${index}-task
 const TASK_RECOVERY = "Recovery";
 const TASK_CRIME = "Crime";
 const TASK_GYM = "Gym";
+const TASK_SYNC = "Synchro";
 
 const GYM_POWERHOUSE = "Powerhouse Gym";
 
@@ -39,10 +40,10 @@ export async function main(ns) {
     let numsleeves = readNumSleeves(ns);
     ns.print(`We have ${numsleeves} sleeves`);
     while (numsleeves > 0) {
-        ns.print("Evaluating sleeve activity");
         for (let i = 0; i < numsleeves; i++) {
             sleeveTime(ns, i);
         }
+        ns.print("Re-evaluating in 60 seconds...");
         await ns.sleep(60000);
     }
 }
@@ -124,14 +125,25 @@ function sleeveTime(ns, index) {
             // ns.print(`Sleeve ${index}: Committing homicide at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(CRIME_HOMICIDE), readSleeveStats(ns, index)), '0.00%')}% chance`)
             ns.print(`Sleeve ${index}: Committing homicide`);
             commitSleeveCrime(ns, index, CRIME_HOMICIDE);
+            return
         }
     }
-    // What do I do after the gang is done?
+    // If the gang is done, and I'm under 100 sync, let's fix that first
+    if (stats.sync < 100 && sleeve_task.task != TASK_SYNC) {
+        ns.print(`Sleeve ${index}: Sync level is at ${ns.nFormat(stats.sync/100, '0.00%')}%, setting to synchronize`)
+        ns.sleeve.setToSynchronize(index);
+        return
+    } else if (stats.sync < 100) {
+        ns.print(`Sleeve ${index}: Sync level is at ${ns.nFormat(stats.sync/100, '0.00%')}%, still synchronizing`)
+        return
+    }
+    // Otherwise, commit a crime to make money
     let best_crime = calculateBestSleeveCrime(ns, index);
     // Start committing crimes!
     if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != best_crime)) {
         ns.print(`Sleeve ${index}: Committing ${best_crime} at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(best_crime), readSleeveStats(ns, index)), '0.00%')}% chance`)
         commitSleeveCrime(ns, index, best_crime);
+        return
     }
 }
 
@@ -270,5 +282,17 @@ What crimeStats looks like:
     "agility_exp": 3,
     "charisma_exp": 0,
     "intelligence_exp": 0
+}
+
+What Sleeve Stats looks like:
+{
+    "shock": 0,
+    "sync": 77.96386375382257,
+    "hacking": 1,
+    "strength": 100,
+    "defense": 116,
+    "dexterity": 90,
+    "agility": 90,
+    "charisma": 1
 }
 */
