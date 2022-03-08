@@ -51,7 +51,7 @@ export function commitKarmaFocusedCrime(ns) {
 	let homicide_chance = ns.getCrimeChance(HOMICIDE);
 	if (homicide_chance <= 0.7) {
 		ns.commitCrime(MUG);
-		ns.print(`Homicide chance: ${ns.nFormat(homicide_chance, '0.00%')}, mugging people instead.`)
+		ns.print(`Homicide chance: ${ns.nFormat(homicide_chance, '0.00%')}, mugging people instead; Current karma: ${ns.heart.break()}`)
 	} else {
 		ns.commitCrime(HOMICIDE);
 		ns.print(`Committing homicide at ${ns.nFormat(homicide_chance, '0.00%')}; Current karma: ${ns.heart.break()}`);
