@@ -87,7 +87,7 @@ async function buyAugmentLoop(ns, aug_map) {
 		await outputLog(ns, MID_LOG, "Evaluating NeuroFlux Governor upgrades");
 		await handleNeuroflux(ns);
 		// Now check: is the next cheapest aug simply too expensive? If so, we should install and reset
-		await isCheapestAugReasonable(ns, augs_to_buy);
+		await isCheapestAugReasonable(ns, augs_to_buy, aug_map);
 		// See if we can upgrade our home
 		ns.print("Looking at home upgrades...");
 		home_stats = upgradeHome(ns);
@@ -166,28 +166,45 @@ async function setUpGame(ns) {
 }
 
 /**
- * Main loop where we buy augs and do things
+ * Determine if the cheapest aug is reasonably attainable, or prompt for reset
  * @param {import(".").NS} ns 
  * @param {array} auglist List of augs to buy
  * @param {*} aug_map Map of objects from buildAugMap()
  */
-async function isCheapestAugReasonable(ns, auglist) {
-	let sortable_augs = {};
-	for (const aug of auglist) {
-		// Skip augs I already own/have pending
-		if (ns.getOwnedAugmentations(true).includes(aug)) continue
-		sortable_augs[aug] = ns.getAugmentationPrice(aug);
-	}
-	let sorted_list = Object.fromEntries(
-		Object.entries(sortable_augs).sort(
-			([, a], [, b]) => a["cost"] - b["cost"]
-		).reverse()
-	)
-	let cheapest_aug = Object.keys(sorted_list)[0];
-	ns.print("Cheapest aug " + cheapest_aug + " costs " + ns.nFormat(sorted_list[cheapest_aug], '$0.00a'));
+async function isCheapestAugReasonable(ns, auglist, aug_map) {
+	// let sortable_augs = {};
+	// for (const aug of auglist) {
+	// 	// Skip augs I already own/have pending
+	// 	if (ns.getOwnedAugmentations(true).includes(aug)) continue
+	// 	sortable_augs[aug] = ns.getAugmentationPrice(aug);
+	// }
+	// let sorted_list = Object.fromEntries(
+	// 	Object.entries(sortable_augs).sort(
+	// 		([, a], [, b]) => a["cost"] - b["cost"]
+	// 	).reverse()
+	// )
+	// let cheapest_aug = Object.keys(sorted_list)[0];
+	// Find the cheapest non-Bladeburner aug
+	// We specifically exclude BB because the faction rep is dependent on BB actions
+    const cheapest_aug = auglist
+        .map(aug => {
+            return {
+                name: aug,
+                cost: aug_map[aug].cost,
+                repreq: aug_map[aug].repreq,
+            };
+        })
+		.filter(aug => !aug_map[aug.name].factions.includes("Bladeburner"))
+        .reduce((a, b) => (a.cost > b.cost ? a : b))
+	ns.print("Cheapest aug " + cheapest_aug.name + " costs " + ns.nFormat(cheapest_aug.cost, '$0.00a'));
 	// If the cheapest aug is > 1 trillion, it's probably time to reset
 	// Except Q-Link, that shit's 25t to start with
-	if ((cheapest_aug != "QLink") && (sorted_list[cheapest_aug] >= 1000000000000) && (ns.getServerMoneyAvailable(HOME) < sorted_list[cheapest_aug])) {
+	if (
+		(cheapest_aug != "QLink") && 
+		(cheapest_aug.cost >= 1e12) && 
+		(ns.getServerMoneyAvailable(HOME) < cheapest_aug.cost) &&
+		ns.getOwnedAugmentations(true).length > 0
+	) {
 		ns.print("The cheapest aug costs more than $1t, and isn't QLink. You should reset.");
 		let should_reset = await ns.prompt("Install augmentations and reset?");
 		if (should_reset) ns.installAugmentations('starter.js');
