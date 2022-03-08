@@ -63,37 +63,34 @@ async function sleeveTime(ns, index) {
         shockRecovery(ns, index);
         return
     }
-    // Am I in a gang yet?
-    if (checkSForBN(ns, 2) && !ns.gang.inGang()) {
-        // Before starting any crimes, we want to get our stats to 100/100/60/60
-        if ((stats.strength < STR_MIN) && (sleeve_task.task != TASK_GYM)) {
-            ns.print(`Sleeve ${index}: Strength is <${STR_MIN}, working out at the gym`);
-            workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Strength");
-            return
-        }
-        if ((stats.defense < DEF_MIN) && (sleeve_task.task != TASK_GYM)) {
-            ns.print(`Sleeve ${index}: Defense is <${DEF_MIN}, working out at the gym`);
-            workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Defense");
-            return
-        }
-        if ((stats.dexterity < DEX_MIN) && (sleeve_task.task != TASK_GYM)) {
-            ns.print(`Sleeve ${index}: Dexterity is <${DEX_MIN}, working out at the gym`);
-            workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Dexterity");
-            return
-        }
-        if ((stats.agility < AGI_MIN) && (sleeve_task.task != TASK_GYM)) {
-            ns.print(`Sleeve ${index}: Agility is <${AGI_MIN}, working out at the gym`);
-            workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Agility");
-            return
-        }
-        // Start committing homicide!
-        if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != CRIME_HOMICIDE)) {
-            ns.print(`Sleeve ${index}: Committing homicide`);
-            commitSleeveCrime(ns, index, CRIME_HOMICIDE);
-        }
+    // Before starting any crimes, we want to get our stats to 100/100/60/60
+    if ((stats.strength < STR_MIN) && (sleeve_task.task != TASK_GYM)) {
+        ns.print(`Sleeve ${index}: Strength is <${STR_MIN}, working out at the gym`);
+        workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Strength");
+        return
+    }
+    if ((stats.defense < DEF_MIN) && (sleeve_task.task != TASK_GYM)) {
+        ns.print(`Sleeve ${index}: Defense is <${DEF_MIN}, working out at the gym`);
+        workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Defense");
+        return
+    }
+    if ((stats.dexterity < DEX_MIN) && (sleeve_task.task != TASK_GYM)) {
+        ns.print(`Sleeve ${index}: Dexterity is <${DEX_MIN}, working out at the gym`);
+        workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Dexterity");
+        return
+    }
+    if ((stats.agility < AGI_MIN) && (sleeve_task.task != TASK_GYM)) {
+        ns.print(`Sleeve ${index}: Agility is <${AGI_MIN}, working out at the gym`);
+        workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Agility");
+        return
+    }
+    // Start committing homicide!
+    if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != CRIME_HOMICIDE)) {
+        ns.print(`Sleeve ${index}: Committing homicide`);
+        commitSleeveCrime(ns, index, CRIME_HOMICIDE);
     }
     // Now switch to sleevesMid.js
-    // ns.spawn('sleevesMid.js', 1);
+    ns.print("Early game sleeve work is done; switch to SleevesMid.js");
 }
 
 /* Retrieve data about sleeves */
