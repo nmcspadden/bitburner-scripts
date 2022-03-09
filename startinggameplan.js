@@ -34,11 +34,12 @@ export async function main(ns) {
 async function crimeWhileUpgradingLoop(ns) {
 	let timeout = 250; // In ms - too low of a time will result in a lockout/hang
 	while (ns.getServerMaxRam(HOME) <= 32) {
-		await ns.sleep(timeout); // Wait it out first
 		if (ns.isBusy()) continue;
+		ns.exec('sleeves.js', HOME);	
 		// See if we can upgrade our home
 		ns.exec('upgradeHome.js', HOME);
 		// Otherwise, commit crime!
-		commitKarmaFocusedCrime(ns);
+		timeout = commitKarmaFocusedCrime(ns);
+		await ns.sleep(timeout); // Wait it out first
 	}
 }

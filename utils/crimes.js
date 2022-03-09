@@ -43,6 +43,7 @@ export async function workoutAllUntil(ns, level) {
 /** 
  * Commit a single crime to get us closer to Gang Karma levels
  * @param {import("../.").NS} ns
+ * @returns {Number} ms required to commit the crime
 **/
 export function commitKarmaFocusedCrime(ns) {
 	const HOMICIDE = "homicide";
@@ -50,11 +51,11 @@ export function commitKarmaFocusedCrime(ns) {
 	// Calculate crime success chance of homicide
 	let homicide_chance = ns.getCrimeChance(HOMICIDE);
 	if (homicide_chance <= 0.7) {
-		ns.commitCrime(MUG);
 		ns.print(`Homicide chance: ${ns.nFormat(homicide_chance, '0.00%')}, mugging people instead; Current karma: ${ns.heart.break()}`)
+		return ns.commitCrime(MUG);
 	} else {
-		ns.commitCrime(HOMICIDE);
 		ns.print(`Committing homicide at ${ns.nFormat(homicide_chance, '0.00%')}; Current karma: ${ns.heart.break()}`);
+		return ns.commitCrime(HOMICIDE);
 	}
 }
 
