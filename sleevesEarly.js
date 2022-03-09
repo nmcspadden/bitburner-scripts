@@ -3,7 +3,7 @@ import { checkSForBN, HOME, waitForPid } from "utils/script_tools.js";
 /*
 1. In Early game phase during karma grind, sleeves should work out
 2. Once stats are good enough, start committing homicide until the gang grind is done
-3. After that, we switch to sleevesMid.js
+3. After that, we switch to sleeves.js
 */
 
 export const FILE_NUM_SLEEVES = "/sleeves/results/NumSleeves.txt";
@@ -23,7 +23,7 @@ const AGI_MIN = 100;
 
 const CRIME_HOMICIDE = "Homicide";
 
-/** @param {import("../.").NS} ns **/
+/** @param {import("..").NS} ns **/
 export async function main(ns) {
     // If we don't have SF10, bail
     if (!checkSForBN(ns, 10)) return
@@ -45,7 +45,7 @@ export async function main(ns) {
 
 /**
  * Handle a sleeve's activity
- * @param {import("../.").NS} ns 
+ * @param {import("..").NS} ns 
  * @param {number} index Sleeve number
  */
 async function sleeveTime(ns, index) {
@@ -89,14 +89,14 @@ async function sleeveTime(ns, index) {
         ns.print(`Sleeve ${index}: Committing homicide`);
         commitSleeveCrime(ns, index, CRIME_HOMICIDE);
     }
-    // Now switch to sleevesMid.js
+    // Now switch to sleeves.js
     ns.print("Early game sleeve work is done; switch to SleevesMid.js");
 }
 
 /* Retrieve data about sleeves */
 /**
  * Get the number of sleeves
- * @param {import("../.").NS} ns
+ * @param {import("..").NS} ns
  */
 function readNumSleeves(ns) {
     let data = ns.read(FILE_NUM_SLEEVES);
@@ -106,7 +106,7 @@ function readNumSleeves(ns) {
 
 /**
  * Get sleeve stats
- * @param {import("../.").NS} ns
+ * @param {import("..").NS} ns
  * @param {Number} index Index of sleeve
  */
 async function readSleeveStats(ns, index) {
@@ -118,7 +118,7 @@ async function readSleeveStats(ns, index) {
 
 /**
  * Get sleeve stats
- * @param {import("../.").NS} ns
+ * @param {import("..").NS} ns
  * @param {Number} index Index of sleeve
  */
 async function readSleeveTask(ns, index) {

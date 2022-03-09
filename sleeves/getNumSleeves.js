@@ -1,9 +1,9 @@
 /* 
-This is meant to be run by the sleeves.js orchestrator.
+This is meant to be run by the sleevesEarly.js orchestrator.
 It writes the number of sleeves to disk.
 */
 
-import { FILE_NUM_SLEEVES } from "WIP/sleeves.js";
+import { FILE_NUM_SLEEVES } from "sleevesEarly.js";
 
 /** @param {import("../.").NS} ns **/
 export async function main(ns) {

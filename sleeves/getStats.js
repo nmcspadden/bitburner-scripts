@@ -1,9 +1,9 @@
 /* 
-This is meant to be run by the sleeves.js orchestrator.
+This is meant to be run by the sleevesEarly.js orchestrator.
 It takes a sleeve index # as its only argument, and then writes the sleeve stats to disk.
 */
 
-import { FILE_SLEEVE_STATS } from "WIP/sleeves.js";
+import { FILE_SLEEVE_STATS } from "sleevesEarly.js";
 
 /** @param {import("../.").NS} ns **/
 export async function main(ns) {

@@ -1,5 +1,5 @@
 /* 
-This is meant to be run by the sleeves.js orchestrator.
+This is meant to be run by the sleevesEarly.js orchestrator.
 Takes: Sleeve Index, crime to commit.
 Does: Starts committing a crime.
 */

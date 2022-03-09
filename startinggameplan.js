@@ -18,7 +18,7 @@ export async function main(ns) {
 	ns.disableLog("ALL"); // Disable the log
 	ns.tail(); // Open a window to view the status of the script
 	await outputLog(ns, START_LOG, "Activating sleeves, if we have any");
-	ns.exec('sleeves.js', HOME);
+	ns.exec('sleevesEarly.js', HOME);
 	await outputLog(ns, START_LOG, "Beginning workout");
 	await workoutAllUntil(ns, MIN_STAT);
 	await outputLog(ns, START_LOG, "Committing crimes while upgrading loop");
@@ -35,7 +35,7 @@ async function crimeWhileUpgradingLoop(ns) {
 	let timeout = 250; // In ms - too low of a time will result in a lockout/hang
 	while (ns.getServerMaxRam(HOME) <= 32) {
 		if (ns.isBusy()) continue;
-		ns.exec('sleeves.js', HOME);	
+		ns.exec('sleevesEarly.js', HOME);	
 		// See if we can upgrade our home
 		ns.exec('upgradeHome.js', HOME);
 		// Otherwise, commit crime!

@@ -1,5 +1,5 @@
 /* 
-This is meant to be run by the sleeves.js orchestrator.
+This is meant to be run by the sleevesEarly.js orchestrator.
 Takes: Sleeve Index, Gym, Stat to train.
 Does: Start training that stat at gym.
 */

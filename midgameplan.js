@@ -129,9 +129,9 @@ async function setUpGame(ns) {
 		ns.exec("utils/networkmap.js", HOME, 1, "--daemon");
 	}
 	// Active sleeves, if we have any
-	if (!isProcessRunning(ns, HOME, "sleevesMid.js")) {
+	if (!isProcessRunning(ns, HOME, "sleeves.js")) {
 		await outputLog(ns, MID_LOG, "Activating sleeves, if we have any");
-		ns.exec('WIP/sleevesMid.js', HOME);
+		ns.exec('sleeves.js', HOME);
 	}
 	// Make sure gangs is running
 	if (!isProcessRunning(ns, HOME, "gangs.js")) {
