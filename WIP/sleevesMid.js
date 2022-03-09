@@ -143,7 +143,7 @@ function sleeveTime(ns, index) {
     // Otherwise, commit a crime to make money
     let best_crime = calculateBestSleeveCrime(ns, index);
     // Start committing crimes!
-    if ((sleeve_task.task != TASK_CRIME) || (sleeve_task.crime != best_crime)) {
+    if ((sleeve_task.task != TASK_CRIME) || (sleeve_task.crime.toLowerCase() != best_crime.toLowerCase())) {
         ns.print(`Sleeve ${index}: Committing ${best_crime} at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(best_crime), readSleeveStats(ns, index)), '0.00%')}% chance`)
         commitSleeveCrime(ns, index, best_crime);
         return
