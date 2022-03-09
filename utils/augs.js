@@ -178,8 +178,8 @@ export function findMyFactionsWithAug(ns, aug, player) {
  * @param {import(".").NS} ns
  * @param avail_factions Factions I belong to that sell NF 
 **/
-export function getClosestNFFaction(ns, avail_factions) {
-	let rep_sorted_fax = avail_factions.sort((a, b) => ns.getFactionRep(a) - ns.getFactionRep(b)).reverse();
+export function getClosestNFFaction(ns) {
+	let rep_sorted_fax = ns.getPlayer().factions.filter(fct => ns.getAugmentationsFromFaction(fct).includes(NF)).sort((a, b) => ns.getFactionRep(a) - ns.getFactionRep(b)).reverse();
 	let sorted_fax = rep_sorted_fax.sort((a, b) => (ns.getAugmentationRepReq(NF) - ns.getFactionRep(a)) < (ns.getAugmentationRepReq(NF) - ns.getFactionRep(b)))
 	return sorted_fax[0]
 }

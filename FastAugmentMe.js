@@ -129,7 +129,7 @@ export async function handleNeuroflux(ns) {
 		return
 	}
 	// output(ns, TERMINAL, "Current money: " + ns.nFormat(player.money, '$0.00a'));
-	let closest_faction = getClosestNFFaction(ns, my_factions_w_nf);
+	let closest_faction = getClosestNFFaction(ns);
 	let closest_faction_rep = ns.getFactionRep(closest_faction);
 	let rep_req = ns.getAugmentationRepReq(NF);
 	// If we don't have enough rep to buy it, abort
