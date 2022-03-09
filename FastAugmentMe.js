@@ -1,7 +1,6 @@
-import { buildAugMap, aug_bonus_types, findMyFactionsWithAug, sortAugsByRepThenCost } from "utils/augs.js";
+import { buildAugMap, aug_bonus_types, findMyFactionsWithAug, sortAugsByRepThenCost, getClosestNFFaction, NF } from "utils/augs.js";
 import { checkSForBN, output } from "utils/script_tools.js";
 
-export const NF = "NeuroFlux Governor";
 let TERMINAL = false;
 
 /** @param {import(".").NS} ns **/
@@ -542,15 +541,4 @@ function printAugCheckbox(ns, aug, aug_map) {
  */
 function printCheckbox(condition, label) {
 	return `[${!!condition ? 'x' : ' '}] ${label}`
-}
-
-/** 
- * Determine the faction whose rep is closest to the next rep requirement. 
- * @param {import(".").NS} ns
- * @param avail_factions Factions I belong to that sell NF 
-**/
-function getClosestNFFaction(ns, avail_factions) {
-	let rep_sorted_fax = avail_factions.sort((a, b) => ns.getFactionRep(a) - ns.getFactionRep(b)).reverse();
-	let sorted_fax = rep_sorted_fax.sort((a, b) => (ns.getAugmentationRepReq(NF) - ns.getFactionRep(a)) < (ns.getAugmentationRepReq(NF) - ns.getFactionRep(b)))
-	return sorted_fax[0]
 }
