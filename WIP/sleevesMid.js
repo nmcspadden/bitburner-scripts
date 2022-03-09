@@ -143,7 +143,7 @@ function sleeveTime(ns, index) {
     // Do we have a faction with NF, but we don't currently have enough rep to buy it?
     // If so, let's work for that faction.
     let faction = getClosestNFFaction(ns);
-    if (ns.getAugmentationRepReq(NF) < ns.getFactionRep(faction)) {
+    if (faction && (ns.getAugmentationRepReq(NF) < ns.getFactionRep(faction))) {
         workForNFFaction(ns, index, faction);
         return
     }
