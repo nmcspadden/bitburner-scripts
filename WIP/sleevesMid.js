@@ -1,6 +1,6 @@
-import { checkSForBN, HOME, waitForPid } from "utils/script_tools.js";
-import { gamePhase } from "utils/gameplan.js";
+import { checkSForBN, HOME } from "utils/script_tools.js";
 import { CRIMES } from "utils/crimes.js";
+import { getClosestNFFaction, NF } from "utils/augs.js";
 
 /*
 1. In Early game phase during karma grind, sleeves should be performing highest success % crime
@@ -18,8 +18,11 @@ const TASK_RECOVERY = "Recovery";
 const TASK_CRIME = "Crime";
 const TASK_GYM = "Gym";
 const TASK_SYNC = "Synchro";
+const TASK_FACTION = "Faction";
 
-const GYM_POWERHOUSE = "Powerhouse Gym";
+const GYM_POWERHOUSE = "Powerhouse Gym"; // location
+const FACTION_HACKING = "Hacking"; // factionWorkType
+const FACTION_FIELD = "Field"; // factionWorkType
 
 const STR_MIN = 100;
 const DEF_MIN = 100;
@@ -130,16 +133,20 @@ function sleeveTime(ns, index) {
     }
     // If the gang is done, and I'm under 100 sync, let's fix that first
     if (stats.sync < 100 && sleeve_task.task != TASK_SYNC) {
-        ns.print(`Sleeve ${index}: Sync level is at ${ns.nFormat(stats.sync/100, '0.00%')}%, setting to synchronize`)
+        ns.print(`Sleeve ${index}: Sync level is at ${ns.nFormat(stats.sync / 100, '0.00%')}%, setting to synchronize`)
         ns.sleeve.setToSynchronize(index);
         return
     } else if (stats.sync < 100) {
-        ns.print(`Sleeve ${index}: Sync level is at ${ns.nFormat(stats.sync/100, '0.00%')}%, still synchronizing`)
+        ns.print(`Sleeve ${index}: Sync level is at ${ns.nFormat(stats.sync / 100, '0.00%')}%, still synchronizing`)
         return
     }
     // Do we have a faction with NF, but we don't currently have enough rep to buy it?
     // If so, let's work for that faction.
-    // TODO: Add in 'pick NF faction' logic
+    let faction = getClosestNFFaction(ns);
+    if (ns.getAugmentationRepReq(NF) < ns.getFactionRep(faction)) {
+        workForNFFaction(ns, index, faction);
+        return
+    }
     // Otherwise, commit a crime to make money
     let best_crime = calculateBestSleeveCrime(ns, index);
     // Start committing crimes!
@@ -168,19 +175,19 @@ function calculateBestSleeveCrime(ns, index) {
         })
         // To only filter by chance:
         .reduce((a, b) => (a.chance > b.chance ? a : b));
-        // To filter by both chance + money:
-        // .reduce(
-        //     (a, b) => {
-        //         let real_a_chance = 0;
-        //         let real_b_chance = 0;
-        //         if (a.chance > 100) real_a_chance = 100
-        //         if (b.chance > 100) real_b_chance = 100
-        //         if (real_a_chance > real_b_chance) return a
-        //         // If they have the same chance, return whichever gives more money
-        //         if (a.money > b.money) return a
-        //         return b
-        //     }
-        // )
+    // To filter by both chance + money:
+    // .reduce(
+    //     (a, b) => {
+    //         let real_a_chance = 0;
+    //         let real_b_chance = 0;
+    //         if (a.chance > 100) real_a_chance = 100
+    //         if (b.chance > 100) real_b_chance = 100
+    //         if (real_a_chance > real_b_chance) return a
+    //         // If they have the same chance, return whichever gives more money
+    //         if (a.money > b.money) return a
+    //         return b
+    //     }
+    // )
     return best_crime.name
 }
 
@@ -201,6 +208,24 @@ function getCrimeSuccessChance(Crime, P) {
     chance /= 975; //CONSTANTS.MaxSkillLevel
     chance /= Crime.difficulty;
     return chance;
+}
+
+/**
+ * Determine if we should work for a faction to get NF rep
+ * @param {import("../.").NS} ns
+ */
+function workForNFFaction(ns, index, faction) {
+    // Determine if anyone is working for a faction
+    let tasks = [];
+    for (let i = 0; i < readNumSleeves(ns); i++) {
+        tasks.push(readSleeveTask(ns, i));
+    }
+    if (tasks.some(sleeve => (sleeve.task == TASK_FACTION) && (sleeve.location == faction))) {
+        return
+    } else {
+        ns.print(`Sleeve ${index}: Working for ${faction}`);
+        ns.sleeve.setToFactionWork(index, faction, FACTION_FIELD);
+    }
 }
 
 /* Retrieve data about sleeves */
