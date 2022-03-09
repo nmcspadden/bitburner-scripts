@@ -5,10 +5,12 @@ import { MID_LOG } from "midgameplan.js";
 import { AUGMAP } from "utils/augs.js";
 import { NETWORK_MAP } from "utils/networkmap.js";
 import { SERVERGRADES } from "WIP/gradeservers.js";
+import { readNumSleeves, readSleeveStats, FILE_NUM_SLEEVES, FILE_SLEEVE_STATS, FILE_SLEEVE_TASK } from "sleevesEarly.js";
 
 /* 
  Starter.js: starting point for launching the gameplans
 */
+const MAX_SLEEVES = 8;
 
 /** @param {import(".").NS} ns **/
 export async function main(ns) {
@@ -22,6 +24,12 @@ export async function main(ns) {
     ns.rm(AUGMAP + ".txt");
     ns.rm(NETWORK_MAP + ".txt");
     ns.rm(SERVERGRADES + ".txt");
+    // Sleeve files
+    ns.rm(FILE_NUM_SLEEVES);
+    for (let i = 0; i < MAX_SLEEVES; i++) {
+        ns.rm(FILE_SLEEVE_STATS(i));
+        ns.rm(FILE_SLEEVE_TASK(i));
+    }
 
     // Create the source file map
     ns.tprint("Creating source file map");
@@ -34,6 +42,14 @@ export async function main(ns) {
     // Check if we have any sleeves
     ns.tprint("Checking for sleeves...");
     ns.exec("sleeves/getNumSleeves.js", HOME);
+    await ns.sleep(200);
+    let sleeves = readNumSleeves(ns);
+    ns.tprint("We have " + sleeves + " sleeves");
+    for (let i = 0; i < sleeves; i++) {
+        await readSleeveStats(ns, i);
+        await ns.sleep(100);
+    }
+    ns.tprint("Got all sleeve stats");
     // We start at 32 GB RAM
     if (home_ram <= 32) {
         ns.tprint("Starting game plan");

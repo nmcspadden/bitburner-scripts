@@ -17,8 +17,8 @@ export async function main(ns) {
 	ns.toast("Starting beginning game plan!", "info", null);
 	ns.disableLog("ALL"); // Disable the log
 	ns.tail(); // Open a window to view the status of the script
-	await outputLog(ns, START_LOG, "Activating sleeves, if we have any");
-	ns.exec('sleevesEarly.js', HOME);
+	// await outputLog(ns, START_LOG, "Activating sleeves, if we have any");
+	// ns.exec('sleevesEarly.js', HOME);
 	await outputLog(ns, START_LOG, "Beginning workout");
 	await workoutAllUntil(ns, MIN_STAT);
 	await outputLog(ns, START_LOG, "Committing crimes while upgrading loop");
