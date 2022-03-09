@@ -35,7 +35,7 @@ async function crimeWhileUpgradingLoop(ns) {
 	let timeout = 250; // In ms - too low of a time will result in a lockout/hang
 	while (ns.getServerMaxRam(HOME) <= 32) {
 		if (ns.isBusy()) continue;
-		ns.exec('sleevesEarly.js', HOME);	
+		// ns.exec('sleevesEarly.js', HOME);	
 		// See if we can upgrade our home
 		ns.exec('upgradeHome.js', HOME);
 		// Otherwise, commit crime!
