@@ -60,7 +60,8 @@ export const aug_bonus_types = {
 	crime: ["crime_success_mult", "crime_money_mult"],
 	combat: ["agility_exp_mult", "agility_mult", "defense_exp_mult", "defense_mult", "dexterity_exp_mult", "dexterity_mult", "strength_exp_mult", "strength_mult"],
 	charisma: ["charisma_exp_mult", "charisma_mult"],
-    bladeburners: ["bladeburner_success_chance_mult", "bladeburner_max_stamina_mult", "bladeburner_stamina_gain_mult", "bladeburner_analysis_mult"]
+    bladeburners: ["bladeburner_success_chance_mult", "bladeburner_max_stamina_mult", "bladeburner_stamina_gain_mult", "bladeburner_analysis_mult"],
+	hacknet: ["hacknet_node_money_mult", "hacknet_node_purchase_cost_mult", "hacknet_node_ram_cost_mult", "hacknet_node_core_cost_mult", "hacknet_node_level_cost_mult"]
 };
 
 /** 
