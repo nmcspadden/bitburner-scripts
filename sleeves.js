@@ -173,7 +173,6 @@ function calculateBestSleeveCrime(ns, index) {
                 money: ns.getCrimeStats(crime).money
             };
         })
-        // To only filter by chance:
         .reduce((a, b) => (a.chance > b.chance ? a : b));
     // To filter by both chance + money:
     // .reduce(
