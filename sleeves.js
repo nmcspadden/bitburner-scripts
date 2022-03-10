@@ -164,6 +164,7 @@ function sleeveTime(ns, index) {
  * @returns {string} Name of the best crime to commit
  */
 function calculateBestSleeveCrime(ns, index) {
+    // New algorithm: Find the most moneymaking crime with a chance > 70%
     const best_crime = CRIMES
         .map(crime => {
             return {
@@ -173,20 +174,8 @@ function calculateBestSleeveCrime(ns, index) {
                 money: ns.getCrimeStats(crime).money
             };
         })
-        .reduce((a, b) => (a.chance > b.chance ? a : b));
-    // To filter by both chance + money:
-    // .reduce(
-    //     (a, b) => {
-    //         let real_a_chance = 0;
-    //         let real_b_chance = 0;
-    //         if (a.chance > 100) real_a_chance = 100
-    //         if (b.chance > 100) real_b_chance = 100
-    //         if (real_a_chance > real_b_chance) return a
-    //         // If they have the same chance, return whichever gives more money
-    //         if (a.money > b.money) return a
-    //         return b
-    //     }
-    // )
+        .filter(crime => crime.chance > 0.7)
+        .reduce((a, b) => (a.money > b.money ? a : b));
     return best_crime.name
 }
 
@@ -206,6 +195,8 @@ function getCrimeSuccessChance(Crime, P) {
         Crime.charisma_success_weight * P.charisma;
     chance /= 975; //CONSTANTS.MaxSkillLevel
     chance /= Crime.difficulty;
+    // Values higher than 100% are irrelevant, reduce to 100%
+    if (chance > 1) chance = 1
     return chance;
 }
 
