@@ -31,15 +31,13 @@ const AGI_MIN = 100;
 
 const CRIME_HOMICIDE = "Homicide";
 
-/** @param {import("../.").NS} ns **/
+/** @param {import(".").NS} ns **/
 export async function main(ns) {
     // If we don't have SF10, bail
     if (!checkSForBN(ns, 10)) return
     ns.disableLog("ALL");
     ns.tail();
     ns.print("** Starting sleeve daemon");
-    // Map out the number of sleeves we have
-    ns.exec('sleeves/getNumSleeves.js', HOME);
     let numsleeves = readNumSleeves(ns);
     ns.print(`We have ${numsleeves} sleeves`);
     while (numsleeves > 0) {
@@ -53,7 +51,7 @@ export async function main(ns) {
 
 /**
  * Get augs that sleeves will care about
- * @param {import("../.").NS} ns 
+ * @param {import(".").NS} ns 
  * @param {number} index Sleeve number
  */
 function getUsefulAugs(ns, index) {
@@ -80,7 +78,7 @@ function getUsefulAugs(ns, index) {
 
 /**
  * Get augs that sleeves will care about
- * @param {import("../.").NS} ns 
+ * @param {import(".").NS} ns 
  * @param {number} index Sleeve number
  */
 function sleeveTime(ns, index) {
@@ -144,8 +142,8 @@ function sleeveTime(ns, index) {
     // If so, let's work for that faction.
     let faction = getClosestNFFaction(ns);
     if (faction && (ns.getAugmentationRepReq(NF) < ns.getFactionRep(faction))) {
-        workForNFFaction(ns, index, faction);
-        return
+        let did_work = workForNFFaction(ns, index, faction);
+        if (did_work) return
     }
     // Otherwise, commit a crime to make money
     let best_crime = calculateBestSleeveCrime(ns, index);
@@ -159,7 +157,7 @@ function sleeveTime(ns, index) {
 
 /**
  * Get augs that sleeves will care about
- * @param {import("../.").NS} ns , index
+ * @param {import(".").NS} ns , index
  * @param {number} index Sleeve number
  * @returns {string} Name of the best crime to commit
  */
@@ -202,7 +200,7 @@ function getCrimeSuccessChance(Crime, P) {
 
 /**
  * Determine if we should work for a faction to get NF rep
- * @param {import("../.").NS} ns
+ * @param {import(".").NS} ns
  */
 function workForNFFaction(ns, index, faction) {
     // Determine if anyone is working for a faction
@@ -211,17 +209,18 @@ function workForNFFaction(ns, index, faction) {
         tasks.push(readSleeveTask(ns, i));
     }
     if (tasks.some(sleeve => (sleeve.task == TASK_FACTION) && (sleeve.location == faction))) {
-        return
+        return false
     } else {
         ns.print(`Sleeve ${index}: Working for ${faction}`);
-        ns.sleeve.setToFactionWork(index, faction, FACTION_FIELD);
+        // TODO: Determine best rep/sec here
+        return ns.sleeve.setToFactionWork(index, faction, FACTION_FIELD);
     }
 }
 
 /* Retrieve data about sleeves */
 /**
  * Get the number of sleeves
- * @param {import("../.").NS} ns
+ * @param {import(".").NS} ns
  */
 function readNumSleeves(ns) {
     return ns.sleeve.getNumSleeves();
@@ -229,7 +228,7 @@ function readNumSleeves(ns) {
 
 /**
  * Get sleeve stats
- * @param {import("../.").NS} ns
+ * @param {import(".").NS} ns
  * @param {Number} index Index of sleeve
  */
 function readSleeveStats(ns, index) {
@@ -239,7 +238,7 @@ function readSleeveStats(ns, index) {
 
 /**
  * Get sleeve task
- * @param {import("../.").NS} ns
+ * @param {import(".").NS} ns
  * @param {Number} index Index of sleeve
  */
 function readSleeveTask(ns, index) {
@@ -250,7 +249,7 @@ function readSleeveTask(ns, index) {
 /* Sleeve actions */
 /**
  * Get sleeve task
- * @param {import("../.").NS} ns
+ * @param {import(".").NS} ns
  * @param {Number} index Index of sleeve
  */
 function workOutAtGym(ns, index, gym, stat) {
@@ -260,7 +259,7 @@ function workOutAtGym(ns, index, gym, stat) {
 
 /**
  * Get sleeve task
- * @param {import("../.").NS} ns
+ * @param {import(".").NS} ns
  * @param {Number} index Index of sleeve
  */
 function commitSleeveCrime(ns, index, crime) {
@@ -270,7 +269,7 @@ function commitSleeveCrime(ns, index, crime) {
 
 /**
  * Get sleeve task
- * @param {import("../.").NS} ns
+ * @param {import(".").NS} ns
  * @param {Number} index Index of sleeve
  */
 function shockRecovery(ns, index) {
