@@ -24,6 +24,10 @@ export async function main(ns) {
 	await outputLog(ns, START_LOG, "Committing crimes while upgrading loop");
 	await crimeWhileUpgradingLoop(ns);
 	await outputLog(ns, START_LOG, "Bought enough RAM to move to Early Game!");
+	// With sleeves training, this will likely mean negative money
+	if (ns.getServerMoneyAvailable(HOME) < 0) {
+		ns.softReset('starter.js');
+	} 
 	ns.spawn('earlygameplan.js');
 }
 
@@ -37,7 +41,7 @@ async function crimeWhileUpgradingLoop(ns) {
 		if (ns.isBusy()) continue;
 		// ns.exec('sleevesEarly.js', HOME);	
 		// See if we can upgrade our home
-		ns.exec('upgradeHome.js', HOME);
+		ns.exec('utils/upgradeHome.js', HOME);
 		// Otherwise, commit crime!
 		timeout = commitKarmaFocusedCrime(ns);
 		await ns.sleep(timeout); // Wait it out first
