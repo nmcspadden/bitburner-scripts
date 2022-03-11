@@ -92,6 +92,9 @@ function sleeveTime(ns, index) {
     let stats = readSleeveStats(ns, index);
     // ns.print(`Sleeve ${index}: Checking current task`);
     let sleeve_task = readSleeveTask(ns, index);
+    // Is there a closest NF faction?
+    let faction = getClosestNFFaction(ns);
+    let best_crime = calculateBestSleeveCrime(ns, index);
     // Reduce Shock to 97 first
     if (stats.shock > 97 && (sleeve_task.task != TASK_RECOVERY)) {
         ns.print(`Sleeve ${index}: Shock is >97, setting to Shock Recovery`);
@@ -99,7 +102,7 @@ function sleeveTime(ns, index) {
         return
     }
     // Am I in a gang yet?
-    if (checkSForBN(ns, 2) && !ns.gang.inGang()) {
+    else if (checkSForBN(ns, 2) && !ns.gang.inGang()) {
         // Before starting any crimes, we want to get our stats to 100/100/60/60
         if ((stats.strength < STR_MIN) && (sleeve_task.task != TASK_GYM)) {
             ns.print(`Sleeve ${index}: Strength is <${STR_MIN}, working out at the gym`);
@@ -130,7 +133,7 @@ function sleeveTime(ns, index) {
         }
     }
     // If the gang is done, and I'm under 100 sync, let's fix that first
-    if (stats.sync < 100 && sleeve_task.task != TASK_SYNC) {
+    else if (stats.sync < 100 && sleeve_task.task != TASK_SYNC) {
         ns.print(`Sleeve ${index}: Sync level is at ${ns.nFormat(stats.sync / 100, '0.00%')}%, setting to synchronize`)
         ns.sleeve.setToSynchronize(index);
         return
@@ -139,16 +142,19 @@ function sleeveTime(ns, index) {
         return
     }
     // Do we have a faction with NF, but we don't currently have enough rep to buy it?
-    // If so, let's work for that faction.
-    let faction = getClosestNFFaction(ns);
-    if (faction && (ns.getAugmentationRepReq(NF) < ns.getFactionRep(faction))) {
-        let did_work = workForNFFaction(ns, index, faction);
-        if (did_work) return
+    else if (faction && (ns.getAugmentationRepReq(NF) < ns.getFactionRep(faction))) {
+        let tasks = [];
+        for (let i = 0; i < readNumSleeves(ns); i++) {
+            tasks.push(readSleeveTask(ns, i));
+        }
+        if (!tasks.some(sleeve => (sleeve.task == TASK_FACTION) && (sleeve.location == faction))) {
+            ns.print(`Nobody is working for ${faction}`);
+            workForNFFaction(ns, index, faction);
+            return
+        }
     }
     // Otherwise, commit a crime to make money
-    let best_crime = calculateBestSleeveCrime(ns, index);
-    // Start committing crimes!
-    if ((sleeve_task.task != TASK_CRIME) || (sleeve_task.crime.toLowerCase() != best_crime.toLowerCase())) {
+    else if ((sleeve_task.task != TASK_CRIME) || (sleeve_task.crime.toLowerCase() != best_crime.toLowerCase())) {
         ns.print(`Sleeve ${index}: Committing ${best_crime} at ${ns.nFormat(getCrimeSuccessChance(ns.getCrimeStats(best_crime), readSleeveStats(ns, index)), '0.00%')}% chance`)
         commitSleeveCrime(ns, index, best_crime);
         return
@@ -203,18 +209,9 @@ function getCrimeSuccessChance(Crime, P) {
  * @param {import(".").NS} ns
  */
 function workForNFFaction(ns, index, faction) {
-    // Determine if anyone is working for a faction
-    let tasks = [];
-    for (let i = 0; i < readNumSleeves(ns); i++) {
-        tasks.push(readSleeveTask(ns, i));
-    }
-    if (tasks.some(sleeve => (sleeve.task == TASK_FACTION) && (sleeve.location == faction))) {
-        return false
-    } else {
-        ns.print(`Sleeve ${index}: Working for ${faction}`);
-        // TODO: Determine best rep/sec here
-        return ns.sleeve.setToFactionWork(index, faction, FACTION_FIELD);
-    }
+    ns.print(`Sleeve ${index}: Working for ${faction}`);
+    // TODO: Determine best rep/sec here
+    return ns.sleeve.setToFactionWork(index, faction, FACTION_FIELD);
 }
 
 /* Retrieve data about sleeves */
