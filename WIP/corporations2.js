@@ -142,14 +142,15 @@ export async function main(ns) {
         ns.corporation.createCorporation(CORP_NAME, should_self_fund);
         ns.print("Created our corporation, now bootstrapping!");
         ns.tail();
-        await bootstrapCorp(ns);  
+        await bootstrapCorp(ns);
+      } else {
+        ns.print("Waiting for enough money to bootstrap a corporation...");
+        await ns.sleep(300000);
       }
     } else {
       ns.tail();
       await bootstrapCorp(ns);
     }
-    ns.print("Waiting for enough money to bootstrap a corporation...");
-    await ns.sleep(300000);
   }
   // Now the corp loop
   // We are making the assumption right now that we're only developing Tobacco
@@ -177,8 +178,7 @@ async function corpLoop(ns, division_type) {
   product_names.forEach(prod => {
     ns.corporation.sellProduct(division, "Aevum", prod, "MAX", "MP", true);
     // At some point, we'll need this check, but for now, leaving it commented
-    // if (ns.corporation.hasResearched(division, MARKET_TA2)) ns.corporation.setProductMarketTA2(division, prod, true);
-    ns.corporation.setProductMarketTA2(division, prod, true);
+    if (ns.corporation.hasResearched(division, MARKET_TA2)) ns.corporation.setProductMarketTA2(division, prod, true)
   });
   // Do we have less than the max number of products?
   while (ns.corporation.getDivision(division).products.length < max_number_of_products) {
@@ -349,7 +349,11 @@ export async function bootstrapCorp(ns) {
     ns.print("Developing new product");
     let product_name = developNewProduct(ns, SECOND_DIVISION);
     ns.corporation.sellProduct(SECOND_DIVISION, "Aevum", product_name, "MAX", "MP", true);
-    ns.corporation.setProductMarketTA2(SECOND_DIVISION, product_name, true);
+    if (ns.corporation.hasResearched(SECOND_DIVISION, MARKET_TA2)) {
+      ns.corporation.setProductMarketTA2(SECOND_DIVISION, product_name, true);
+    } else {
+      ns.corporation.sellProduct(SECOND_DIVISION, city, product_name, "MAX", "MP");
+    }
   }
   // Upgrade Wilson Analytics while we have > $3t
   ns.print("Leveling up Wilson Analytics...");
@@ -800,7 +804,9 @@ async function discontinueOldestProduct(ns, division) {
   if (product_names.length == 0) return
   // Sell all of it at MP to get rid of all inventory
   ns.print(`Selling off ${product_names[0]}`);
-  ns.corporation.setProductMarketTA2(division, product_names[0], false);
+  try {
+    ns.corporation.setProductMarketTA2(division, product_names[0], false);
+  } catch (error) { }
   ns.corporation.sellProduct(division, "Aevum", product_names[0], "MAX", "MP", true);
   ns.print("Waiting 10 seconds...");
   await ns.sleep(10000); // wait 20 seconds for two ticks to sell all inventory
