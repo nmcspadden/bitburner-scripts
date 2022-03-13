@@ -155,8 +155,8 @@ export async function main(ns) {
   // Now the corp loop
   // We are making the assumption right now that we're only developing Tobacco
   ns.print("We are public, managing the corporation...");
+  ns.tail();
   while (true) {
-    ns.tail();
     await corpLoop(ns, SECOND_INDUSTRY);
   }
 }
