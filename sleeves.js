@@ -35,6 +35,11 @@ const CRIME_HOMICIDE = "Homicide";
 export async function main(ns) {
     // If we don't have SF10, bail
     if (!checkSForBN(ns, 10)) return
+
+    const flagdata = ns.flags([
+        ["augs", false]
+    ]);
+
     ns.disableLog("ALL");
     ns.tail();
     ns.print("** Starting sleeve daemon");
@@ -42,7 +47,7 @@ export async function main(ns) {
     ns.print(`We have ${numsleeves} sleeves`);
     while (numsleeves > 0) {
         for (let i = 0; i < numsleeves; i++) {
-            sleeveTime(ns, i);
+            sleeveTime(ns, i, flagdata.augs);
         }
         ns.print("Re-evaluating in 60 seconds...");
         await ns.sleep(60000);
@@ -53,35 +58,33 @@ export async function main(ns) {
  * Get augs that sleeves will care about
  * @param {import(".").NS} ns 
  * @param {number} index Sleeve number
+ * @returns List of augs sorted by cost (descending)
  */
 function getUsefulAugs(ns, index) {
-    ns.tprint("Getting all sleeve augs");
     let augs_to_buy = ns.sleeve.getSleevePurchasableAugs(index);
     // There are some augs that are just useless on sleeves, like Red Pill and hacknet augs
-    ns.tprint("Total aug length: " + augs_to_buy.length);
-    ns.tprint(augs_to_buy);
-    ns.tprint("Sorting sleeves");
-    let sorted_augs = augs_to_buy.
-        filter(aug => !(
+    // Filter out ones the sleeve already has
+    let sorted_augs = augs_to_buy
+        .filter(aug => !ns.sleeve.getSleeveAugmentations(index).includes(aug))
+        .filter(aug => !(
             aug["name"].includes("Hacknet") ||
             aug["name"].includes("Pill") ||
             aug["name"].includes("Neuroreceptor Management") ||
             aug["name"].includes("CashRoot"))
-        ).
-        sort(
+        )
+        .sort(
             (a, b) => a["cost"] - b["cost"]
         ).reverse();
-    ns.tprint(sorted_augs);
-    ns.tprint("Total aug length: " + sorted_augs.length);
     return sorted_augs
 }
 
 /**
  * Get augs that sleeves will care about
  * @param {import(".").NS} ns 
- * @param {number} index Sleeve number
+ * @param {Number} index Sleeve number
+ * @param {Boolean} buy_augs If true, we should buy augs for the sleeves too
  */
-function sleeveTime(ns, index) {
+function sleeveTime(ns, index, buy_augs = false) {
     /*
         What a working Sleeve looks like:
         {"task":"Crime","crime":"Homicide","location":"11250","gymStatType":"","factionWorkType":"None"}
@@ -159,6 +162,8 @@ function sleeveTime(ns, index) {
         commitSleeveCrime(ns, index, best_crime);
         return
     }
+    // Should we buy this sleeve any augs?
+    augmentSleeve(ns, index);
 }
 
 /**
@@ -245,9 +250,11 @@ function readSleeveTask(ns, index) {
 
 /* Sleeve actions */
 /**
- * Get sleeve task
+ * Work out at gym
  * @param {import(".").NS} ns
  * @param {Number} index Index of sleeve
+ * @param {String} gym What gym to work out
+ * @param {String} stat What stat to train
  */
 function workOutAtGym(ns, index, gym, stat) {
     if (!Number.isInteger(index)) return false
@@ -255,9 +262,10 @@ function workOutAtGym(ns, index, gym, stat) {
 }
 
 /**
- * Get sleeve task
+ * Start committing crimes
  * @param {import(".").NS} ns
  * @param {Number} index Index of sleeve
+ * @param {String} crime What crime to commit
  */
 function commitSleeveCrime(ns, index, crime) {
     if (!Number.isInteger(index)) return false
@@ -265,7 +273,7 @@ function commitSleeveCrime(ns, index, crime) {
 }
 
 /**
- * Get sleeve task
+ * Start recovering from shock
  * @param {import(".").NS} ns
  * @param {Number} index Index of sleeve
  */
@@ -273,6 +281,25 @@ function shockRecovery(ns, index) {
     if (!Number.isInteger(index)) return false
     return ns.sleeve.setToShockRecovery(index);
 }
+
+/**
+ * Buy augments for sleeve
+ * @param {import(".").NS} ns
+ * @param {Number} index Index of sleeve
+ */
+function augmentSleeve(ns, index) {
+    if (!Number.isInteger(index)) return false
+    let useful_augs = getUsefulAugs(ns, index);
+    useful_augs.forEach(aug => {
+        let remaining_money = ns.getServerMoneyAvailable(HOME) - aug.cost;
+        // Don't go below $1b when buying augs
+        if ((aug.cost < ns.getServerMoneyAvailable(HOME)) && (remaining_money > 1e9)) {
+            let did_buy = ns.sleeve.purchaseSleeveAug(index, aug.name);
+            if (did_buy) ns.print(`Sleeve ${index}: Bought ${aug.name}`)
+        }
+    })
+}
+
 /*
 What crimeStats looks like:
 {
