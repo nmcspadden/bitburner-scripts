@@ -157,7 +157,8 @@ export async function handleNeuroflux(ns) {
 		} else break
 		await ns.sleep(250);
 	}
-	output(ns, TERMINAL, `Not enough money to buy more NFs, need ${ns.nFormat(price, '$0.00a')}`);
+	let aug_map = await buildAugMap(ns);
+	output(ns, TERMINAL, getNFCheckbox(ns, aug_map));
 }
 
 /**
@@ -362,7 +363,7 @@ function listCrimeAugs(aug_map, owned = false) {
  * @param {boolean} owned True to include augs I own, false to exclude them (default: false)
  * @returns List of aug names to purchase
  */
- function listPreferredHacknetAugs(aug_map, owned = false) {
+function listPreferredHacknetAugs(aug_map, owned = false) {
 	let desired_augs = {};
 	// Map the shorthand type arguments to actual aug stats we want, filtered to only include exp
 	let aug_stat_types = getStatsFromTypes(["hacknet"]);
@@ -556,6 +557,20 @@ function printAugCheckbox(ns, aug, aug_map) {
 		msg += ` -- Factions: ${aug_map[aug]["factions"].join(", ")}, ${printCheckbox(satisfy_rep, `Rep req: ${ns.nFormat(aug_map[aug]["repreq"], '0.000a')}`)}, ${printCheckbox(satisfy_cost, `Cost: ${ns.nFormat(aug_map[aug]["cost"], '$0.00a')}`)}`
 	}
 	ns.tprint(printCheckbox(condition, msg));
+}
+
+/**
+ * Print a nicely formatted aug - checked box if we own it/pending, otherwise display the rep and costs
+ * @param {import(".").NS} ns
+ * @param {string} aug Name of an aug to print out in a nicely formatted way
+ * @param {*} aug_map Map of augs built by buildAugMap()
+ */
+function getNFCheckbox(ns, aug_map) {
+	let msg = `${NF}`
+	let satisfy_rep = augRepAvailable(ns, aug_map[NF]["repreq"], aug_map[NF]["factions"]);
+	let satisfy_cost = augCostAvailable(ns, aug_map[NF]["cost"]);
+	msg += ` -- ${printCheckbox(satisfy_rep, `Rep req: ${ns.nFormat(aug_map[NF]["repreq"], '0.000a')}`)}, ${printCheckbox(satisfy_cost, `Cost: ${ns.nFormat(aug_map[NF]["cost"], '$0.00a')}`)}`
+	return msg
 }
 
 /**
