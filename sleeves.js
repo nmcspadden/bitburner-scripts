@@ -164,7 +164,7 @@ function sleeveTime(ns, index, buy_augs = false) {
         return
     }
     // Should we buy this sleeve any augs?
-    augmentSleeve(ns, index);
+    if (stats.shock == 0) augmentSleeve(ns, index)
 }
 
 /**
