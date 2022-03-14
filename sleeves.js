@@ -30,6 +30,7 @@ const DEX_MIN = 100;
 const AGI_MIN = 100;
 
 const CRIME_HOMICIDE = "Homicide";
+const CRIME_MUG = "Mug";
 
 /** @param {import(".").NS} ns **/
 export async function main(ns) {
@@ -184,7 +185,7 @@ function calculateBestSleeveCrime(ns, index) {
             };
         })
         .filter(crime => crime.chance > 0.7)
-        .reduce((a, b) => (a.money > b.money ? a : b));
+        .reduce((a, b) => (a.money > b.money ? a : b), CRIME_MUG);
     return best_crime.name
 }
 
