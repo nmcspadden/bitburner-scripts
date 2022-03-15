@@ -192,6 +192,7 @@ export async function growTargetServer(ns, target) {
 	let network_map = await readNetworkMap(ns);
 	for (const server of Object.keys(network_map)) {
 		if (server == HOME) continue
+		if (server.includes("hacknet")) continue
 		if (network_map[server].maxRAM < 1) continue
 		await ns.scp(SCRIPT, server);
 		let threads = maxThreads(ns, SCRIPT, server, 100);
