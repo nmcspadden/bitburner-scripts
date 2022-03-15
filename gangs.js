@@ -1,7 +1,7 @@
 // This code is largely stolen from someone else
 // https://github.com/alainbryden/bitburner-scripts/blob/main/gangs.js
 
-import { formatMoney, formatNumberShort, getNsDataThroughFile, getActiveSourceFiles, runCommand, tryGetBitNodeMultipliers } from './helpers.js'
+import { formatMoney, formatNumberShort, getNsDataThroughFile, getActiveSourceFiles, runCommand, tryGetBitNodeMultipliers } from 'utils/helpers.js'
 
 // Global constants
 const updateInterval = 200;
