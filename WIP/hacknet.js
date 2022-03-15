@@ -1,10 +1,14 @@
 // From https://github.com/InfinityBMX/bitburner-scripts/blob/master/hacknet-manager.js
 
+import { findOptimal } from "utils/networkmap.js";
+
 const HACKNET_PURCHASE_RATIO = 0.1;
 const HACKNET_UPGRADE_RATIO = 0.2;
 const HACKNET_CACHE_RATIO = 0.01;
 
-/** @param {NS} ns **/
+const CACHE_CAP = 2048;
+
+/** @param {import("../.").NS} ns **/
 export async function main(ns) {
     const maxNodes = ns.hacknet.maxNumNodes();
     const flagdata = ns.flags([
@@ -39,19 +43,27 @@ export async function main(ns) {
                     ns.tprint('Hacknet Upgrade failed to find a cheapest option');
             }
 
-
             let bestCache = findBestCacheUpgrade(ns, cacheBudget);
-            if ((ns.hacknet.hashCapacity() < 2048) && (bestCache >= 0)) // -1 for no upgrade
+            if ((ns.hacknet.hashCapacity() < CACHE_CAP) && (bestCache >= 0)) // -1 for no upgrade
                 ns.hacknet.upgradeCache(bestCache, 1);
         }
-        if (ns.getPlayer().hasCorporation)
-            if (flagdata.focus === 'research')
-                ns.hacknet.spendHashes('Exchange for Corporation Research');
-            else
-                ns.hacknet.spendHashes('Sell for Corporation Funds');
-        else {
-            while (ns.hacknet.numHashes() > ns.hacknet.hashCost('Sell for Money'))
-                ns.hacknet.spendHashes('Sell for Money');
+        switch (flagdata.focus) {
+            case 'research':
+                if (ns.getPlayer().hasCorporation) ns.hacknet.spendHashes('Exchange for Corporation Research')
+                break;
+            case 'corp':
+                if (ns.getPlayer().hasCorporation) ns.hacknet.spendHashes('Sell for Corporation Funds')
+                break;
+            case 'hack':
+                let server = await findOptimal(ns);
+                ns.print("Optimal server: " + server);
+                ns.hacknet.spendHashes("Reduce Minimum Security", server);
+                ns.hacknet.spendHashes("Increase Maximum Money", server);
+                break;
+            case 'money':
+            default:
+                while (ns.hacknet.numHashes() > ns.hacknet.hashCost('Sell for Money'))
+                    ns.hacknet.spendHashes('Sell for Money');
         }
         await ns.sleep(1000);
     }
