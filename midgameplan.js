@@ -196,6 +196,7 @@ async function isCheapestAugReasonable(ns, auglist, aug_map) {
             };
         })
 		.filter(aug => !aug_map[aug.name].factions.includes(BB))
+		.filter(aug => !ns.getOwnedAugmentations(true).includes(aug))
         .reduce((a, b) => (a.cost < b.cost ? a : b))
 	if (!cheapest_aug) return
 	ns.print("Cheapest aug " + cheapest_aug.name + " costs " + ns.nFormat(cheapest_aug.cost, '$0.00a'));
