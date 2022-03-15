@@ -162,5 +162,4 @@ export async function waitForPid(ns, pid, retries = 1000) {
         // if (verbose && retries % 100 === 0) ns.print(`Waiting for pid ${pid} to complete... (${retries})`);
         await ns.sleep(10);
     }
-	ns.enableLog("sleep");
 }
