@@ -43,6 +43,7 @@ export async function main(ns) {
     // while ((numsleeves > 0) && (ns.getServerMaxRam(HOME) <= 32)) {
     for (let i = 0; i < numsleeves; i++) {
         await sleeveTime(ns, i);
+        await ns.sleep(50);
     }
     // await ns.sleep(30000);
     // ns.print("We now have >32GB RAM, switch to SleevesMid.js");
@@ -63,36 +64,46 @@ async function sleeveTime(ns, index) {
     let stats = await readSleeveStats(ns, index);
     let sleeve_task = await readSleeveTask(ns, index);
     // Reduce Shock to 97 first
-    if (stats.shock > 97 && (sleeve_task.task != TASK_RECOVERY)) {
-        ns.print(`Sleeve ${index}: Shock is >97, setting to Shock Recovery`);
-        shockRecovery(ns, index);
+    if (stats.shock > 97) {
+        if (sleeve_task.task != TASK_RECOVERY) {
+            ns.print(`Sleeve ${index}: Shock is >97, setting to Shock Recovery`);
+            await shockRecovery(ns, index);
+        }
         return
     }
     // Before starting any crimes, we want to get our stats to 100/100/60/60
-    if ((stats.strength < STR_MIN) || (sleeve_task.task != TASK_GYM) || (sleeve_task.gymStatType != STAT_STR)) {
-        ns.print(`Sleeve ${index}: Strength is <${STR_MIN}, working out at the gym`);
-        workOutAtGym(ns, index, GYM_POWERHOUSE, STAT_STR);
+    if (stats.strength < STR_MIN) {
+        if ((sleeve_task.task != TASK_GYM) && (sleeve_task.gymStatType != STAT_STR)) {
+            ns.print(`Sleeve ${index}: Strength is <${STR_MIN}, working out at the gym`);
+            await workOutAtGym(ns, index, GYM_POWERHOUSE, STAT_STR);
+        }
         return
     }
-    if ((stats.defense < DEF_MIN) || (sleeve_task.task != TASK_GYM) || (sleeve_task.gymStatType != STAT_DEF)) {
-        ns.print(`Sleeve ${index}: Defense is <${DEF_MIN}, working out at the gym`);
-        workOutAtGym(ns, index, GYM_POWERHOUSE, STAT_DEF);
+    if (stats.defense < DEF_MIN) {
+        if ((sleeve_task.task != TASK_GYM) || (sleeve_task.gymStatType != STAT_DEF)) {
+            ns.print(`Sleeve ${index}: Defense is <${DEF_MIN}, working out at the gym`);
+            await workOutAtGym(ns, index, GYM_POWERHOUSE, STAT_DEF);
+        }
         return
     }
-    if ((stats.dexterity < DEX_MIN) || (sleeve_task.task != TASK_GYM) || (sleeve_task.gymStatType != STAT_DEX)) {
-        ns.print(`Sleeve ${index}: Dexterity is <${DEX_MIN}, working out at the gym`);
-        workOutAtGym(ns, index, GYM_POWERHOUSE, STAT_DEX);
+    if (stats.dexterity < DEX_MIN) {
+        if ((sleeve_task.task != TASK_GYM) || (sleeve_task.gymStatType != STAT_DEX)) {
+            ns.print(`Sleeve ${index}: Dexterity is <${DEX_MIN}, working out at the gym`);
+            await workOutAtGym(ns, index, GYM_POWERHOUSE, STAT_DEX);
+        }
         return
     }
-    if ((stats.agility < AGI_MIN) || (sleeve_task.task != TASK_GYM) || (sleeve_task.gymStatType != STAT_AGI)) {
-        ns.print(`Sleeve ${index}: Agility is <${AGI_MIN}, working out at the gym`);
-        workOutAtGym(ns, index, GYM_POWERHOUSE, STAT_AGI);
+    if (stats.agility < AGI_MIN) {
+        if ((sleeve_task.task != TASK_GYM) || (sleeve_task.gymStatType != STAT_AGI)) {
+            ns.print(`Sleeve ${index}: Agility is <${AGI_MIN}, working out at the gym`);
+            await workOutAtGym(ns, index, GYM_POWERHOUSE, STAT_AGI);
+        }
         return
     }
     // Start committing homicide!
     if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != CRIME_HOMICIDE)) {
         ns.print(`Sleeve ${index}: Committing homicide`);
-        commitSleeveCrime(ns, index, CRIME_HOMICIDE);
+        await commitSleeveCrime(ns, index, CRIME_HOMICIDE);
         return
     }
     // Now switch to sleeves.js
@@ -135,19 +146,22 @@ export async function readSleeveTask(ns, index) {
 }
 
 /* Sleeve actions */
-function workOutAtGym(ns, index, gym, stat) {
+async function workOutAtGym(ns, index, gym, stat) {
     if (!Number.isInteger(index)) return false
-    return ns.exec('sleeves/workout.js', HOME, 1, index, gym, stat);
+    let pid = ns.exec('sleeves/workout.js', HOME, 1, index, gym, stat);
+    await waitForPid(ns, pid);
 }
 
-function commitSleeveCrime(ns, index, crime) {
+async function commitSleeveCrime(ns, index, crime) {
     if (!Number.isInteger(index)) return false
-    return ns.exec('sleeves/commitCrime.js', HOME, 1, index, crime);
+    let pid = ns.exec('sleeves/commitCrime.js', HOME, 1, index, crime);
+    await waitForPid(ns, pid);
 }
 
-function shockRecovery(ns, index) {
+async function shockRecovery(ns, index) {
     if (!Number.isInteger(index)) return false
-    return ns.exec('sleeves/shockRecovery.js', HOME, 1, index);
+    let pid = ns.exec('sleeves/shockRecovery.js', HOME, 1, index);
+    await waitForPid(ns, pid);
 }
 /*
 What crimeStats looks like:
