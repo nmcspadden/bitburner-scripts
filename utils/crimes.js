@@ -20,6 +20,7 @@ export const GANG_KARMA = 54000;
  * @param {number} level The amount we all stats should be
 **/
 export async function workoutAllUntil(ns, level) {
+	ns.disableLog("sleep");
 	const STATS = [
 		"strength",
 		"defense",
@@ -30,9 +31,10 @@ export async function workoutAllUntil(ns, level) {
 		while (ns.getPlayer()[stat] < level) {
 			if (!ns.isBusy()) {
 				ns.toast("Training " + stat);
+				ns.print("Training " + stat + " until " + level);
 				ns.gymWorkout('Powerhouse Gym', stat, false)
 			}
-			await ns.sleep(100);
+			await ns.sleep(1000);
 		}
 		ns.stopAction();
 	}
