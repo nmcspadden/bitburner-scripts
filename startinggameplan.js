@@ -24,6 +24,7 @@ export async function main(ns) {
 	await waitForPid(ns, pid);
 	await outputLog(ns, START_LOG, "Beginning workout");
 	ns.exec('gameplan/beginWorkout.js', HOME, 1, MIN_STAT);
+	// We gate this on agility because it's last in order when working out
 	while (ns.getPlayer().agility < MIN_STAT) {
 		// Update sleeves
 		ns.print("Checking sleeve activity while working out..."); 
@@ -61,27 +62,5 @@ async function crimeWhileUpgradingLoop(ns) {
 		// Otherwise, commit crime!
 		ns.exec('gameplan/karmaCrime.js', HOME);
 		await ns.sleep(timeout);
-	}
-}
-
-/* Retrieve data about sleeves.
-This is a direct copy from SleevesEarly.js but we can't import it because
-it increases the memory too much. */
-/**
- * Get the number of sleeves
- * @param {import("..").NS} ns
- */
-export function readNumSleeves(ns) {
-	let data = ns.read(FILE_NUM_SLEEVES);
-	if (!data) return -1
-	return Number(ns.read(FILE_NUM_SLEEVES));
-}
-
-async function checkSleeves(ns) {
-	for (let i = 0; i < readNumSleeves(ns); i++) {
-		let pid = ns.exec('sleeves/getTask.js', HOME, 1, i);
-		await waitForPid(ns, pid);
-		pid = ns.exec('sleeves/getStats.js', HOME, 1, i);
-		await waitForPid(ns, pid);
 	}
 }
