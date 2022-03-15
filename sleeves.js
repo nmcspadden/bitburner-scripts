@@ -19,10 +19,12 @@ const TASK_CRIME = "Crime";
 const TASK_GYM = "Gym";
 const TASK_SYNC = "Synchro";
 const TASK_FACTION = "Faction";
+const TASK_CLASS = "Class";
 
 const GYM_POWERHOUSE = "Powerhouse Gym"; // location
 const FACTION_HACKING = "Hacking"; // factionWorkType
 const FACTION_FIELD = "Field"; // factionWorkType
+const UNI_ROTHMAN = "Rothman University";
 
 const STR_MIN = 100;
 const DEF_MIN = 100;
@@ -31,6 +33,8 @@ const AGI_MIN = 100;
 
 const CRIME_HOMICIDE = "Homicide";
 const CRIME_MUG = "Mug";
+
+const CLASS_ALGORITHMS = "Algorithms";
 
 /** @param {import(".").NS} ns **/
 export async function main(ns) {
@@ -145,6 +149,14 @@ function sleeveTime(ns, index, buy_augs = false) {
         ns.print(`Sleeve ${index}: Sync level is at ${ns.nFormat(stats.sync / 100, '0.00%')}%, still synchronizing`)
         return
     }
+    // Do we own The Red Pill and I'm trying to hack it? Time to grow hacking skills!
+    else if (ns.getOwnedAugmentations().includes('The Red Pill')) {
+        if ((sleeve_task.task != TASK_CLASS) || (sleeve_task.location != UNI_ROTHMAN)) {
+            ns.print(`Sleeve ${index}: Taking Algorithms course to learn hacking`);
+            takeUniversityCourse(ns, index, UNI_ROTHMAN, CLASS_ALGORITHMS);
+        }
+        return
+    }
     // Do we have a faction with NF, but we don't currently have enough rep to buy it?
     else if (faction && (ns.getAugmentationRepReq(NF) < ns.getFactionRep(faction))) {
         let tasks = [];
@@ -165,6 +177,7 @@ function sleeveTime(ns, index, buy_augs = false) {
     }
     // Should we buy this sleeve any augs?
     if (stats.shock == 0) augmentSleeve(ns, index)
+    ns.print(`Sleeve ${index}: nothing changed`);
 }
 
 /**
@@ -208,16 +221,6 @@ function getCrimeSuccessChance(Crime, P) {
     // Values higher than 100% are irrelevant, reduce to 100%
     if (chance > 1) chance = 1
     return chance;
-}
-
-/**
- * Determine if we should work for a faction to get NF rep
- * @param {import(".").NS} ns
- */
-function workForNFFaction(ns, index, faction) {
-    ns.print(`Sleeve ${index}: Working for ${faction}`);
-    // TODO: Determine best rep/sec here
-    return ns.sleeve.setToFactionWork(index, faction, FACTION_FIELD);
 }
 
 /* Retrieve data about sleeves */
@@ -281,6 +284,30 @@ function commitSleeveCrime(ns, index, crime) {
 function shockRecovery(ns, index) {
     if (!Number.isInteger(index)) return false
     return ns.sleeve.setToShockRecovery(index);
+}
+
+/**
+ * Determine if we should work for a faction to get NF rep
+ * @param {import(".").NS} ns
+ * @param {Number} index Sleeve number
+ * @param {String} faction Faction to work for
+ */
+function workForNFFaction(ns, index, faction) {
+    ns.print(`Sleeve ${index}: Working for ${faction}`);
+    // TODO: Determine best rep/sec here
+    return ns.sleeve.setToFactionWork(index, faction, FACTION_FIELD);
+}
+
+/**
+ * Determine if we should take a university course
+ * @param {import(".").NS} ns
+ * @param {Number} index Sleeve number
+ * @param {String} uni University to study at
+ * @param {String} course Course to take
+ */
+function takeUniversityCourse(ns, index, uni, course) {
+    if (!Number.isInteger(index)) return false
+    return ns.sleeve.setToUniversityCourse(index, uni, course);
 }
 
 /**
