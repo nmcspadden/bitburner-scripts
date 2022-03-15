@@ -26,15 +26,13 @@ export async function workoutAllUntil(ns, level) {
 		"dexterity",
 		"agility",
 	]
-	let me = ns.getPlayer();
 	for (let stat of STATS) {
-		while (me[stat] < level) {
+		while (ns.getPlayer()[stat] < level) {
 			if (!ns.isBusy()) {
 				ns.toast("Training " + stat);
 				ns.gymWorkout('Powerhouse Gym', stat, false)
 			}
 			await ns.sleep(100);
-			me = ns.getPlayer();
 		}
 		ns.stopAction();
 	}
