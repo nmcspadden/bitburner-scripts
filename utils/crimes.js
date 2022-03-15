@@ -41,6 +41,31 @@ export async function workoutAllUntil(ns, level) {
 }
 
 /** 
+ * Starting working out if below a certain level - NON BLOCKING
+ * @param {import("../.").NS} ns
+ * @param {number} level The amount we all stats should be
+**/
+export async function workoutAll(ns, level) {
+	ns.disableLog("sleep");
+	const STATS = [
+		"strength",
+		"defense",
+		"dexterity",
+		"agility",
+	]
+	for (let stat of STATS) {
+		if (ns.getPlayer()[stat] < level) {
+			if (!ns.isBusy()) {
+				ns.toast("Training " + stat);
+				ns.print("Training " + stat + " until " + level);
+				ns.gymWorkout('Powerhouse Gym', stat, false)
+				return
+			}
+		}
+	}
+}
+
+/** 
  * Commit a single crime to get us closer to Gang Karma levels
  * @param {import("../.").NS} ns
  * @returns {Number} ms required to commit the crime
