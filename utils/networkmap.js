@@ -36,7 +36,7 @@ export async function createNetworkMap(ns, hack = true) {
 
 		// Attempt to crack the server, record the result if we rooted it
 		// Obviously, skip home...
-		if (host != HOME && !newData[host]["root"]) {
+		if (host != HOME && !newData[host]["root"] && (!host.includes("hacknet"))) {
 			newData[host]["root"] = crackServer(ns, host);
 		}
 
@@ -215,6 +215,7 @@ export async function findOptimal(ns) {
 	let currTime;
 	let network_map = await readNetworkMap(ns);
 	for (const server of Object.keys(network_map)) {
+		if (server.includes("hacknet")) continue
 		currVal = network_map[server].maxMoney;
 		currTime = ns.getWeakenTime(server) + ns.getGrowTime(server) + network_map[server].hackTime;
 		currVal /= currTime;
