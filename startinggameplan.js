@@ -43,11 +43,6 @@ export async function main(ns) {
 	await crimeWhileUpgradingLoop(ns);
 
 	await outputLog(ns, START_LOG, "Bought enough RAM to move to Early Game!");
-	// With sleeves training, this will likely mean negative money
-	if (ns.getServerMoneyAvailable(HOME) < 0) {
-		ns.exec('gameplan/resetStarter.js');
-		return
-	}
 	ns.spawn('earlygameplan.js');
 }
 
