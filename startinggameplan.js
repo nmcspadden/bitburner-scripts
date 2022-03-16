@@ -57,9 +57,10 @@ export async function main(ns) {
  * @param {import(".").NS} ns 
 **/
 async function crimeWhileUpgradingLoop(ns) {
-	let timeout = 50; // In ms - too low of a time will result in a lockout/hang
+	let timeout = 300; // In ms - too low of a time will result in a lockout/hang
 	let pid;
 	while (Math.abs(ns.heart.break()) <= GANG_KARMA) {
+		await ns.sleep(timeout);
 		if (ns.isBusy()) continue;
 		ns.exec('sleevesEarly.js', HOME);
 		// See if we can upgrade our home
@@ -67,7 +68,6 @@ async function crimeWhileUpgradingLoop(ns) {
 		// Otherwise, commit crime!
 		pid = ns.exec('gameplan/karmaCrime.js', HOME);
 		await waitForPid(ns, pid);
-		await ns.sleep(timeout);
 		ns.print(`Current karma: ${ns.heart.break()}`)
 	}
 }
