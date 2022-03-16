@@ -38,8 +38,8 @@ export async function main(ns) {
 	ns.stopAction();
 	ns.print("Done working out.");
 
-	await outputLog(ns, START_LOG, "Committing crimes while upgrading loop");
-	await crimeWhileUpgradingLoop(ns);
+	await outputLog(ns, START_LOG, "Committing crimes while building up sleeves");
+	await crimeWhileUpgradingLoop(ns, (Math.abs(ns.heart.break()) <= GANG_KARMA));
 
 	// With sleeves training, this will likely mean negative money
 	if (await checkForSleevesDoneWorkingOut(ns) && (ns.getServerMoneyAvailable(HOME) < 0)) {
@@ -47,6 +47,9 @@ export async function main(ns) {
 		ns.exec('gameplan/resetStarter.js', HOME);
 		return;
 	}
+
+	await outputLog(ns, START_LOG, "Committing crimes while upgrading loop");
+	await crimeWhileUpgradingLoop(ns, (ns.getServerMaxRam(HOME) <= 32));
 
 	await outputLog(ns, START_LOG, "Bought enough RAM to move to Early Game!");
 	ns.spawn('earlygameplan.js');
@@ -56,10 +59,10 @@ export async function main(ns) {
  * Commit crimes, but if we have enough money, buy more home upgrades
  * @param {import(".").NS} ns 
 **/
-async function crimeWhileUpgradingLoop(ns) {
+async function crimeWhileUpgradingLoop(ns, condition) {
 	let timeout = 300; // In ms - too low of a time will result in a lockout/hang
 	let pid;
-	while (Math.abs(ns.heart.break()) <= GANG_KARMA) {
+	while (condition) {
 		await ns.sleep(timeout);
 		if (ns.isBusy()) continue;
 		ns.exec('sleevesEarly.js', HOME);

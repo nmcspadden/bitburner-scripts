@@ -1,4 +1,5 @@
 import { checkSForBN, HOME, waitForPid } from "utils/script_tools.js";
+import { GANG_KARMA } from "utils/crimes";
 
 /*
 1. In Early game phase during karma grind, sleeves should work out
@@ -28,6 +29,7 @@ const STAT_CHA = "Train Charisma";
 const GYM_POWERHOUSE = "Powerhouse Gym";
 
 const CRIME_HOMICIDE = "Homicide";
+const CRIME_LARCENY = "Larceny";
 
 /** @param {import("..").NS} ns **/
 export async function main(ns) {
@@ -98,10 +100,13 @@ async function sleeveTime(ns, index) {
         }
         return
     }
-    // Start committing homicide!
-    if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != CRIME_HOMICIDE)) {
-        ns.print(`Sleeve ${index}: Committing homicide`);
-        await commitSleeveCrime(ns, index, CRIME_HOMICIDE);
+    // Start committing crimes!
+    let crime = CRIME_LARCENY;
+    // If I'm below the Gang Karma requirement, do homicides; otherwise do Larceny to make money
+    if ((Math.abs(ns.heart.break()) <= GANG_KARMA)) crime = CRIME_HOMICIDE;
+    if ((sleeve_task.task != TASK_CRIME) && (sleeve_task.crime != crime)) {
+        ns.print(`Sleeve ${index}: Committing ${crime.toLowerCase()}`);
+        await commitSleeveCrime(ns, index, crime);
         return
     }
 }
