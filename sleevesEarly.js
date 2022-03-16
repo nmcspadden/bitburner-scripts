@@ -10,6 +10,11 @@ export const FILE_NUM_SLEEVES = "/sleeves/results/NumSleeves.txt";
 export const FILE_SLEEVE_STATS = (index) => `/sleeves/results/Sleeve${index}-stats.txt`;
 export const FILE_SLEEVE_TASK = (index) => `/sleeves/results/Sleeve${index}-task.txt`;
 
+export const STR_MIN = 80;
+export const DEF_MIN = 80;
+export const DEX_MIN = 40;
+export const AGI_MIN = 40;
+
 const TASK_RECOVERY = "Recovery";
 const TASK_CRIME = "Crime";
 const TASK_GYM = "Gym";
@@ -21,11 +26,6 @@ const STAT_AGI = "Train Agility";
 const STAT_CHA = "Train Charisma";
 
 const GYM_POWERHOUSE = "Powerhouse Gym";
-
-const STR_MIN = 100;
-const DEF_MIN = 100;
-const DEX_MIN = 60;
-const AGI_MIN = 60;
 
 const CRIME_HOMICIDE = "Homicide";
 
@@ -45,14 +45,12 @@ export async function main(ns) {
         await sleeveTime(ns, i);
         await ns.sleep(50);
     }
-    // await ns.sleep(30000);
-    // ns.print("We now have >32GB RAM, switch to SleevesMid.js");
 }
 
 /**
  * Handle a sleeve's activity
- * @param {import("..").NS} ns 
- * @param {number} index Sleeve number
+ * @param {import(".").NS} ns 
+ * @param {Number} index Sleeve number
  */
 async function sleeveTime(ns, index) {
     /*
@@ -152,7 +150,7 @@ async function workOutAtGym(ns, index, gym, stat) {
 
 async function commitSleeveCrime(ns, index, crime) {
     if (!Number.isInteger(index)) return false
-    let pid = ns.exec('sleeves/commitCrime.js', HOME, 1, index, crime);
+    let pid = ns.exec('sleeves/commitCrimes.js', HOME, 1, index, crime);
     await waitForPid(ns, pid);
 }
 
