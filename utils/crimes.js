@@ -61,7 +61,7 @@ export async function workoutAll(ns, level) {
 				ns.gymWorkout('Powerhouse Gym', stat, false)
 				return
 			}
-		}
+		} else ns.stopAction();
 	}
 }
 
