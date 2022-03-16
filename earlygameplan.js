@@ -76,12 +76,18 @@ async function startAGang(ns) {
 		ns.exec("gangs.js", HOME);
 		return
 	}
-	let ready_gang = ns.checkFactionInvitations().find(invite => gangList.includes(invite));
+	let ready_gang = (
+		ns.checkFactionInvitations().find(invite => gangList.includes(invite)) ||
+		ns.getPlayer().factions.find(faction => gangList.includes(faction))
+	);
 	while (!ready_gang) {
 		// Wait 30 seconds until the invitations show up
 		ns.print("Waiting for gang invitations...")
 		await ns.sleep(30000);
-		ready_gang = ns.checkFactionInvitations().find(invite => gangList.includes(invite));
+		ready_gang = (
+			ns.checkFactionInvitations().find(invite => gangList.includes(invite)) ||
+			ns.getPlayer().factions.find(faction => gangList.includes(faction))
+		);
 	}
 	let joined = ns.joinFaction(ready_gang);
 	if (joined) ns.print(`Joined ${ready_gang} faction, starting a gang!`)
