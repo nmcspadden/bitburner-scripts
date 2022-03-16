@@ -33,6 +33,7 @@ export async function main(ns) {
 		ns.print("Sleeping 30 seconds");
 		await ns.sleep(30000);
 	}
+	ns.stopAction();
 	ns.print("Done working out.");
 	// With sleeves training, this will likely mean negative money
 	if (ns.getServerMoneyAvailable(HOME) < 0) {

@@ -55,13 +55,13 @@ export async function workoutAll(ns, level) {
 	]
 	for (let stat of STATS) {
 		if (ns.getPlayer()[stat] < level) {
-			if (!ns.isBusy()) {
+			if (!ns.getPlayer().className.includes(stat)) {
 				ns.toast("Training " + stat);
 				ns.print("Training " + stat + " until " + level);
 				ns.gymWorkout('Powerhouse Gym', stat, false)
 				return
 			}
-		} else ns.stopAction();
+		}
 	}
 }
 

@@ -106,8 +106,6 @@ async function sleeveTime(ns, index) {
         await commitSleeveCrime(ns, index, CRIME_HOMICIDE);
         return
     }
-    // Now switch to sleeves.js
-    ns.print("Early game sleeve work is done; switch to SleevesMid.js");
 }
 
 /* Retrieve data about sleeves */
