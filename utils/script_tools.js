@@ -53,7 +53,7 @@ export function isProcessRunning(ns, host, script, args = []) {
 	]
 	*/
 	let process_list = ns.ps(host);
-	if (args == "*") return process_list.some(proc => proc["filename"].includes("script"))
+	if (args == "*") return process_list.some(proc => proc["filename"].includes(script))
 	return process_list.some(proc => (proc["filename"].includes(script) && compareArrays(args, proc["args"])))
 }
 

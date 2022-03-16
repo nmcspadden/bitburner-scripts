@@ -16,12 +16,19 @@ export async function main(ns) {
 	ns.tail(); // Open a window to view the status of the script
 	// Create new network map
 	ns.print("Running network mapping daemon...");
-	ns.exec("utils/networkmap.js", HOME, 1, "--daemon");
+	if (!isProcessRunning(ns, HOME, "/utils/networkmap.js", "*")) {
+		ns.exec("utils/networkmap.js", HOME, 1, "--daemon");
+	}
+	// Active sleeves, if we have any
+	if (!isProcessRunning(ns, HOME, "sleeves.js")) {
+		await outputLog(ns, EARLY_LOG, "Activating sleeves, if we have any");
+		ns.exec('sleeves.js', HOME);
+	}
 	// Start crimes until we can do homicides to get to the gang karma, also upgrade home
-	await outputLog(ns, EARLY_LOG, "Starting crime + upgrade loop...");
+	if (Math.abs(ns.heart.break()) <= GANG_KARMA) await outputLog(ns, EARLY_LOG, "Starting crime + upgrade loop...");
 	await crimeWhileUpgradingLoop(ns);
 	// Start a gang!
-	await outputLog(ns, EARLY_LOG, "Starting a gang");
+	await outputLog(ns, EARLY_LOG, "Checking gang status...");
 	await startAGang(ns);
 	// Join bladeburners, if possible
 	await joinBladeburners(ns);
@@ -70,11 +77,13 @@ async function startAGang(ns) {
 		"The Syndicate",
 	];
 	// Am I already in a gang? If so, don't need to do anything here
-	ns.print("Checking to see if I'm in a gang...")
 	if (ns.gang.inGang()) {
 		// If I'm already in a gang, kick off the gang script and bail
-		ns.exec("gangs.js", HOME);
-		return
+		if (!isProcessRunning(ns, HOME, "gangs.js", "*")) {
+			ns.print("Running gangs script");
+			ns.exec("gangs.js", HOME);
+			return
+		}
 	}
 	let ready_gang = (
 		ns.checkFactionInvitations().find(invite => gangList.includes(invite)) ||
