@@ -30,6 +30,8 @@ export async function main(ns) {
 		ns.print("Checking sleeve activity while working out..."); 
 		pid = ns.exec('sleevesEarly.js', HOME);
 		await waitForPid(ns, pid);
+		ns.exec('gameplan/beginWorkout.js', HOME, 1, MIN_STAT);
+		await waitForPid(ns, pid);
 		ns.print("Sleeping 30 seconds");
 		await ns.sleep(30000);
 	}
