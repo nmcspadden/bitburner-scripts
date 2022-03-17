@@ -96,21 +96,32 @@ export async function listPreferredAugs(ns, aug_map, type, owned = true, pending
  */
 export async function promptForAugs(ns, aug_map, desired_augs, should_prompt) {
 	let purchased_augs = [];
-	let my_augs = ns.getOwnedAugmentations(true);
-	for (const aug of desired_augs) {
-		if (my_augs.includes(aug)) continue
-		// Do I have a faction for whom satisifes the rep cost?
+	let real_augs_to_buy = desired_augs
+		.filter(
+			// I shouldn't already own it/have it pending, I should afford it, and have the rep to buy it
+			aug =>
+				!ns.getOwnedAugmentations(true).includes(aug) &&
+				augCostAvailable(ns, aug_map[aug]["cost"]) &&
+				augRepAvailable(ns, aug_map[aug]["repreq"], aug_map[aug]["factions"])
+		)
+		.sort(
+			// We want to buy the most expensive ones first
+			(a, b) => aug_map[b].cost - aug_map[a].cost
+		)
+	for (const aug of real_augs_to_buy) {
+		// if (my_augs.includes(aug)) continue
+		// // Do I have a faction for whom satisifes the rep cost?
 		let satisfy_rep = augRepAvailable(ns, aug_map[aug]["repreq"], aug_map[aug]["factions"]);
-		// Do I have the money?
-		let rich_af = augCostAvailable(ns, aug_map[aug]["cost"]);
+		// // Do I have the money?
+		// let rich_af = augCostAvailable(ns, aug_map[aug]["cost"]);
 		// Do I satisfy pre-reqs?
 		let needed_prereqs = augPreReqsAvailable(ns, aug_map[aug]["prereqs"]);
 		if (needed_prereqs.length > 0) {
 			// Calculate our pre-reqs first
-			await promptForAugs(ns, aug_map, needed_prereqs, should_prompt);
+			await promptForAugs(ns, aug_map, needed_prereqs, false);
 		}
 		// If all of those are true, let's do it
-		if (satisfy_rep && rich_af && (needed_prereqs.length == 0)) {
+		if (needed_prereqs.length == 0) {
 			let did_buy = await purchaseAug(ns, aug, satisfy_rep, should_prompt);
 			if (did_buy) purchased_augs.push(aug);
 		}
@@ -439,8 +450,7 @@ function augRepAvailable(ns, repreq, factions) {
 **/
 function augCostAvailable(ns, price) {
 	// Is this aug available to purchase right now?
-	let my_money = ns.getPlayer().money;
-	return (my_money >= price)
+	return (ns.getServerMoneyAvailable('home') >= price)
 }
 
 /** 
