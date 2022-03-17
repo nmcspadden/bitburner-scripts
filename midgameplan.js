@@ -71,7 +71,7 @@ async function buyAugmentLoop(ns, aug_map) {
 		await outputLog(ns, MID_LOG, "Joining pending factions");
 		joinFactions(ns);
 		// Attempt to buy the augs silently
-		ns.print("Augs to buy: " + augs_to_buy.join(", "));
+		// ns.print("Augs to buy: " + augs_to_buy.join(", "));
 		await outputLog(ns, MID_LOG, "Checking for augmentations to buy");
 		let purchased_aug_list = await promptForAugs(ns, aug_map, augs_to_buy, false);
 		// How many are left?
@@ -103,7 +103,7 @@ async function buyAugmentLoop(ns, aug_map) {
 			!isProcessRunning(ns, HOME, "corporations2.js") &&
 			(ns.getServerMaxRam(HOME) > ns.getScriptRam('WIP/corporations2.js'))
 		) {
-			await outputLog(ns, MID_LOG, "Starting Corporations script...")
+			// await outputLog(ns, MID_LOG, "Starting Corporations script...")
 			ns.exec("WIP/corporations2.js", HOME);
 		}
 		// If we have lots of money, see if we can buy darkweb programs
