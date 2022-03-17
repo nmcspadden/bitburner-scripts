@@ -177,28 +177,28 @@ function sleeveTime(ns, index, buy_augs = false) {
     }
     // Should we buy this sleeve any augs?
     if (stats.shock == 0) augmentSleeve(ns, index)
-    ns.print(`Sleeve ${index}: nothing changed`);
+    // ns.print(`Sleeve ${index}: nothing changed`);
 }
 
 /**
- * Get augs that sleeves will care about
+ * Determine the best sleeve crime to make money
  * @param {import(".").NS} ns , index
  * @param {number} index Sleeve number
  * @returns {string} Name of the best crime to commit
  */
 function calculateBestSleeveCrime(ns, index) {
-    // New algorithm: Find the most moneymaking crime with a chance > 70%
     const best_crime = CRIMES
         .map(crime => {
             return {
                 name: crime,
                 chance: getCrimeSuccessChance(ns.getCrimeStats(crime), readSleeveStats(ns, index)),
                 karma: ns.getCrimeStats(crime).karma,
-                money: ns.getCrimeStats(crime).money
+                money: ns.getCrimeStats(crime).money,
+                effective_gain: (ns.getCrimeStats(crime).money / ns.getCrimeStats(crime).time) * getCrimeSuccessChance(ns.getCrimeStats(crime), ns.sleeve.getSleeveStats(index))
             };
         })
         .filter(crime => crime.chance > 0.7)
-        .reduce((a, b) => (a.money > b.money ? a : b), CRIME_MUG);
+        .reduce((a, b) => (a.effective_gain > b.effective_gain ? a : b), CRIME_MUG);
     return best_crime.name
 }
 
