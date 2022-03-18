@@ -64,7 +64,7 @@ async function buyAugmentLoop(ns, aug_map) {
 	}
 	let original_aug_length = augs_to_buy.length;
 	let purchased_augs = 0;
-	await outputLog(ns, MID_LOG, `There are ${original_aug_length} augs to purchase`);
+	// await outputLog(ns, MID_LOG, `There are ${original_aug_length} augs to purchase`);
 	// We move to Endgame when there are no more augs left to buy, or we hit hacking 2500
 	while (!endGameTrigger(ns) && augs_to_buy.length > 0) {
 		// Join Section-12 faction if it's waiting
@@ -127,6 +127,7 @@ async function setUpGame(ns) {
 	if (!isProcessRunning(ns, 'home', 'networkmap.js', ['--daemon'])) {
 		await outputLog(ns, MID_LOG, "Running network mapping daemon...");
 		ns.exec("utils/networkmap.js", HOME, 1, "--daemon");
+		await ns.sleep(2000);
 	}
 	// Active sleeves, if we have any
 	if (!isProcessRunning(ns, HOME, "sleeves.js")) {
@@ -173,19 +174,6 @@ async function setUpGame(ns) {
  * @param {*} aug_map Map of objects from buildAugMap()
  */
 async function isCheapestAugReasonable(ns, auglist, aug_map) {
-	// let sortable_augs = {};
-	// for (const aug of auglist) {
-	// 	// Skip augs I already own/have pending
-	// 	if (ns.getOwnedAugmentations(true).includes(aug)) continue
-	// 	sortable_augs[aug] = ns.getAugmentationPrice(aug);
-	// }
-	// let sorted_list = Object.fromEntries(
-	// 	Object.entries(sortable_augs).sort(
-	// 		([, a], [, b]) => a["cost"] - b["cost"]
-	// 	).reverse()
-	// )
-	// let cheapest_aug = Object.keys(sorted_list)[0];
-	// Find the cheapest non-Bladeburner aug
 	// We specifically exclude BB because the faction rep is dependent on BB actions
     const cheapest_aug = auglist
         .map(aug => {
@@ -210,6 +198,6 @@ async function isCheapestAugReasonable(ns, auglist, aug_map) {
 	) {
 		ns.print("The cheapest aug costs more than $1t, and isn't QLink. You should reset.");
 		let should_reset = await ns.prompt("Install augmentations and reset?");
-		if (should_reset) ns.installAugmentations('starter.js');
+		if (should_reset) ns.installAugmentations('midgameplan.js');
 	}
 }
