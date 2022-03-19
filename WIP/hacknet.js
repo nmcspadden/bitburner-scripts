@@ -43,8 +43,11 @@ export async function main(ns) {
                     ns.tprint('Hacknet Upgrade failed to find a cheapest option');
             }
 
+            let cache_cap_adjusted = CACHE_CAP;
+            // Don't keep upgrading cache when generating money, because it never increases in price
+            if (flagdata.focus != "money") cache_cap_adjusted = 1e12;
             let bestCache = findBestCacheUpgrade(ns, cacheBudget);
-            if ((ns.hacknet.hashCapacity() < CACHE_CAP) && (bestCache >= 0)) // -1 for no upgrade
+            if ((ns.hacknet.hashCapacity() < cache_cap_adjusted) && (bestCache >= 0)) // -1 for no upgrade
                 ns.hacknet.upgradeCache(bestCache, 1);
         }
         switch (flagdata.focus) {
