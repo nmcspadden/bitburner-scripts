@@ -1,6 +1,7 @@
 import { checkSForBN, HOME } from "utils/script_tools.js";
 import { CRIMES } from "utils/crimes.js";
 import { getClosestNFFaction, NF } from "utils/augs.js";
+import { START_LOG } from "./startinggameplan";
 
 /*
 1. In Early game phase during karma grind, sleeves should be performing highest success % crime
@@ -26,10 +27,10 @@ const FACTION_HACKING = "Hacking"; // factionWorkType
 const FACTION_FIELD = "Field"; // factionWorkType
 const UNI_ROTHMAN = "Rothman University";
 
-const STR_MIN = 100;
-const DEF_MIN = 100;
-const DEX_MIN = 100;
-const AGI_MIN = 100;
+const STR_MIN = 80;
+const DEF_MIN = 80;
+const DEX_MIN = 40;
+const AGI_MIN = 40;
 
 const CRIME_HOMICIDE = "Homicide";
 const CRIME_MUG = "Mug";
@@ -104,32 +105,46 @@ function sleeveTime(ns, index, buy_augs = false) {
     let faction = getClosestNFFaction(ns);
     let best_crime = calculateBestSleeveCrime(ns, index);
     // Reduce Shock to 97 first
-    if (stats.shock > 97 && (sleeve_task.task != TASK_RECOVERY)) {
-        ns.print(`Sleeve ${index}: Shock is >97, setting to Shock Recovery`);
-        shockRecovery(ns, index);
+    if (stats.shock > 97) {
+        if (sleeve_task.task != TASK_RECOVERY) {
+            ns.print(`Sleeve ${index}: Shock is >97, setting to Shock Recovery`);
+            shockRecovery(ns, index);
+        }
         return
     }
     // Am I in a gang yet?
     else if (checkSForBN(ns, 2) && !ns.gang.inGang()) {
         // Before starting any crimes, we want to get our stats to 100/100/60/60
-        if ((stats.strength < STR_MIN) && (sleeve_task.task != TASK_GYM)) {
-            ns.print(`Sleeve ${index}: Strength is <${STR_MIN}, working out at the gym`);
-            workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Strength");
+        if (stats.strength < STR_MIN) {
+            if (sleeve_task.task != TASK_GYM || !sleeve_task.gymStatType.toLowerCase().includes("strength")) {
+                ns.print(`Sleeve ${index}: Strength is <${STR_MIN}, working out at the gym`);
+                workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Strength");
+            }
+            ns.print(`Sleeve ${index}: Strength is ${stats.strength}/${STR_MIN}`);
             return
         }
-        if ((stats.defense < DEF_MIN) && (sleeve_task.task != TASK_GYM)) {
-            ns.print(`Sleeve ${index}: Defense is <${DEF_MIN}, working out at the gym`);
-            workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Defense");
+        if (stats.defense < DEF_MIN) {
+            if (sleeve_task.task != TASK_GYM || !sleeve_task.gymStatType.toLowerCase().includes("defense")) {
+                ns.print(`Sleeve ${index}: Defense is <${DEF_MIN}, working out at the gym`);
+                workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Defense");
+            }
+            ns.print(`Sleeve ${index}: Defense is ${stats.defense}/${DEF_MIN}`);
             return
         }
-        if ((stats.dexterity < DEX_MIN) && (sleeve_task.task != TASK_GYM)) {
-            ns.print(`Sleeve ${index}: Dexterity is <${DEX_MIN}, working out at the gym`);
-            workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Dexterity");
+        if (stats.dexterity < DEX_MIN) {
+            if (sleeve_task.task != TASK_GYM || !sleeve_task.gymStatType.toLowerCase().includes("dexterity")) {
+                ns.print(`Sleeve ${index}: Dexterity is <${DEX_MIN}, working out at the gym`);
+                workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Dexterity");
+            }
+            ns.print(`Sleeve ${index}: Dexterity is ${stats.dexterity}/${DEX_MIN}`);
             return
         }
-        if ((stats.agility < AGI_MIN) && (sleeve_task.task != TASK_GYM)) {
-            ns.print(`Sleeve ${index}: Agility is <${AGI_MIN}, working out at the gym`);
-            workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Agility");
+        if (stats.agility < AGI_MIN) {
+            if (sleeve_task.task != TASK_GYM || !sleeve_task.gymStatType.toLowerCase().includes("agility")) {
+                ns.print(`Sleeve ${index}: Agility is <${AGI_MIN}, working out at the gym`);
+                workOutAtGym(ns, index, GYM_POWERHOUSE, "Train Agility");
+            }
+            ns.print(`Sleeve ${index}: Agility is ${stats.agility}/${AGI_MIN}`);
             return
         }
         // Start committing homicide!
