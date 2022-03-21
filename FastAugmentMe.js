@@ -82,7 +82,7 @@ export async function listPreferredAugs(ns, aug_map, type, owned = true, pending
 	// Don't include Neurofluxes here; they're handled separately
 	preferred = preferred.filter(aug => !aug.includes("NeuroFlux"));
 	// Exclude pending installs if desired
-	if (!pending) preferred = preferred.filter(aug => !aug_map[aug]["pending"])
+	if (!pending) preferred = preferred.filter(aug => !ns.getOwnedAugmentations(true).includes(aug))
 	return preferred
 }
 
