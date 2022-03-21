@@ -352,7 +352,7 @@ export async function bootstrapCorp(ns) {
     if (ns.corporation.hasResearched(SECOND_DIVISION, MARKET_TA2)) {
       ns.corporation.setProductMarketTA2(SECOND_DIVISION, product_name, true);
     } else {
-      ns.corporation.sellProduct(SECOND_DIVISION, city, product_name, "MAX", "MP");
+      ns.corporation.sellProduct(SECOND_DIVISION, "Aevum", product_name, "MAX", "MP");
     }
   }
   // Upgrade Wilson Analytics while we have > $3t
