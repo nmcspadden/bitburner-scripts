@@ -11,11 +11,13 @@ export async function main(ns) {
 		["help", false],
 		["ask", false],
 		["auto", false],
+		["hide_purchased", false]
 	])
 	if (flagdata.help) {
 		ns.tprint(
 			`--type can be: ${Object.keys(aug_bonus_types).join(", ")}
-			--ask prompts to buy; --auto autobuys any augs. If neither are specified, no purchasing will happen.`
+			--ask prompts to buy; --auto autobuys any augs. If neither are specified, no purchasing will happen.
+			--hide_purchased will not show owned/pending augs.`
 		);
 		return
 	}
@@ -26,7 +28,7 @@ export async function main(ns) {
 		await handleNeuroflux(ns);
 		ns.exit();
 	}
-	let preferred = await listPreferredAugs(ns, aug_map, flagdata.type);
+	let preferred = await listPreferredAugs(ns, aug_map, flagdata.type, flagdata.hide_purchased);
 	printPrettyAugList(ns, preferred, aug_map);
 	// Now check to see if we should buy
 	if (preferred.length > 0) {
@@ -40,10 +42,10 @@ export async function main(ns) {
  * @param {import(".").NS} ns
  * @param {*} aug_map Map of objects from buildAugMap()
  * @param {string} type Type of augs to look for
- * @param {boolean} pending If true, we filter out any owned/pending installs
+ * @param {boolean} filter_pending If true, we filter out any owned/pending installs
  * @returns List of aug names (strings) to purchase
  */
-export async function listPreferredAugs(ns, aug_map, type, filter_pending = true) {
+export async function listPreferredAugs(ns, aug_map, type, filter_pending = false) {
 	let preferred = [];
 	switch (type) {
 		case "bladeburners":
@@ -72,7 +74,7 @@ export async function listPreferredAugs(ns, aug_map, type, filter_pending = true
 			break;
 		case "":
 			ns.tprint("NEW PREFERRED AUGS!");
-			preferred = newPreferredAugs(ns, aug_map, false);
+			preferred = newPreferredAugs(ns, aug_map, filter_pending);
 			break;
 		default:
 			output(ns, TERMINAL, "Invalid type!");
@@ -81,8 +83,43 @@ export async function listPreferredAugs(ns, aug_map, type, filter_pending = true
 	// Don't include Neurofluxes here; they're handled separately
 	preferred = preferred.filter(aug => !aug.includes("NeuroFlux"));
 	// Exclude pending installs if desired
-	if (!filter_pending) preferred = preferred.filter(aug => !ns.getOwnedAugmentations(true).includes(aug))
+	if (filter_pending) preferred = preferred.filter(aug => !ns.getOwnedAugmentations(true).includes(aug))
 	return preferred
+}
+
+/**
+ * Get a list of preferred augmentations
+ * @param {import(".").NS} ns 
+ * @param {*} aug_map Map of objects from buildAugMap()
+ * @param {*} filter_pending If true, we filter out any owned/pending installs
+ * @returns List of names of augs we want to buy
+ */
+function newPreferredAugs(ns, aug_map, filter_pending = true) {
+	let faction_augs = listAugsByTypesFilteredByStats(ns, aug_map, "faction", "rep");
+	let hacking_exp_augs = listAugsByTypesFilteredByStats(ns, aug_map, "hack", "exp");
+	let hacking_augs = listAugsByTypesFilteredByStats(ns, aug_map, "hack", "");
+	let results = faction_augs.concat(hacking_exp_augs, hacking_augs);
+	if (filter_pending) results = results.filter(aug => !ns.getOwnedAugmentations(true).includes(aug))
+	return results
+}
+
+/**
+ * Filter the aug map based on types from augs.js, then by a specific stat substring
+ * @param {import(".").NS} ns 
+ * @param {*} aug_map Map of objects from buildAugMap()
+ * @param {*} type Type of aug based on augs.js constant
+ * @param {*} stat_filter The stats on an aug must contain this substring - use empty string to match everything
+ * @returns List of aug names based on filters
+ */
+function listAugsByTypesFilteredByStats(ns, aug_map, type, stat_filter) {
+	let desired_augs = {};
+	// Map the shorthand type arguments to actual aug stats we want, filtered to only include substring
+	let aug_stat_types = getStatsFromTypes([type]).filter(stat => stat.includes(stat_filter));
+	// Filter by augs that contain a stat matching the desired stat types
+	desired_augs = Object.entries(aug_map).filter(
+		([aug, model]) => !aug.includes(NF) && Object.keys(model.stats).some(stat => aug_stat_types.includes(stat))
+	);
+	return Object.keys(Object.fromEntries(desired_augs))
 }
 
 /**
@@ -398,33 +435,4 @@ function getNFCheckbox(ns, aug_map) {
  */
 function printCheckbox(condition, label) {
 	return `[${!!condition ? 'x' : ' '}] ${label}`
-}
-
-// ***************** NEW STUFF
-/*
-Here's what I want:
-1. Faction rep+ augs first
-2. Hacking exp augs
-3. Hacking success augs
-4. Once those are all obtained, start buying whatever other stuff
-*/
-
-function newPreferredAugs(ns, aug_map, filter_pending = true) {
-	let faction_augs = listAugsByTypesFilteredByStats(ns, aug_map, "faction", "rep");
-	let hacking_exp_augs = listAugsByTypesFilteredByStats(ns, aug_map, "hack", "exp");
-	let hacking_augs = listAugsByTypesFilteredByStats(ns, aug_map, "hack", "");
-	let results = faction_augs.concat(hacking_exp_augs, hacking_augs);
-	if (filter_pending) results = results.filter(aug => !ns.getOwnedAugmentations(true).includes(aug))
-	return results
-}
-
-function listAugsByTypesFilteredByStats(ns, aug_map, type, stat_filter) {
-	let desired_augs = {};
-	// Map the shorthand type arguments to actual aug stats we want, filtered to only include substring
-	let aug_stat_types = getStatsFromTypes([type]).filter(stat => stat.includes(stat_filter));
-	// Filter by augs that contain a stat matching the desired stat types
-	desired_augs = Object.entries(aug_map).filter(
-		([aug, model]) => !aug.includes(NF) && Object.keys(model.stats).some(stat => aug_stat_types.includes(stat))
-	);
-	return Object.keys(Object.fromEntries(desired_augs))
 }
