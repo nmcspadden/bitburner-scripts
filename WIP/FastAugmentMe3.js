@@ -95,10 +95,14 @@ export async function listPreferredAugs(ns, aug_map, type, filter_pending = fals
  * @returns List of names of augs we want to buy
  */
 function newPreferredAugs(ns, aug_map, filter_pending = true) {
+	// TODO: 1) if we completed BN9, include hacknet
+	// TODO: 2) sort by rep, then cost
 	let faction_augs = listAugsByTypesFilteredByStats(ns, aug_map, "faction", "rep");
 	let hacking_exp_augs = listAugsByTypesFilteredByStats(ns, aug_map, "hack", "exp");
 	let hacking_augs = listAugsByTypesFilteredByStats(ns, aug_map, "hack", "");
-	let results = faction_augs.concat(hacking_exp_augs, hacking_augs);
+	let hacknet_augs = [];
+	if (checkSForBN(9)) hacknet_augs = listAugsByTypesFilteredByStats(ns, aug_map, "hacknet", "")
+	let results = faction_augs.concat(hacknet_augs, hacking_exp_augs, hacking_augs);
 	if (filter_pending) results = results.filter(aug => !ns.getOwnedAugmentations(true).includes(aug))
 	return results
 }
@@ -144,6 +148,7 @@ export async function promptForAugs(ns, aug_map, desired_augs, should_prompt) {
 			// We want to buy the most expensive ones first
 			(a, b) => aug_map[b].cost - aug_map[a].cost
 		)
+	// TODO: reduce this down to a single aug to buy until there are no more?
 	for (const aug of real_augs_to_buy) {
 		// if (my_augs.includes(aug)) continue
 		// // Do I have a faction for whom satisifes the rep cost?
