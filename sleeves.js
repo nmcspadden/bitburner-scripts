@@ -172,6 +172,18 @@ function sleeveTime(ns, index, buy_augs = false) {
         }
         return
     }
+    // Do we need to generate rep to buy The Red Pill?
+    else if (ns.getPlayer().factions.includes("Daedalus") && !ns.getOwnedAugmentations().includes("The Red Pill")) {
+        let tasks = [];
+        for (let i = 0; i < readNumSleeves(ns); i++) {
+            tasks.push(readSleeveTask(ns, i));
+        }
+        if (!tasks.some(sleeve => (sleeve.task == TASK_FACTION) && (sleeve.location == "Daedalus"))) {
+            ns.print(`Nobody is working for Daedalus`);
+            workForNFFaction(ns, index, "Daedalus");
+            return
+        }
+    }
     // Do we have a faction with NF, but we don't currently have enough rep to buy it?
     else if (faction && (ns.getAugmentationRepReq(NF) < ns.getFactionRep(faction))) {
         let tasks = [];
