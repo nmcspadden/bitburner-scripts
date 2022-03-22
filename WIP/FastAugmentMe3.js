@@ -26,9 +26,7 @@ export async function main(ns) {
 		await handleNeuroflux(ns);
 		ns.exit();
 	}
-	// Handle type - ignoring owned items, but allowing pending ones
-	let preferred = newPreferredAugs(ns, aug_map, false);
-	// if (flagdata.type) preferred = await listPreferredAugs(ns, aug_map, flagdata.type, false, true);
+	let preferred = await listPreferredAugs(ns, aug_map, flagdata.type);
 	printPrettyAugList(ns, preferred, aug_map);
 	// Now check to see if we should buy
 	if (preferred.length > 0) {
@@ -47,36 +45,38 @@ export async function main(ns) {
  */
 export async function listPreferredAugs(ns, aug_map, type, filter_pending = true) {
 	let preferred = [];
-	if (type) {
-		switch (type) {
-			case "bladeburners":
-				if (await checkSForBN(ns, 7)) preferred = listBladeburnerAugs(aug_map)
-				break;
-			case "charisma":
-				preferred = listCharismaAugs(ns, aug_map);
-				break;
-			case "combat":
-				preferred = listCombatAugs(ns, aug_map);
-				break;
-			case "company":
-				preferred = listCompanyAugs(ns, aug_map);
-				break;
-			case "crime":
-				preferred = listCrimeAugs(ns, aug_map);
-				break;
-			case "faction":
-				preferred = listFactionAugs(ns, aug_map);
-				break;
-			case "hack":
-				preferred = listHackingAugs(ns, aug_map);
-				break;
-			case "hacknet":
-				preferred = listHacknetAugs(ns, aug_map);
-				break;
-			default:
-				output(ns, TERMINAL, "Invalid type!");
-				ns.exit();
-		}
+	switch (type) {
+		case "bladeburners":
+			if (await checkSForBN(ns, 7)) preferred = listBladeburnerAugs(ns, aug_map)
+			break;
+		case "charisma":
+			preferred = listCharismaAugs(ns, aug_map);
+			break;
+		case "combat":
+			preferred = listCombatAugs(ns, aug_map);
+			break;
+		case "company":
+			preferred = listCompanyAugs(ns, aug_map);
+			break;
+		case "crime":
+			preferred = listCrimeAugs(ns, aug_map);
+			break;
+		case "faction":
+			preferred = listFactionAugs(ns, aug_map);
+			break;
+		case "hack":
+			preferred = listHackingAugs(ns, aug_map);
+			break;
+		case "hacknet":
+			preferred = listHacknetAugs(ns, aug_map);
+			break;
+		case "":
+			ns.tprint("NEW PREFERRED AUGS!");
+			preferred = newPreferredAugs(ns, aug_map, false);
+			break;
+		default:
+			output(ns, TERMINAL, "Invalid type!");
+			ns.exit();
 	}
 	// Don't include Neurofluxes here; they're handled separately
 	preferred = preferred.filter(aug => !aug.includes("NeuroFlux"));
@@ -177,6 +177,8 @@ export async function handleNeuroflux(ns) {
  * @returns List of aug names (strings) to purchase
  */
 function listBladeburnerAugs(ns, aug_map) {
+	// If not a member of Bladeburners faction, this will be empty
+	if (!ns.getPlayer().factions.includes("Bladeburner")) return []
 	// Prefer success+ augs, then everything else
 	let augs = listAugsByTypesFilteredByStats(ns, aug_map, "bladeburners", "success");
 	return augs.concat(listAugsByTypesFilteredByStats(ns, aug_map, "bladeburners", ""));
@@ -339,11 +341,15 @@ function augPreReqsAvailable(ns, prereqs) {
  * @param {*} aug_map Map of augs built by buildAugMap()
  */
 function printPrettyAugList(ns, aug_list, aug_map) {
-	ns.tprint("Augs to purchase: ");
+	if (aug_list.length > 0) ns.tprint("Augs to purchase: ");
+	else {
+		ns.tprint("Nothing to purchase.");
+		return
+	}
 	// Sort this by ones that are already owned, then pending
 	let sorted_list = []
 	sorted_list = aug_list.sort((a, b) => getPendingInstalls(ns).includes(a) - getPendingInstalls(ns).includes(b));
-	sorted_list =  aug_list.sort((a, b) => ns.getOwnedAugmentations().includes(a) - ns.getOwnedAugmentations().includes(b));
+	sorted_list = aug_list.sort((a, b) => ns.getOwnedAugmentations().includes(a) - ns.getOwnedAugmentations().includes(b));
 	sorted_list = sorted_list.reverse();
 	sorted_list.forEach(aug => printAugCheckbox(ns, aug, aug_map));
 }
