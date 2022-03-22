@@ -176,11 +176,20 @@ export function findMyFactionsWithAug(ns, aug, player) {
 
 /** 
  * Determine the faction whose rep is closest to the next rep requirement. 
- * @param {import(".").NS} ns
+ * @param {import("../.").NS} ns
  * @param avail_factions Factions I belong to that sell NF 
 **/
 export function getClosestNFFaction(ns) {
 	let rep_sorted_fax = ns.getPlayer().factions.filter(fct => ns.getAugmentationsFromFaction(fct).includes(NF)).sort((a, b) => ns.getFactionRep(a) - ns.getFactionRep(b)).reverse();
 	let sorted_fax = rep_sorted_fax.sort((a, b) => (ns.getAugmentationRepReq(NF) - ns.getFactionRep(a)) < (ns.getAugmentationRepReq(NF) - ns.getFactionRep(b)))
 	return sorted_fax[0]
+}
+
+/**
+ * Get a list of augs pending install
+ * @param {import("../.").NS} ns 
+ * @returns A list of augs pending install
+ */
+export function getPendingInstalls(ns) {
+	return ns.getOwnedAugmentations(true).filter(aug => !ns.getOwnedAugmentations().includes(aug))
 }
