@@ -1,6 +1,6 @@
-import { commitKarmaFocusedCrime, GANG_KARMA } from "utils/crimes.js";
+import { commitKarmaFocusedCrime, GANG_KARMA, workoutAllUntil } from "utils/crimes.js";
 import { isProcessRunning, checkSForBN, outputLog, HOME } from "utils/script_tools.js";
-import { upgradeHome, growHackingXP } from "utils/gameplan.js";
+import { upgradeHome, growHackingXP, MIN_STAT } from "utils/gameplan.js";
 
 /**
  * Early Gameplan w/ Gangs (64+ GB RAM)
@@ -24,6 +24,8 @@ export async function main(ns) {
 		await outputLog(ns, EARLY_LOG, "Activating sleeves, if we have any");
 		ns.exec('sleeves.js', HOME);
 	}
+	// Work out until we have the necessary stats to do homicide
+	await workoutAllUntil(ns, MIN_STAT);
 	// Start crimes until we can do homicides to get to the gang karma, also upgrade home
 	if (Math.abs(ns.heart.break()) <= GANG_KARMA) await outputLog(ns, EARLY_LOG, "Starting crime + upgrade loop...");
 	await crimeWhileUpgradingLoop(ns);

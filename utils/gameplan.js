@@ -1,5 +1,7 @@
 import { maximizeScriptUse, HOME } from "utils/script_tools.js";
 
+export const MIN_STAT = 80;
+
 /** 
  * Upgrade the home
  * @param {import("../.").NS} ns 

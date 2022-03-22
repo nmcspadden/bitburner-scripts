@@ -1,6 +1,7 @@
 import { outputLog, HOME, waitForPid } from "utils/script_tools.js";
 import { FILE_NUM_SLEEVES, readSleeveStats, STR_MIN, DEF_MIN, DEX_MIN, AGI_MIN } from "sleevesEarly.js";
 import { GANG_KARMA } from "utils/crimes";
+import { MIN_STAT } from "utils/gameplan";
 
 /**
  * Starting game plan (32 GB only)
@@ -10,7 +11,6 @@ import { GANG_KARMA } from "utils/crimes";
  */
 
 export const START_LOG = "startinggameplan.log.txt";
-const MIN_STAT = 80;
 
 /** @param {import(".").NS} ns **/
 export async function main(ns) {
