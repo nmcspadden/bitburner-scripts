@@ -31,6 +31,9 @@ export async function main(ns) {
 	let preferred = await listPreferredAugs(ns, aug_map, flagdata.type, flagdata.hide_purchased);
 	printPrettyAugList(ns, preferred, aug_map);
 	// Now check to see if we should buy
+	// TODO: Change the logic here
+	// We should try to buy all the ones from the list of preferred augs by group (hack+ exp, hacknet, etc.) first
+	// If there are no obtainable within that list, only _THEN_ do we consider the other groups
 	if (preferred.length > 0) {
 		if (!flagdata.ask && !flagdata.auto) return
 		await promptForAugs(ns, aug_map, preferred, flagdata.ask)
@@ -95,7 +98,6 @@ export async function listPreferredAugs(ns, aug_map, type, filter_pending = fals
  * @returns List of names of augs we want to buy
  */
 function newPreferredAugs(ns, aug_map, filter_pending = true) {
-	// TODO: 1) if we completed BN9, include hacknet
 	// TODO: 2) sort by rep, then cost
 	let faction_augs = listAugsByTypesFilteredByStats(ns, aug_map, "faction", "rep");
 	let hacking_exp_augs = listAugsByTypesFilteredByStats(ns, aug_map, "hack", "exp");
@@ -148,7 +150,6 @@ export async function promptForAugs(ns, aug_map, desired_augs, should_prompt) {
 			// We want to buy the most expensive ones first
 			(a, b) => aug_map[b].cost - aug_map[a].cost
 		)
-	// TODO: reduce this down to a single aug to buy until there are no more?
 	for (const aug of real_augs_to_buy) {
 		// if (my_augs.includes(aug)) continue
 		// // Do I have a faction for whom satisifes the rep cost?
