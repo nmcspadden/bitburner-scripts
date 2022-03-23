@@ -1,5 +1,6 @@
-import { buildAugMap, aug_bonus_types, findMyFactionsWithAug, sortAugsByRepThenCost, getClosestNFFaction, NF } from "utils/augs.js";
+import { buildAugMap, aug_bonus_types, findMyFactionsWithAug, getClosestNFFaction, NF, getPendingInstalls } from "utils/augs.js";
 import { checkSForBN, output } from "utils/script_tools.js";
+import { readAugMap } from "utils/augs";
 
 let TERMINAL = false;
 
@@ -11,11 +12,13 @@ export async function main(ns) {
 		["help", false],
 		["ask", false],
 		["auto", false],
+		["hide_purchased", false]
 	])
 	if (flagdata.help) {
 		ns.tprint(
 			`--type can be: ${Object.keys(aug_bonus_types).join(", ")}
-			--ask prompts to buy; --auto autobuys any augs. If neither are specified, no purchasing will happen.`
+			--ask prompts to buy; --auto autobuys any augs. If neither are specified, no purchasing will happen.
+			--hide_purchased will not show owned/pending augs.`
 		);
 		return
 	}
@@ -26,10 +29,12 @@ export async function main(ns) {
 		await handleNeuroflux(ns);
 		ns.exit();
 	}
-	// Handle type - ignoring owned items, but allowing pending ones
-	let preferred = await listPreferredAugs(ns, aug_map, flagdata.type, false, true);
+	let preferred = await listPreferredAugs(ns, aug_map, flagdata.type, flagdata.hide_purchased);
 	printPrettyAugList(ns, preferred, aug_map);
 	// Now check to see if we should buy
+	// TODO: Change the logic here
+	// We should try to buy all the ones from the list of preferred augs by group (hack+ exp, hacknet, etc.) first
+	// If there are no obtainable within that list, only _THEN_ do we consider the other groups
 	if (preferred.length > 0) {
 		if (!flagdata.ask && !flagdata.auto) return
 		await promptForAugs(ns, aug_map, preferred, flagdata.ask)
@@ -41,49 +46,86 @@ export async function main(ns) {
  * @param {import(".").NS} ns
  * @param {*} aug_map Map of objects from buildAugMap()
  * @param {string} type Type of augs to look for
- * @param {boolean} owned Whether we include augs we already own
+ * @param {boolean} filter_pending If true, we filter out any owned/pending installs
  * @returns List of aug names (strings) to purchase
  */
-export async function listPreferredAugs(ns, aug_map, type, owned = true, pending = false) {
-	// TODO: One notable problem here is that if there are pending EXP+ installs, the others won't get
-	// considered. Should we change that logic?
+export async function listPreferredAugs(ns, aug_map, type, filter_pending = false) {
 	let preferred = [];
-	if (type) {
-		switch (type) {
-			case "bladeburners":
-				if (await checkSForBN(ns, 7)) preferred = listBladeburnerAugs(aug_map, owned)
-				break;
-			case "charisma":
-				preferred = listCharismaAugs(aug_map, owned);
-				break;
-			case "combat":
-				preferred = listCombatAugs(aug_map, owned);
-				break;
-			case "company":
-				preferred = listCompanyAugs(aug_map, owned);
-				break;
-			case "crime":
-				preferred = listCrimeAugs(aug_map, owned);
-				break;
-			case "faction":
-				preferred = listFactionAugs(aug_map, owned);
-				break;
-			case "hack":
-				preferred = listPreferredHackingAugs(aug_map, owned);
-				break;
-			case "hacknet":
-				preferred = listPreferredHacknetAugs(aug_map, owned);
-				break;
-			default:
-				output(ns, TERMINAL, "Invalid type!");
-				ns.exit();
-		}
+	switch (type) {
+		case "bladeburners":
+			if (await checkSForBN(ns, 7)) preferred = listBladeburnerAugs(ns, aug_map)
+			break;
+		case "charisma":
+			preferred = listCharismaAugs(ns, aug_map);
+			break;
+		case "combat":
+			preferred = listCombatAugs(ns, aug_map);
+			break;
+		case "company":
+			preferred = listCompanyAugs(ns, aug_map);
+			break;
+		case "crime":
+			preferred = listCrimeAugs(ns, aug_map);
+			break;
+		case "faction":
+			preferred = listFactionAugs(ns, aug_map);
+			break;
+		case "hack":
+			preferred = listHackingAugs(ns, aug_map);
+			break;
+		case "hacknet":
+			preferred = listHacknetAugs(ns, aug_map);
+			break;
+		case "":
+			preferred = newPreferredAugs(ns, filter_pending);
+			break;
+		default:
+			output(ns, TERMINAL, "Invalid type!");
+			ns.exit();
 	}
 	// Don't include Neurofluxes here; they're handled separately
 	preferred = preferred.filter(aug => !aug.includes("NeuroFlux"));
 	// Exclude pending installs if desired
-	if (!pending) preferred = preferred.filter(aug => !ns.getOwnedAugmentations(true).includes(aug))
+	if (filter_pending) preferred = preferred.filter(aug => !ns.getOwnedAugmentations(true).includes(aug))
 	return preferred
+}
+
+/**
+ * Get a list of preferred augmentations
+ * @param {import(".").NS} ns 
+ * @param {*} aug_map Map of objects from buildAugMap()
+ * @param {*} filter_pending If true, we filter out any owned/pending installs
+ * @returns List of names of augs we want to buy
+ */
+export async function newPreferredAugs(ns, filter_pending = true) {
+	let aug_map = await readAugMap(ns);
+	let faction_augs = listAugsByTypesFilteredByStats(ns, aug_map, "faction", "rep");
+	let hacking_exp_augs = listAugsByTypesFilteredByStats(ns, aug_map, "hack", "exp");
+	let hacking_augs = listAugsByTypesFilteredByStats(ns, aug_map, "hack", "");
+	let hacknet_augs = [];
+	if (checkSForBN(9)) hacknet_augs = listAugsByTypesFilteredByStats(ns, aug_map, "hacknet", "")
+	let results = faction_augs.concat(hacknet_augs, hacking_exp_augs, hacking_augs);
+	if (filter_pending) results = results.filter(aug => !ns.getOwnedAugmentations(true).includes(aug))
+	return results
+}
+
+/**
+ * Filter the aug map based on types from augs.js, then by a specific stat substring
+ * @param {import(".").NS} ns 
+ * @param {*} aug_map Map of objects from buildAugMap()
+ * @param {*} type Type of aug based on augs.js constant
+ * @param {*} stat_filter The stats on an aug must contain this substring - use empty string to match everything
+ * @returns List of aug names based on filters
+ */
+function listAugsByTypesFilteredByStats(ns, aug_map, type, stat_filter) {
+	let desired_augs = {};
+	// Map the shorthand type arguments to actual aug stats we want, filtered to only include substring
+	let aug_stat_types = getStatsFromTypes([type]).filter(stat => stat.includes(stat_filter));
+	// Filter by augs that contain a stat matching the desired stat types
+	desired_augs = Object.entries(aug_map).filter(
+		([aug, model]) => !aug.includes(NF) && Object.keys(model.stats).some(stat => aug_stat_types.includes(stat))
+	);
+	return Object.keys(Object.fromEntries(desired_augs))
 }
 
 /**
@@ -96,18 +138,7 @@ export async function listPreferredAugs(ns, aug_map, type, owned = true, pending
  */
 export async function promptForAugs(ns, aug_map, desired_augs, should_prompt) {
 	let purchased_augs = [];
-	let real_augs_to_buy = desired_augs
-		.filter(
-			// I shouldn't already own it/have it pending, I should afford it, and have the rep to buy it
-			aug =>
-				!ns.getOwnedAugmentations(true).includes(aug) &&
-				augCostAvailable(ns, aug_map[aug]["cost"]) &&
-				augRepAvailable(ns, aug_map[aug]["repreq"], aug_map[aug]["factions"])
-		)
-		.sort(
-			// We want to buy the most expensive ones first
-			(a, b) => aug_map[b].cost - aug_map[a].cost
-		)
+	let real_augs_to_buy = filterObtainableAugs(ns, desired_augs, aug_map);
 	for (const aug of real_augs_to_buy) {
 		// if (my_augs.includes(aug)) continue
 		// // Do I have a faction for whom satisifes the rep cost?
@@ -175,219 +206,89 @@ export async function handleNeuroflux(ns) {
 /**
  * Get a list of names of priority augs for bladeburners stats
  * @param {*} aug_map Map of augs as generated by readAugMap()
- * @param {boolean} owned True to include augs I own, false to exclude them (default: false)
  * @returns List of aug names (strings) to purchase
  */
-function listBladeburnerAugs(aug_map, owned = false) {
-	// First, check if I want success augs
-	let desired_augs = listBladeburnerAugsPrimitive(aug_map, "success", owned);
-	// If those are all done, get the rest
-	if (desired_augs.length > 0) desired_augs = listBladeburnerAugsPrimitive(aug_map, "bladeburner", owned);
-	return desired_augs
-}
-
-/**
- * Get a list of names of priority augs for bladeburners success
- * @param {*} aug_map Map of augs as generated by readAugMap()
- * @param {string} substring A given substring to filter stats for
- * @param {boolean} owned True to include augs I own, false to exclude them (default: false)
- * @returns List of aug names (strings) to purchase
- */
-function listBladeburnerAugsPrimitive(aug_map, substring, owned = false) {
-	let desired_augs = {};
-	// Map the shorthand type arguments to actual aug stats we want, filtered to only include substring
-	let aug_stat_types = getStatsFromTypes(["bladeburners"]).filter(stat => stat.includes(substring));
-	// Now let's take a look at the rep requirements, and costs...
-	for (let [aug, model] of Object.entries(aug_map)) {
-		// Look for matching stats
-		if (aug_stat_types.some(item => Object.keys(model["stats"]).includes(item))) {
-			// Skip items we own unless specifically told to include them
-			if (model["owned"] && !owned) continue
-			desired_augs[aug] = model;
-		}
-	}
-	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
-}
-
-/**
- * Get a list of names of priority augs for hacking
- * @param {*} aug_map Map of augs as generated by readAugMap()
- * @param {boolean} owned True to include augs I own, false to exclude them (default: false)
- * @returns List of aug names (strings) to purchase
- */
-function listPreferredHackingAugs(aug_map, owned = false) {
-	let desired_augs = listExpAugs(aug_map, "hack", owned);
-	if (desired_augs.length > 0) return desired_augs
-	desired_augs = listSuccessAugs(aug_map, "hack", owned);
-	if (desired_augs.length > 0) return desired_augs
-	desired_augs = listHackingAugs(aug_map, owned);
-	if (desired_augs.length > 0) return desired_augs
-	// If nothing left to buy, return an empty list
-	return []
+function listBladeburnerAugs(ns, aug_map) {
+	// If not a member of Bladeburners faction, this will be empty
+	if (!ns.getPlayer().factions.includes("Bladeburner")) return []
+	// Prefer success+ augs, then everything else
+	let augs = listAugsByTypesFilteredByStats(ns, aug_map, "bladeburners", "success");
+	return augs.concat(listAugsByTypesFilteredByStats(ns, aug_map, "bladeburners", ""));
 }
 
 /**
  * Get a list of names of faction-rep-gain augs
  * @param {object} aug_map Map of augs as generated by readAugMap()
- * @param {boolean} owned True to include augs I own, false to exclude them (default: false)
  * @returns List of aug names to purchase
  */
-function listFactionAugs(aug_map, owned = false) {
-	// Prefer rep+ augs
-	let desired_augs = listRepAugs(aug_map, "faction", owned);
-	if (desired_augs.length > 0) return desired_augs
-	// Map the shorthand type arguments to actual aug stats we want, filtered to only include exp
-	let aug_stat_types = getStatsFromTypes(["faction"]);
-	// Now let's take a look at the rep requirements, and costs...
-	for (let [aug, model] of Object.entries(aug_map)) {
-		// Look for matching stats
-		if (aug_stat_types.some(item => Object.keys(model["stats"]).includes(item))) {
-			// Skip items we own unless specifically told to include them
-			if (aug_map[aug]["owned"] && !owned) continue
-			desired_augs[aug] = model;
-		}
-	}
-	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
+function listFactionAugs(ns, aug_map) {
+	// Prefer rep+ augs, then everything else
+	let augs = listAugsByTypesFilteredByStats(ns, aug_map, "faction", "rep");
+	return augs.concat(listAugsByTypesFilteredByStats(ns, aug_map, "faction", ""));
 }
 
 /**
  * Get a list of names of hacking augs
  * @param {object} aug_map Map of augs as generated by readAugMap
- * @param {boolean} owned True to include augs I own, false to exclude them (default: false)
  * @returns List of aug names to purchase
  */
-function listHackingAugs(aug_map, owned = false) {
-	let desired_augs = {};
-	// Map the shorthand type arguments to actual aug stats we want, filtered to only include exp
-	let aug_stat_types = getStatsFromTypes(["hack"]);
-	// Now let's take a look at the rep requirements, and costs...
-	for (let [aug, model] of Object.entries(aug_map)) {
-		// Look for matching stats
-		if (aug_stat_types.some(item => Object.keys(model["stats"]).includes(item))) {
-			// Skip items we own unless specifically told to include them
-			if (aug_map[aug]["owned"] && !owned) continue
-			desired_augs[aug] = model;
-		}
-	}
-	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
+function listHackingAugs(ns, aug_map) {
+	// Prefer exp+ augs, then everything else
+	let augs = listAugsByTypesFilteredByStats(ns, aug_map, "hack", "exp");
+	return augs.concat(listAugsByTypesFilteredByStats(ns, aug_map, "hack", ""));
 }
 
 /**
  * Get a list of names of charisma-gain augs
  * @param {object} aug_map Map of augs as generated by readAugMap
- * @param {boolean} owned True to include augs I own, false to exclude them (default: false)
  * @returns List of aug names to purchase
  */
-function listCharismaAugs(aug_map, owned = false) {
-	// Prefer exp+ augs
-	let desired_augs = listExpAugs(aug_map, "charisma", owned);
-	if (desired_augs.length > 0) return desired_augs
-	// Map the shorthand type arguments to actual aug stats we want, filtered to only include exp
-	let aug_stat_types = getStatsFromTypes(["charisma"]);
-	// Now let's take a look at the rep requirements, and costs...
-	for (let [aug, model] of Object.entries(aug_map)) {
-		// Look for matching stats
-		if (aug_stat_types.some(item => Object.keys(model["stats"]).includes(item))) {
-			// Skip items we own unless specifically told to include them
-			if (aug_map[aug]["owned"] && !owned) continue
-			desired_augs[aug] = model;
-		}
-	}
-	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
+function listCharismaAugs(ns, aug_map) {
+	// Prefer exp+ augs, then everything else
+	let augs = listAugsByTypesFilteredByStats(ns, aug_map, "charisma", "exp");
+	return augs.concat(listAugsByTypesFilteredByStats(ns, aug_map, "charisma", ""));
 }
 
 /**
  * Get a list of names of combat-gain augs
  * @param {object} aug_map Map of augs as generated by readAugMap
- * @param {boolean} owned True to include augs I own, false to exclude them (default: false)
  * @returns List of aug names to purchase
  */
-function listCombatAugs(aug_map, owned = false) {
-	// Prefer exp+ augs
-	let desired_augs = listExpAugs(aug_map, "combat", owned);
-	if (desired_augs.length > 0) return desired_augs
-	// Map the shorthand type arguments to actual aug stats we want, filtered to only include exp
-	let aug_stat_types = getStatsFromTypes(["combat"]);
-	// Now let's take a look at the rep requirements, and costs...
-	for (let [aug, model] of Object.entries(aug_map)) {
-		// Look for matching stats
-		if (aug_stat_types.some(item => Object.keys(model["stats"]).includes(item))) {
-			// Skip items we own unless specifically told to include them
-			if (aug_map[aug]["owned"] && !owned) continue
-			desired_augs[aug] = model;
-		}
-	}
-	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
+function listCombatAugs(ns, aug_map) {
+	// Prefer exp+ augs, then everything else
+	let augs = listAugsByTypesFilteredByStats(ns, aug_map, "combat", "exp");
+	return augs.concat(listAugsByTypesFilteredByStats(ns, aug_map, "combat", ""));
 }
 
 /**
  * Get a list of names of company-gain augs
  * @param {object} aug_map Map of augs as generated by readAugMap
- * @param {boolean} owned True to include augs I own, false to exclude them (default: false)
  * @returns List of aug names to purchase
  */
-function listCompanyAugs(aug_map, owned = false) {
-	// Prefer exp+ augs
-	let desired_augs = listRepAugs(aug_map, "company", owned);
-	if (desired_augs.length > 0) return desired_augs
-	// Map the shorthand type arguments to actual aug stats we want, filtered to only include exp
-	let aug_stat_types = getStatsFromTypes(["company"]);
-	// Now let's take a look at the rep requirements, and costs...
-	for (let [aug, model] of Object.entries(aug_map)) {
-		// Look for matching stats
-		if (aug_stat_types.some(item => Object.keys(model["stats"]).includes(item))) {
-			// Skip items we own unless specifically told to include them
-			if (aug_map[aug]["owned"] && !owned) continue
-			desired_augs[aug] = model;
-		}
-	}
-	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
+function listCompanyAugs(ns, aug_map) {
+	// Prefer rep+ augs, then everything else
+	let augs = listAugsByTypesFilteredByStats(ns, aug_map, "company", "rep");
+	return augs.concat(listAugsByTypesFilteredByStats(ns, aug_map, "company", ""));
 }
 
 /**
  * Get a list of names of crime-specific augs
  * @param {object} aug_map Map of augs as generated by readAugMap
- * @param {boolean} owned True to include augs I own, false to exclude them (default: false)
  * @returns List of aug names to purchase
  */
-function listCrimeAugs(aug_map, owned = false) {
-	// Prefer success+ augs
-	let desired_augs = listSuccessAugs(aug_map, "crime", owned);
-	if (desired_augs.length > 0) return desired_augs
-	// Map the shorthand type arguments to actual aug stats we want, filtered to only include exp
-	let aug_stat_types = getStatsFromTypes(["crime"]);
-	// Now let's take a look at the rep requirements, and costs...
-	for (let [aug, model] of Object.entries(aug_map)) {
-		// Look for matching stats
-		if (aug_stat_types.some(item => Object.keys(model["stats"]).includes(item))) {
-			// Skip items we own unless specifically told to include them
-			if (aug_map[aug]["owned"] && !owned) continue
-			desired_augs[aug] = model;
-		}
-	}
-	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
+function listCrimeAugs(ns, aug_map) {
+	// Success first, then everything else
+	let augs = listAugsByTypesFilteredByStats(ns, aug_map, "crime", "success");
+	return augs.concat(listAugsByTypesFilteredByStats(ns, aug_map, "crime", ""));
 }
 
 /**
  * Get a list of names of Hacknet augs
  * @param {object} aug_map Map of augs as generated by readAugMap()
- * @param {boolean} owned True to include augs I own, false to exclude them (default: false)
  * @returns List of aug names to purchase
  */
-function listPreferredHacknetAugs(aug_map, owned = false) {
-	let desired_augs = {};
-	// Map the shorthand type arguments to actual aug stats we want, filtered to only include exp
-	let aug_stat_types = getStatsFromTypes(["hacknet"]);
-	// Now let's take a look at the rep requirements, and costs...
-	for (let [aug, model] of Object.entries(aug_map)) {
-		// Look for matching stats
-		if (aug_stat_types.some(item => Object.keys(model["stats"]).includes(item))) {
-			// Skip items we own unless specifically told to include them
-			if (aug_map[aug]["owned"] && !owned) continue
-			desired_augs[aug] = model;
-		}
-	}
-	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
+function listHacknetAugs(ns, aug_map) {
+	return listAugsByTypesFilteredByStats(ns, aug_map, "hacknet", "")
 }
 
 /**
@@ -403,10 +304,10 @@ function getStatsFromTypes(types) {
 	return stat_list.flat()
 }
 
-/** 
+/**
  * Purchase an aug. Return true if succeeded, otherwise false.
  * @param {import(".").NS} ns
- * @param {string} aug Name of augmentation 
+ * @param {string} aug Name of augmentation
  * @param {string} faction Which faction to buy from
  * @param {boolean} should_prompt True if we should prompt to buy; false means we buy silently
  * @returns True if we purchased the aug; false if we did not
@@ -427,11 +328,11 @@ async function purchaseAug(ns, aug, faction, should_prompt = true) {
 	return did_buy
 }
 
-/** 
+/**
  * Return list of factions I have enough rep to buy from
  * @param {import(".").NS} ns
- * @param {number} repreq Amount of rep required 
- * @param {array} factions List of factions to check 
+ * @param {number} repreq Amount of rep required
+ * @param {array} factions List of factions to check
  * @returns True if there is a faction we can buy this aug from right now
 **/
 function augRepAvailable(ns, repreq, factions) {
@@ -442,7 +343,7 @@ function augRepAvailable(ns, repreq, factions) {
 	return common_factions.find(faction => repreq <= ns.getFactionRep(faction))
 }
 
-/** 
+/**
  * Return true if I have enough money to buy something
  * @param {import(".").NS} ns
  * @param {number} price Cost of aug
@@ -453,7 +354,7 @@ function augCostAvailable(ns, price) {
 	return (ns.getServerMoneyAvailable('home') >= price)
 }
 
-/** 
+/**
  * Return a list of prereqs I do NOT satisfy; otherwise empty list
  * @param {import(".").NS} ns
  * @param {number} prereqs List of aug prereqs
@@ -465,75 +366,20 @@ function augPreReqsAvailable(ns, prereqs) {
 	return prereqs.filter(item => !my_augs.includes(item))
 }
 
-/**
-* Get a list of names of exp-enhancing augs
-* @param {object} aug_map Map of augs as generated by readAugMap
-* @param {string} type The type of augs to consider when we filter for success
-* @param {boolean} owned True to include augs I own, false to exclude them
-* @returns List of aug names to purchase
-*/
-function listExpAugs(aug_map, type, owned = false) {
-	let desired_augs = {};
-	// Map the shorthand type arguments to actual aug stats we want, filtered to only include exp
-	let aug_stat_types = getStatsFromTypes([type]).filter(stat => stat.includes("exp"));
-	// Now let's take a look at the rep requirements, and costs...
-	for (let [aug, model] of Object.entries(aug_map)) {
-		// Look for matching stats
-		if (aug_stat_types.some(item => Object.keys(model["stats"]).includes(item))) {
-			// BB augs can have combat stats but are not easily obtained, so exclude them
-			if (aug_map[aug]["factions"].includes("Bladeburners")) continue
-			// Skip items we own unless specifically told to include them
-			if (aug_map[aug]["owned"] && !owned) continue
-			desired_augs[aug] = model;
-		}
-	}
-	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
-}
-
-/**
-* Get a list of names of rep-enhancing augs
-* @param {object} aug_map Map of augs as generated by readAugMap
-* @param {string} type The type of augs to consider when we filter for success
-* @param {boolean} owned True to include augs I own, false to exclude them
-* @returns List of aug names to purchase
-*/
-function listRepAugs(aug_map, type, owned = false) {
-	let desired_augs = {};
-	// Map the shorthand type arguments to actual aug stats we want, filtered to only include exp
-	let aug_stat_types = getStatsFromTypes([type]).filter(stat => stat.includes("rep"));
-	// Now let's take a look at the rep requirements, and costs...
-	for (let [aug, model] of Object.entries(aug_map)) {
-		// Look for matching stats
-		if (aug_stat_types.some(item => Object.keys(model["stats"]).includes(item))) {
-			// Skip items we own unless specifically told to include them
-			if (aug_map[aug]["owned"] && !owned) continue
-			desired_augs[aug] = model;
-		}
-	}
-	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
-}
-
-/**
-* Get a list of names of success-enhancing augs
-* @param {object} aug_map Map of augs as generated by readAugMap
-* @param {string} type The type of augs to consider when we filter for success
-* @param {boolean} owned True to include augs I own, false to exclude them
-* @returns List of aug names to purchase
-*/
-function listSuccessAugs(aug_map, type, owned = false) {
-	let desired_augs = {};
-	// Map the shorthand type arguments to actual aug stats we want, filtered to only include exp
-	let aug_stat_types = getStatsFromTypes([type]).filter(stat => stat.includes("success"));
-	// Now let's take a look at the rep requirements, and costs...
-	for (let [aug, model] of Object.entries(aug_map)) {
-		// Look for matching stats
-		if (aug_stat_types.some(item => Object.keys(model["stats"]).includes(item))) {
-			// Skip items we own unless specifically told to include them
-			if (aug_map[aug]["owned"] && !owned) continue
-			desired_augs[aug] = model;
-		}
-	}
-	return Object.keys(sortAugsByRepThenCost(desired_augs, aug_map))
+function filterObtainableAugs(ns, aug_list, aug_map) {
+	// Filter the list of augs to only ones we can buy right now
+	return aug_list
+		.filter(
+			// I shouldn't already own it/have it pending, I should afford it, and have the rep to buy it
+			aug =>
+				!ns.getOwnedAugmentations(true).includes(aug) &&
+				augCostAvailable(ns, ns.getAugmentationPrice(aug)) &&
+				augRepAvailable(ns, aug_map[aug]["repreq"], aug_map[aug]["factions"])
+		)
+		.sort(
+			// We want to buy the most expensive ones first
+			(a, b) => aug_map[b].cost - aug_map[a].cost
+		)
 }
 
 /**
@@ -543,8 +389,17 @@ function listSuccessAugs(aug_map, type, owned = false) {
  * @param {*} aug_map Map of augs built by buildAugMap()
  */
 function printPrettyAugList(ns, aug_list, aug_map) {
-	ns.tprint("Augs to purchase: ");
-	aug_list.forEach(aug => printAugCheckbox(ns, aug, aug_map));
+	if (aug_list.length > 0) ns.tprint("Augs to purchase: ");
+	else {
+		ns.tprint("Nothing to purchase.");
+		return
+	}
+	// Sort this by ones that are already owned, then pending
+	let sorted_list = []
+	sorted_list = aug_list.sort((a, b) => getPendingInstalls(ns).includes(a) - getPendingInstalls(ns).includes(b));
+	sorted_list = aug_list.sort((a, b) => ns.getOwnedAugmentations().includes(a) - ns.getOwnedAugmentations().includes(b));
+	sorted_list = sorted_list.reverse();
+	sorted_list.forEach(aug => printAugCheckbox(ns, aug, aug_map));
 }
 
 /**
@@ -556,10 +411,10 @@ function printPrettyAugList(ns, aug_list, aug_map) {
 function printAugCheckbox(ns, aug, aug_map) {
 	let msg = `${aug}`
 	let condition = false;
-	if (aug_map[aug]["pending"]) {
+	if (aug_map[aug]["pending"] || getPendingInstalls(ns).includes(aug)) {
 		msg = `${aug} (pending install)`;
 		condition = true;
-	} else if (aug_map[aug]["owned"]) {
+	} else if (aug_map[aug]["owned"] || ns.getOwnedAugmentations().includes(aug)) {
 		condition = true;
 	} else {
 		let satisfy_rep = augRepAvailable(ns, aug_map[aug]["repreq"], aug_map[aug]["factions"]);
