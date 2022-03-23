@@ -138,7 +138,7 @@ function listAugsByTypesFilteredByStats(ns, aug_map, type, stat_filter) {
  */
 export async function promptForAugs(ns, aug_map, desired_augs, should_prompt) {
 	let purchased_augs = [];
-	let real_augs_to_buy = filterObtainableAugs(ns, desired_augs);
+	let real_augs_to_buy = filterObtainableAugs(ns, desired_augs, aug_map);
 	for (const aug of real_augs_to_buy) {
 		// if (my_augs.includes(aug)) continue
 		// // Do I have a faction for whom satisifes the rep cost?
@@ -366,7 +366,7 @@ function augPreReqsAvailable(ns, prereqs) {
 	return prereqs.filter(item => !my_augs.includes(item))
 }
 
-function filterObtainableAugs(ns, aug_list) {
+function filterObtainableAugs(ns, aug_list, aug_map) {
 	// Filter the list of augs to only ones we can buy right now
 	return aug_list
 		.filter(
