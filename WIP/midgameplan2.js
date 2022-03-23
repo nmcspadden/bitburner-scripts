@@ -1,6 +1,6 @@
 import { outputLog, isProcessRunning, HOME } from "utils/script_tools.js";
 import { buildAugMap } from "utils/augs.js";
-import { newPreferredAugs, promptForAugs, handleNeuroflux, filterObtainableAugs } from "WIP/FastAugmentMe3.js";
+import { newPreferredAugs, promptForAugs, handleNeuroflux } from "WIP/FastAugmentMe3.js";
 import { upgradeHome, growHackingXP, joinFactions, endGameTrigger } from "utils/gameplan.js";
 import { hasStockAccess } from "stocks";
 
@@ -34,11 +34,8 @@ export async function main(ns) {
 	ns.toast("Starting mid game plan!", "info", null);
 	ns.disableLog("ALL"); // Disable the log
 	ns.tail(); // Open a window to view the status of the script
-
-	if (!endGameTrigger(ns)) {
-		let aug_map = await setUpGame(ns);
-		await buyAugmentLoop(ns, aug_map);
-	}
+	let aug_map = await setUpGame(ns);
+	await buyAugmentLoop(ns, aug_map);
 	await outputLog(ns, MID_LOG, "Moving to endgame!");
 	ns.spawn('endgameplan.js');
 }
@@ -51,29 +48,24 @@ export async function main(ns) {
 async function buyAugmentLoop(ns, aug_map) {
 	let home_ram = ns.getServerMaxRam(HOME);
 	let home_stats = [home_ram, 2]; // RAM, then Cores; the cores are actually irrelevant
-	let augs_to_buy = newPreferredAugs(ns);
+	let augs_to_buy = await newPreferredAugs(ns, true);
 	let original_aug_length = augs_to_buy.length;
 	let purchased_augs = 0;
 	// await outputLog(ns, MID_LOG, `There are ${original_aug_length} augs to purchase`);
 	// We move to Endgame when there are no more augs left to buy, or we hit hacking 2500
-	while (!endGameTrigger(ns) && augs_to_buy.length > 0) {
+	while (augs_to_buy.length > 0) {
 		// Join Section-12 faction if it's waiting
 		await outputLog(ns, MID_LOG, "Joining pending factions");
 		joinFactions(ns);
 		// Attempt to buy the augs silently
-		// ns.print("Augs to buy: " + augs_to_buy.join(", "));
+		ns.print("Augs to buy: " + augs_to_buy.join(", "));
 		await outputLog(ns, MID_LOG, "Checking for augmentations to buy");
 		let purchased_aug_list = await promptForAugs(ns, aug_map, augs_to_buy, false);
 		// How many are left?
 		purchased_augs += purchased_aug_list.length;
 		if (purchased_augs < original_aug_length) await outputLog(ns, MID_LOG, `You have ${original_aug_length - purchased_augs} left to buy`)
 		// Recalculate how many augs are left to buy
-		augs_to_buy = [].concat(
-			await listPreferredAugs(ns, aug_map, "combat", false),
-			await listPreferredAugs(ns, aug_map, "hack", false),
-			await listPreferredAugs(ns, aug_map, "bladeburners", false),
-			await listPreferredAugs(ns, aug_map, "faction", false),
-		);
+		augs_to_buy = await newPreferredAugs(ns, true);
 		// Also buy all available Neurofluxes
 		await outputLog(ns, MID_LOG, "Evaluating NeuroFlux Governor upgrades");
 		await handleNeuroflux(ns);
@@ -165,24 +157,24 @@ async function setUpGame(ns) {
  */
 async function isCheapestAugReasonable(ns, auglist, aug_map) {
 	// We specifically exclude BB because the faction rep is dependent on BB actions
-    const cheapest_aug = auglist
-        .map(aug => {
-            return {
-                name: aug,
-                cost: ns.getAugmentationPrice(aug),
-                repreq: aug_map[aug].repreq,
-            };
-        })
+	const cheapest_aug = auglist
+		.map(aug => {
+			return {
+				name: aug,
+				cost: ns.getAugmentationPrice(aug),
+				repreq: aug_map[aug].repreq,
+			};
+		})
 		.filter(aug => !aug_map[aug.name].factions.includes(BB))
 		.filter(aug => !ns.getOwnedAugmentations(true).includes(aug))
-        .reduce((a, b) => (a.cost < b.cost ? a : b))
-	if (!cheapest_aug) return
+		.reduce((a, b) => (a.cost < b.cost ? a : b), "Empty")
+	if (!cheapest_aug || (cheapest_aug == "Empty")) return
 	ns.print("Cheapest aug " + cheapest_aug.name + " costs " + ns.nFormat(cheapest_aug.cost, '$0.00a'));
 	// If the cheapest aug is > 1 trillion, it's probably time to reset
 	// Except Q-Link, that shit's 25t to start with
 	if (
-		(cheapest_aug != "QLink") && 
-		(cheapest_aug.cost >= 1e12) && 
+		(cheapest_aug != "QLink") &&
+		(cheapest_aug.cost >= 1e12) &&
 		(ns.getServerMoneyAvailable(HOME) < cheapest_aug.cost) &&
 		(ns.getOwnedAugmentations(true).length - ns.getOwnedAugmentations(false).length) > 0
 	) {
