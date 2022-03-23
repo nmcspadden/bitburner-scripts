@@ -1,4 +1,4 @@
-import { buildAugMap, aug_bonus_types, findMyFactionsWithAug, sortAugsByRepThenCost, getClosestNFFaction, NF, getPendingInstalls } from "utils/augs.js";
+import { buildAugMap, aug_bonus_types, findMyFactionsWithAug, getClosestNFFaction, NF, getPendingInstalls } from "utils/augs.js";
 import { checkSForBN, output } from "utils/script_tools.js";
 import { readAugMap } from "utils/augs";
 

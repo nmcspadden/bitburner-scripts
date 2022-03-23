@@ -1,10 +1,11 @@
-import { buildAugMap, findMyFactionsWithAug } from "utils/augs.js";
+import { buildAugMap, findMyFactionsWithAug, getPendingInstalls } from "utils/augs.js";
 import { donationAmountForRep, workUntilDonate, calculateBribeNeededForRep } from "utils/repNeededForFavor.js";
 import { locateServer } from "utils/networkmap.js";
 import { outputLog, isProcessRunning, HOME } from "utils/script_tools.js";
 import { growHackingXP, joinFactions } from "utils/gameplan.js";
 import { numFormat } from "utils/format.js";
 import { hasStockAccess } from "stocks";
+import { handleNeuroflux } from "WIP/FastAugmentMe3.js";
 
 /**
  * End-Gameplan
@@ -57,6 +58,7 @@ async function setUpGame(ns) {
 	if (!isProcessRunning(ns, 'home', 'networkmap.js', ['--daemon'])) {
 		await outputLog(ns, END_LOG, "Running network mapping daemon...");
 		ns.exec("utils/networkmap.js", HOME, 1, "--daemon");
+		await ns.sleep(2000);
 	}
 	// Active sleeves, if we have any
 	if (!isProcessRunning(ns, HOME, "sleeves.js")) {
@@ -155,9 +157,22 @@ async function hackThePlanet(ns) {
 	ns.print(`Checking to see if we have the required hacking level (${ns.getServerRequiredHackingLevel(WORLD)})...`);
 	growHackingXP(ns);
 	while (ns.getPlayer().hacking < ns.getServerRequiredHackingLevel(WORLD)) {
+		// Join any random factions that are present
+		joinFactions(ns);
+		let current_level = ns.getPlayer().hacking;
 		// Wait for our hacking level to increase more
 		ns.print(`Waiting 10 seconds for hacking level to increase to ${ns.getServerRequiredHackingLevel(WORLD)}...`);
+		// Also buy all available Neurofluxes
+		await outputLog(ns, END_LOG, "Evaluating NeuroFlux Governor upgrades");
+		await handleNeuroflux(ns);
 		await ns.sleep(10000);
+		let new_level = ns.getPlayer().hacking;
+		if (((current_level - new_level) < 200) && (getPendingInstalls(ns).length > 0)) {
+			// If we didn't go up by at least 200 levels in 10 seconds, we're probably going too slow and need to reset
+			ns.print("Your hacking level went up by less than 200 in 10 seconds. You should reset.");
+			let should_reset = await ns.prompt("Install augmentations and reset?");
+			if (should_reset) ns.installAugmentations('endgameplan.js');
+		}
 	}
 	while (!ns.hasRootAccess(WORLD)) {
 		// Try to buy more darkweb programs
