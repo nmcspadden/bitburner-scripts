@@ -1,6 +1,6 @@
 import { outputLog, isProcessRunning, HOME } from "utils/script_tools.js";
 import { buildAugMap } from "utils/augs.js";
-import { newPreferredAugs, promptForAugs, handleNeuroflux } from "WIP/FastAugmentMe3.js";
+import { newPreferredAugs, promptForAugs, handleNeuroflux } from "AugmentMe.js";
 import { upgradeHome, growHackingXP, joinFactions } from "utils/gameplan.js";
 import { hasStockAccess } from "stocks";
 
