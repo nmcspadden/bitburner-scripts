@@ -26,17 +26,20 @@ export async function main(ns) {
 	}
 	// Work out until we have the necessary stats to do homicide
 	await workoutAllUntil(ns, MIN_STAT);
-	// Start crimes until we can do homicides to get to the gang karma, also upgrade home
-	if (Math.abs(ns.heart.break()) <= GANG_KARMA) await outputLog(ns, EARLY_LOG, "Starting crime + upgrade loop...");
-	await crimeWhileUpgradingLoop(ns);
+	if (!checkSForBN(ns, 2)) {
+		// Start crimes until we can do homicides to get to the gang karma, also upgrade home
+		if (Math.abs(ns.heart.break()) <= GANG_KARMA) await outputLog(ns, EARLY_LOG, "Starting crime + upgrade loop...");
+		await crimeWhileUpgradingLoop(ns);
+	}
 	// Start a gang!
 	await outputLog(ns, EARLY_LOG, "Checking gang status...");
 	await startAGang(ns);
 	// Join bladeburners, if possible
 	await joinBladeburners(ns);
 	// Evaluate hacking scripts again
-	await outputLog(ns, EARLY_LOG, "Re-evaluating hacking scripts");
-	growHackingXP(ns);
+	// No point doing any hacking until after we move to midgame
+	// await outputLog(ns, EARLY_LOG, "Re-evaluating hacking scripts");
+	// growHackingXP(ns);
 	// Go into a waiting loop where we upgrade, buy programs, re-evaluate hacking XP
 	await outputLog(ns, EARLY_LOG, "Passive money and upgrade loop while managing gang");
 	await upgradingLoop(ns);
