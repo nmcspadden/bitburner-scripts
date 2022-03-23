@@ -5,7 +5,7 @@ import { outputLog, isProcessRunning, HOME } from "utils/script_tools.js";
 import { growHackingXP, joinFactions } from "utils/gameplan.js";
 import { numFormat } from "utils/format.js";
 import { hasStockAccess } from "stocks";
-import { handleNeuroflux } from "WIP/FastAugmentMe3.js";
+import { handleNeuroflux } from "AugmentMe.js";
 
 /**
  * End-Gameplan
