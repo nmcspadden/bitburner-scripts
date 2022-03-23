@@ -1,5 +1,6 @@
 import { buildAugMap, aug_bonus_types, findMyFactionsWithAug, sortAugsByRepThenCost, getClosestNFFaction, NF, getPendingInstalls } from "utils/augs.js";
 import { checkSForBN, output } from "utils/script_tools.js";
+import { readAugMap } from "utils/augs";
 
 let TERMINAL = false;
 
@@ -76,8 +77,7 @@ export async function listPreferredAugs(ns, aug_map, type, filter_pending = fals
 			preferred = listHacknetAugs(ns, aug_map);
 			break;
 		case "":
-			ns.tprint("NEW PREFERRED AUGS!");
-			preferred = newPreferredAugs(ns, aug_map, filter_pending);
+			preferred = newPreferredAugs(ns, filter_pending);
 			break;
 		default:
 			output(ns, TERMINAL, "Invalid type!");
@@ -97,8 +97,8 @@ export async function listPreferredAugs(ns, aug_map, type, filter_pending = fals
  * @param {*} filter_pending If true, we filter out any owned/pending installs
  * @returns List of names of augs we want to buy
  */
-function newPreferredAugs(ns, aug_map, filter_pending = true) {
-	// TODO: 2) sort by rep, then cost
+export async function newPreferredAugs(ns, filter_pending = true) {
+	let aug_map = await readAugMap(ns);
 	let faction_augs = listAugsByTypesFilteredByStats(ns, aug_map, "faction", "rep");
 	let hacking_exp_augs = listAugsByTypesFilteredByStats(ns, aug_map, "hack", "exp");
 	let hacking_augs = listAugsByTypesFilteredByStats(ns, aug_map, "hack", "");
@@ -138,18 +138,7 @@ function listAugsByTypesFilteredByStats(ns, aug_map, type, stat_filter) {
  */
 export async function promptForAugs(ns, aug_map, desired_augs, should_prompt) {
 	let purchased_augs = [];
-	let real_augs_to_buy = desired_augs
-		.filter(
-			// I shouldn't already own it/have it pending, I should afford it, and have the rep to buy it
-			aug =>
-				!ns.getOwnedAugmentations(true).includes(aug) &&
-				augCostAvailable(ns, aug_map[aug]["cost"]) &&
-				augRepAvailable(ns, aug_map[aug]["repreq"], aug_map[aug]["factions"])
-		)
-		.sort(
-			// We want to buy the most expensive ones first
-			(a, b) => aug_map[b].cost - aug_map[a].cost
-		)
+	let real_augs_to_buy = filterObtainableAugs(ns, desired_augs);
 	for (const aug of real_augs_to_buy) {
 		// if (my_augs.includes(aug)) continue
 		// // Do I have a faction for whom satisifes the rep cost?
@@ -375,6 +364,22 @@ function augPreReqsAvailable(ns, prereqs) {
 	// Do I meet all the pre-reqs?
 	let my_augs = ns.getOwnedAugmentations(true);
 	return prereqs.filter(item => !my_augs.includes(item))
+}
+
+function filterObtainableAugs(ns, aug_list) {
+	// Filter the list of augs to only ones we can buy right now
+	return aug_list
+		.filter(
+			// I shouldn't already own it/have it pending, I should afford it, and have the rep to buy it
+			aug =>
+				!ns.getOwnedAugmentations(true).includes(aug) &&
+				augCostAvailable(ns, ns.getAugmentationPrice(aug)) &&
+				augRepAvailable(ns, aug_map[aug]["repreq"], aug_map[aug]["factions"])
+		)
+		.sort(
+			// We want to buy the most expensive ones first
+			(a, b) => aug_map[b].cost - aug_map[a].cost
+		)
 }
 
 /**
