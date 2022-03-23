@@ -1,4 +1,4 @@
-import { outputLog, HOME, waitForPid } from "utils/script_tools.js";
+import { outputLog, HOME, waitForPid, checkSForBN } from "utils/script_tools.js";
 import { FILE_NUM_SLEEVES, readSleeveStats, STR_MIN, DEF_MIN, DEX_MIN, AGI_MIN } from "sleevesEarly.js";
 import { GANG_KARMA } from "utils/crimes";
 import { MIN_STAT } from "utils/gameplan";
@@ -38,16 +38,17 @@ export async function main(ns) {
 	ns.stopAction();
 	ns.print("Done working out.");
 
-	await outputLog(ns, START_LOG, "Committing crimes while building up sleeves");
-	await crimeWhileUpgradingLoop(ns, (Math.abs(ns.heart.break()) <= GANG_KARMA));
+	if (!checkSForBN(ns, 2)) {
+		await outputLog(ns, START_LOG, "Committing crimes while building up sleeves");
+		await crimeWhileUpgradingLoop(ns, (Math.abs(ns.heart.break()) <= GANG_KARMA));
 
-	// With sleeves training, this will likely mean negative money
-	if (await checkForSleevesDoneWorkingOut(ns) && (ns.getServerMoneyAvailable(HOME) < 0)) {
-		ns.print("Sleeves are done working out; executing soft reset!");
-		ns.exec('gameplan/resetStarter.js', HOME);
-		return;
+		// With sleeves training, this will likely mean negative money
+		if (await checkForSleevesDoneWorkingOut(ns) && (ns.getServerMoneyAvailable(HOME) < 0)) {
+			ns.print("Sleeves are done working out; executing soft reset!");
+			ns.exec('gameplan/resetStarter.js', HOME);
+			return;
+		}
 	}
-
 	await outputLog(ns, START_LOG, "Committing crimes while upgrading loop");
 	await crimeWhileUpgradingLoop(ns, (ns.getServerMaxRam(HOME) <= 32));
 
