@@ -76,9 +76,9 @@ async function setUpGame(ns) {
 		ns.exec("bladeburner.js", HOME, 1, "--quiet");
 	}
 	// Make sure corporations are running
-	if (!isProcessRunning(ns, HOME, "corporations2.js")) {
+	if (!isProcessRunning(ns, HOME, "corporations.js")) {
 		await logprint(ns, "Starting Corporations script...")
-		ns.exec("WIP/corporations2.js", HOME);
+		ns.exec("WIP/corporations.js", HOME);
 	}
 	// Try to buy more darkweb programs
 	ns.exec("obtainPrograms.js", HOME, 1, "--quiet");

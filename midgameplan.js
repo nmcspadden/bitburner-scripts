@@ -82,11 +82,11 @@ async function buyAugmentLoop(ns, aug_map) {
 		}
 		// Make sure corporations are running
 		if (
-			!isProcessRunning(ns, HOME, "corporations2.js") &&
-			(ns.getServerMaxRam(HOME) > ns.getScriptRam('WIP/corporations2.js'))
+			!isProcessRunning(ns, HOME, "corporations.js") &&
+			(ns.getServerMaxRam(HOME) > ns.getScriptRam('WIP/corporations.js'))
 		) {
 			// await outputLog(ns, MID_LOG, "Starting Corporations script...")
-			ns.exec("WIP/corporations2.js", HOME);
+			ns.exec("WIP/corporations.js", HOME);
 		}
 		// If we have lots of money, see if we can buy darkweb programs
 		ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
@@ -135,11 +135,11 @@ async function setUpGame(ns) {
 	}
 	// Make sure corporations are running
 	if (
-		!isProcessRunning(ns, HOME, "corporations2.js") &&
-		(ns.getServerMaxRam(HOME) > ns.getScriptRam('WIP/corporations2.js'))
+		!isProcessRunning(ns, HOME, "corporations.js") &&
+		(ns.getServerMaxRam(HOME) > ns.getScriptRam('WIP/corporations.js'))
 	) {
 		await outputLog(ns, MID_LOG, "Starting Corporations script...")
-		ns.exec("WIP/corporations2.js", HOME);
+		ns.exec("WIP/corporations.js", HOME);
 	}
 	// Stonks?
 	if (!isProcessRunning(ns, HOME, "stocks.js") && hasStockAccess(ns)) {
