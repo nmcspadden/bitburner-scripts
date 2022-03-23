@@ -97,9 +97,7 @@ function sleeveTime(ns, index, buy_augs = false) {
         Idle sleeve:
         {"task":"Idle","crime":"","location":"","gymStatType":"","factionWorkType":"None"}
     }*/
-    // ns.print(`Sleeve ${index}: Reading stats`);
     let stats = readSleeveStats(ns, index);
-    // ns.print(`Sleeve ${index}: Checking current task`);
     let sleeve_task = readSleeveTask(ns, index);
     // Is there a closest NF faction?
     let faction = getClosestNFFaction(ns);
@@ -176,21 +174,23 @@ function sleeveTime(ns, index, buy_augs = false) {
         return
     }
     // If the gang is done, and I'm under 100 sync, let's fix that first
-    else if (stats.sync < 100 && sleeve_task.task != TASK_SYNC) {
-        ns.print(`Sleeve ${index}: Sync level is at ${ns.nFormat(stats.sync / 100, '0.00%')}, setting to synchronize`)
-        ns.sleeve.setToSynchronize(index);
-        return
-    } else if (stats.sync < 100) {
-        ns.print(`Sleeve ${index}: Sync level is at ${ns.nFormat(stats.sync / 100, '0.00%')}, still synchronizing`)
+    else if (stats.sync < 100) {
+        if (sleeve_task.task != TASK_SYNC) {
+            ns.print(`Sleeve ${index}: Sync level is at ${ns.nFormat(stats.sync / 100, '0.00%')}, setting to synchronize`)
+            ns.sleeve.setToSynchronize(index);
+        } else {
+            ns.print(`Sleeve ${index}: Sync level is at ${ns.nFormat(stats.sync / 100, '0.00%')}, still synchronizing`)
+        }
         return
     }
     // If the gang is done, and I'm above 0 shock, let's fix that first
-    else if (stats.shock > 0 && sleeve_task.task != TASK_RECOVERY) {
-        ns.print(`Sleeve ${index}: Shock level is at ${ns.nFormat(stats.shock / 100, '0.00%')}, setting to shock recovery`)
-        ns.sleeve.setToSynchronize(index);
-        return
-    } else if (stats.shock < 100) {
-        ns.print(`Sleeve ${index}: Shock level is at ${ns.nFormat(stats.shock / 100, '0.00%')}, still recovering`)
+    else if (stats.shock > 0) {
+        if (sleeve_task.task != TASK_RECOVERY) {
+            ns.print(`Sleeve ${index}: Shock level is at ${ns.nFormat(stats.shock / 100, '0.00%')}, setting to shock recovery`)
+            ns.sleeve.setToShockRecovery(index);
+        } else {
+            ns.print(`Sleeve ${index}: Shock level is at ${ns.nFormat(stats.shock / 100, '0.00%')}, still recovering`)
+        }
         return
     }
     // Do we need to generate rep to buy The Red Pill?
