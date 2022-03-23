@@ -2,7 +2,7 @@ import { buildAugMap, findMyFactionsWithAug } from "utils/augs.js";
 import { donationAmountForRep, workUntilDonate, calculateBribeNeededForRep } from "utils/repNeededForFavor.js";
 import { locateServer } from "utils/networkmap.js";
 import { outputLog, isProcessRunning, HOME } from "utils/script_tools.js";
-import { growHackingXP } from "utils/gameplan.js";
+import { growHackingXP, joinFactions } from "utils/gameplan.js";
 import { numFormat } from "utils/format.js";
 import { hasStockAccess } from "stocks";
 
@@ -122,6 +122,8 @@ async function grindForRedPill(ns) {
 		5. If we don't have a corp, ask to work for the rep
 		*/
 		ns.print("Hunt for the red pill!");
+		// Join any random factions that are present
+		joinFactions(ns);
 		// Am I in a corp and do I have enough to bribe for it?
 		await bribeToBuy(ns, factions_w_red_pill[0], red_pill_req);
 		// Do I need to work for favor? (Only if not in a corp)
@@ -150,11 +152,11 @@ async function hackThePlanet(ns) {
 		ns.print("The World daemon was not calculated correctly :(");
 		ns.exit();
 	}
-	ns.print("Checking to see if we have the required hacking level...");
+	ns.print(`Checking to see if we have the required hacking level (${ns.getServerRequiredHackingLevel(WORLD)})...`);
 	growHackingXP(ns);
 	while (ns.getPlayer().hacking < ns.getServerRequiredHackingLevel(WORLD)) {
 		// Wait for our hacking level to increase more
-		ns.print("Waiting 10 seconds for hacking level to increase...");
+		ns.print(`Waiting 10 seconds for hacking level to increase to ${ns.getServerRequiredHackingLevel(WORLD)}...`);
 		await ns.sleep(10000);
 	}
 	while (!ns.hasRootAccess(WORLD)) {
@@ -165,7 +167,6 @@ async function hackThePlanet(ns) {
 	}
 	ns.print(`Path to ${WORLD}: ${daemon_path.join(" -> ")}`);
 	for (const step of daemon_path) {
-		// ns.print("Connecting to: " + step)
 		ns.connect(step);
 	}
 	let should_end_bitnode = await ns.prompt(`Backdoor the ${WORLD} and end the bitnode?`);
