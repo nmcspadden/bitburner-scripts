@@ -1,6 +1,6 @@
 import { buildAugMap, aug_bonus_types, findMyFactionsWithAug, getClosestNFFaction, NF, getPendingInstalls } from "utils/augs.js";
 import { checkSForBN, output } from "utils/script_tools.js";
-import { readAugMap } from "utils/augs";
+import { readAugMap, augCostAvailable, augRepAvailable, augPreReqsAvailable } from "utils/augs";
 
 let TERMINAL = false;
 
@@ -326,44 +326,6 @@ async function purchaseAug(ns, aug, faction, should_prompt = true) {
 		}
 	} else ns.exit();
 	return did_buy
-}
-
-/**
- * Return list of factions I have enough rep to buy from
- * @param {import(".").NS} ns
- * @param {number} repreq Amount of rep required
- * @param {array} factions List of factions to check
- * @returns True if there is a faction we can buy this aug from right now
-**/
-function augRepAvailable(ns, repreq, factions) {
-	// Is this aug available to purchase right now?
-	let player = ns.getPlayer();
-	let myfactions = player.factions;
-	let common_factions = factions.filter(faction => myfactions.includes(faction));
-	return common_factions.find(faction => repreq <= ns.getFactionRep(faction))
-}
-
-/**
- * Return true if I have enough money to buy something
- * @param {import(".").NS} ns
- * @param {number} price Cost of aug
- * @returns True if we have enough money to buy the thing
-**/
-function augCostAvailable(ns, price) {
-	// Is this aug available to purchase right now?
-	return (ns.getServerMoneyAvailable('home') >= price)
-}
-
-/**
- * Return a list of prereqs I do NOT satisfy; otherwise empty list
- * @param {import(".").NS} ns
- * @param {number} prereqs List of aug prereqs
- * @returns List of prerequisite augs that I don't already own/have pending for a given aug
-**/
-function augPreReqsAvailable(ns, prereqs) {
-	// Do I meet all the pre-reqs?
-	let my_augs = ns.getOwnedAugmentations(true);
-	return prereqs.filter(item => !my_augs.includes(item))
 }
 
 function filterObtainableAugs(ns, aug_list, aug_map) {

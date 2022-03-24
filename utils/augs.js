@@ -50,7 +50,7 @@ export const corpList = [
 ];
 
 export const bladeburners = [
-    "Bladeburners"
+	"Bladeburners"
 ];
 
 export const aug_bonus_types = {
@@ -60,7 +60,7 @@ export const aug_bonus_types = {
 	crime: ["crime_success_mult", "crime_money_mult"],
 	combat: ["agility_exp_mult", "agility_mult", "defense_exp_mult", "defense_mult", "dexterity_exp_mult", "dexterity_mult", "strength_exp_mult", "strength_mult"],
 	charisma: ["charisma_exp_mult", "charisma_mult"],
-    bladeburners: ["bladeburner_success_chance_mult", "bladeburner_max_stamina_mult", "bladeburner_stamina_gain_mult", "bladeburner_analysis_mult"],
+	bladeburners: ["bladeburner_success_chance_mult", "bladeburner_max_stamina_mult", "bladeburner_stamina_gain_mult", "bladeburner_analysis_mult"],
 	hacknet: ["hacknet_node_money_mult", "hacknet_node_purchase_cost_mult", "hacknet_node_ram_cost_mult", "hacknet_node_core_cost_mult", "hacknet_node_level_cost_mult"]
 };
 
@@ -80,7 +80,7 @@ export function findMyFactionsWithAug(ns, aug, player) {
  * @param {import("../.").NS} ns 
  * @returns Object of the aug map
  */
- export async function buildAugMap(ns) {
+export async function buildAugMap(ns) {
 	let aug_map = {};
 	/* Keys: augmentation name; 
 	 * Values: an object aug_model 
@@ -133,7 +133,7 @@ export function findMyFactionsWithAug(ns, aug, player) {
  * @param {string} aug Name of an aug to fetch data about
  * @returns An object of data about an aug
  */
- function getAugData(ns, aug) {
+function getAugData(ns, aug) {
 	return {
 		"stats": ns.getAugmentationStats(aug),
 		"repreq": ns.getAugmentationRepReq(aug),
@@ -147,11 +147,11 @@ export function findMyFactionsWithAug(ns, aug, player) {
  * @param {NS} ns
  * @returns Object of the aug map
  */
- export async function readAugMap(ns) {
-	if (!ns.ls('home', AUGMAP+".txt")) {
+export async function readAugMap(ns) {
+	if (!ns.ls('home', AUGMAP + ".txt")) {
 		await buildAugMap(ns);
 	}
-	return JSON.parse(ns.read(AUGMAP+".txt"));
+	return JSON.parse(ns.read(AUGMAP + ".txt"));
 }
 
 /**
@@ -160,7 +160,7 @@ export function findMyFactionsWithAug(ns, aug, player) {
  * @param aug_map Map of augs from readAugMap()
  * @returns Same list of aug names sorted by rep, then by cost
  */
- export function sortAugsByRepThenCost(aug_list, aug_map) {
+export function sortAugsByRepThenCost(aug_list, aug_map) {
 	let aug_objects = {};
 	for (const aug in aug_list) {
 		aug_objects[aug] = aug_map[aug]
@@ -192,4 +192,42 @@ export function getClosestNFFaction(ns) {
  */
 export function getPendingInstalls(ns) {
 	return ns.getOwnedAugmentations(true).filter(aug => !ns.getOwnedAugmentations().includes(aug))
+}
+
+/**
+ * Return list of factions I have enough rep to buy from
+ * @param {import(".").NS} ns
+ * @param {Number} repreq Amount of rep required
+ * @param {Array} factions List of factions to check
+ * @returns Name of faction we can buy this aug from
+**/
+export function augRepAvailable(ns, repreq, factions) {
+	// Is this aug available to purchase right now?
+	let player = ns.getPlayer();
+	let myfactions = player.factions;
+	let common_factions = factions.filter(faction => myfactions.includes(faction));
+	return common_factions.find(faction => repreq <= ns.getFactionRep(faction))
+}
+
+/**
+ * Return true if I have enough money to buy something
+ * @param {import(".").NS} ns
+ * @param {Number} price Cost of aug
+ * @returns True if we have enough money to buy the thing
+**/
+export function augCostAvailable(ns, price) {
+	// Is this aug available to purchase right now?
+	return (ns.getServerMoneyAvailable('home') >= price)
+}
+
+/**
+ * Return a list of prereqs I do NOT satisfy; otherwise empty list
+ * @param {import(".").NS} ns
+ * @param {Number} prereqs List of aug prereqs
+ * @returns List of prerequisite augs that I don't already own/have pending for a given aug
+**/
+export function augPreReqsAvailable(ns, prereqs) {
+	// Do I meet all the pre-reqs?
+	let my_augs = ns.getOwnedAugmentations(true);
+	return prereqs.filter(item => !my_augs.includes(item))
 }
