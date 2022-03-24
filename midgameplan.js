@@ -41,7 +41,7 @@ export async function main(ns) {
 	await buyAugmentLoop(ns, aug_map);
 	await outputLog(ns, MID_LOG, "*** Moving to endgame!");
 	if (getPendingInstalls(ns) > 0) ns.installAugmentations('endgameplan.js');
-	s.spawn('endgameplan.js');
+	ns.spawn('endgameplan.js');
 }
 
 /**
