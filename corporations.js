@@ -128,6 +128,12 @@ const DEFAULT_INDUSTRY_SETTINGS = {
 /** @param {import("../.").NS}  ns **/
 export async function main(ns) {
   ns.disableLog('sleep');
+  const flagdata = ns.flags([
+    ["quiet", false],
+  ])
+  // Don't print to terminal or otherwise make any log messages
+  if (!flagdata.quiet) ns.tail();
+
   ns.print('*** Starting Corporation Management');
   let player;
   let should_self_fund = true

@@ -95,7 +95,7 @@ async function buyAugmentLoop(ns, aug_map) {
 			(ns.getServerMaxRam(HOME) > ns.getScriptRam('corporations.js'))
 		) {
 			// await outputLog(ns, MID_LOG, "Starting Corporations script...")
-			ns.exec("corporations.js", HOME);
+			ns.exec("corporations.js", HOME, 1, "--quiet");
 		}
 		// If we have lots of money, see if we can buy darkweb programs
 		ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
@@ -148,7 +148,7 @@ async function setUpGame(ns) {
 		(ns.getServerMaxRam(HOME) > ns.getScriptRam('corporations.js'))
 	) {
 		await outputLog(ns, MID_LOG, "Starting Corporations script...")
-		ns.exec("corporations.js", HOME);
+		ns.exec("corporations.js", HOME, 1, "--quiet");
 	}
 	// Stonks?
 	if (!isProcessRunning(ns, HOME, "stocks.js") && hasStockAccess(ns)) {

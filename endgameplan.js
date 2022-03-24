@@ -78,7 +78,7 @@ async function setUpGame(ns) {
 	// Make sure corporations are running
 	if (!isProcessRunning(ns, HOME, "corporations.js")) {
 		await logprint(ns, "Starting Corporations script...")
-		ns.exec("corporations.js", HOME);
+		ns.exec("corporations.js", HOME, 1, "--quiet");
 	}
 	// Try to buy more darkweb programs
 	ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
