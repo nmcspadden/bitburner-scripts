@@ -24,7 +24,7 @@ export async function main(ns) {
 		await outputLog(ns, EARLY_LOG, "Activating sleeves, if we have any");
 		ns.exec('sleeves.js', HOME);
 	}
-	if (!checkSForBN(ns, 2)) {
+	if (checkSForBN(ns, 2)) {
 		// Work out until we have the necessary stats to do homicide
 		await workoutAllUntil(ns, MIN_STAT);
 		// Start crimes until we can do homicides to get to the gang karma, also upgrade home
