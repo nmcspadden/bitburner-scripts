@@ -43,11 +43,13 @@ export async function main(ns) {
     if (!checkSForBN(ns, 10)) return
 
     const flagdata = ns.flags([
-        ["augs", false]
+        ["augs", false],
+        ["quiet", false]
     ]);
 
     ns.disableLog("ALL");
-    ns.tail();
+    // Don't open the tail window in quiet mode
+    if (!flagdata.quiet) ns.tail();
     ns.print("** Starting sleeve daemon");
     let numsleeves = readNumSleeves(ns);
     ns.print(`We have ${numsleeves} sleeves`);

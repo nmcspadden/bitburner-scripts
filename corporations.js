@@ -131,7 +131,7 @@ export async function main(ns) {
   const flagdata = ns.flags([
     ["quiet", false],
   ])
-  // Don't print to terminal or otherwise make any log messages
+  // Don't open the tail window in quiet mode
   if (!flagdata.quiet) ns.tail();
 
   ns.print('*** Starting Corporation Management');
