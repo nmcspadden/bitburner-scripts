@@ -1,8 +1,10 @@
 import { outputLog, isProcessRunning, HOME } from "utils/script_tools.js";
-import { buildAugMap } from "utils/augs.js";
 import { newPreferredAugs, promptForAugs, handleNeuroflux } from "AugmentMe.js";
 import { upgradeHome, growHackingXP, joinFactions } from "utils/gameplan.js";
 import { hasStockAccess } from "stocks";
+import { buildAugMap, findCheapestAug, findIdealAugToBuy } from "utils/augs";
+import { numFormat } from "utils/format.js";
+import { getPendingInstalls } from "./utils/augs";
 
 
 /**
@@ -35,9 +37,11 @@ export async function main(ns) {
 	ns.disableLog("ALL"); // Disable the log
 	ns.tail(); // Open a window to view the status of the script
 	let aug_map = await setUpGame(ns);
+	await outputLog(ns, MID_LOG, "*** Beginning midgame loop!")
 	await buyAugmentLoop(ns, aug_map);
-	await outputLog(ns, MID_LOG, "Moving to endgame!");
-	ns.spawn('endgameplan.js');
+	await outputLog(ns, MID_LOG, "*** Moving to endgame!");
+	if (getPendingInstalls(ns) > 0) ns.installAugmentations('endgameplan.js');
+	s.spawn('endgameplan.js');
 }
 
 /**
@@ -51,16 +55,23 @@ async function buyAugmentLoop(ns, aug_map) {
 	let augs_to_buy = await newPreferredAugs(ns, true);
 	let original_aug_length = augs_to_buy.length;
 	let purchased_augs = 0;
+	let purchased_aug_list = [];
 	// await outputLog(ns, MID_LOG, `There are ${original_aug_length} augs to purchase`);
 	// We move to Endgame when there are no more augs left to buy, or we hit hacking 2500
 	while (augs_to_buy.length > 0) {
 		// Join Section-12 faction if it's waiting
 		await outputLog(ns, MID_LOG, "Joining pending factions");
 		joinFactions(ns);
-		// Attempt to buy the augs silently
-		ns.print("Augs to buy: " + augs_to_buy.join(", "));
+
+		// Now let's buy the best aug until we can't
+		ns.print("Augs we want to buy: " + augs_to_buy.join(", "));
 		await outputLog(ns, MID_LOG, "Checking for augmentations to buy");
-		let purchased_aug_list = await promptForAugs(ns, aug_map, augs_to_buy, false);
+		let buyme = await findIdealAugToBuy(ns, augs_to_buy)
+		while (buyme) {
+			purchased_aug_list.push(await promptForAugs(ns, aug_map, [buyme], false));
+			// Determine next ideal aug to buy
+			buyme = await findIdealAugToBuy(ns, augs_to_buy);
+		}
 		// How many are left?
 		purchased_augs += purchased_aug_list.length;
 		if (purchased_augs < original_aug_length) await outputLog(ns, MID_LOG, `You have ${original_aug_length - purchased_augs} left to buy`)
@@ -70,7 +81,8 @@ async function buyAugmentLoop(ns, aug_map) {
 		await outputLog(ns, MID_LOG, "Evaluating NeuroFlux Governor upgrades");
 		await handleNeuroflux(ns);
 		// Now check: is the next cheapest aug simply too expensive? If so, we should install and reset
-		await isCheapestAugReasonable(ns, augs_to_buy, aug_map);
+		await isCheapestAugReasonable(ns, augs_to_buy);
+
 		// See if we can upgrade our home
 		ns.print("Looking at home upgrades...");
 		home_stats = upgradeHome(ns);
@@ -153,33 +165,26 @@ async function setUpGame(ns) {
  * Determine if the cheapest aug is reasonably attainable, or prompt for reset
  * @param {import(".").NS} ns 
  * @param {array} auglist List of augs to buy
- * @param {*} aug_map Map of objects from buildAugMap()
  */
-async function isCheapestAugReasonable(ns, auglist, aug_map) {
-	// We specifically exclude BB because the faction rep is dependent on BB actions
-	const cheapest_aug = auglist
-		.map(aug => {
-			return {
-				name: aug,
-				cost: ns.getAugmentationPrice(aug),
-				repreq: aug_map[aug].repreq,
-			};
-		})
-		.filter(aug => !aug_map[aug.name].factions.includes(BB))
-		.filter(aug => !ns.getOwnedAugmentations(true).includes(aug))
-		.reduce((a, b) => (a.cost < b.cost ? a : b), "Empty")
+async function isCheapestAugReasonable(ns, auglist) {
+	const cheapest_aug = await findCheapestAug(ns, auglist);
 	if (!cheapest_aug || (cheapest_aug == "Empty")) return
-	ns.print("Cheapest aug " + cheapest_aug.name + " costs " + ns.nFormat(cheapest_aug.cost, '$0.00a'));
+	const cheapest_cost = ns.getAugmentationPrice(cheapest_aug);
+	ns.print("Cheapest aug " + cheapest_aug + " costs $" + numFormat(cheapest_cost));
 	// If the cheapest aug is > 1 trillion, it's probably time to reset
 	// Except Q-Link, that shit's 25t to start with
 	if (
-		(cheapest_aug != "QLink") &&
-		(cheapest_aug.cost >= 1e12) &&
-		(ns.getServerMoneyAvailable(HOME) < cheapest_aug.cost) &&
-		(ns.getOwnedAugmentations(true).length - ns.getOwnedAugmentations(false).length) > 0
+		((cheapest_aug != "QLink") &&
+		(cheapest_cost >= 1e12) &&
+		(ns.getServerMoneyAvailable(HOME) < cheapest_cost) &&
+		(ns.getOwnedAugmentations(true).length - ns.getOwnedAugmentations(false).length) > 0) ||
+		// Or if the last one is Q-Link and we can't afford it
+		((cheapest_aug == "QLink") && (ns.getServerMoneyAvailable(HOME) < cheapest_cost))
 	) {
+		// ns.print("The cheapest aug costs more than $1t, and isn't QLink. You should reset.");
+		// let should_reset = await ns.prompt("Install augmentations and reset?");
+		// if (should_reset) ns.installAugmentations('midgameplan.js');
 		ns.print("The cheapest aug costs more than $1t, and isn't QLink. You should reset.");
-		let should_reset = await ns.prompt("Install augmentations and reset?");
-		if (should_reset) ns.installAugmentations('midgameplan.js');
+		ns.installAugmentations('midgameplan.js');
 	}
 }

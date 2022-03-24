@@ -239,33 +239,20 @@ export function augPreReqsAvailable(ns, prereqs) {
  * @returns The name of an aug to purchase
  */
 export async function findIdealAugToBuy(ns, auglist) {
-	let aug_map = await readAugMap(ns);
 	if (auglist.length == 0) return
-	const ideal_aug = auglist
-		.map(aug => {
-			return {
-				name: aug,
-				cost: ns.getAugmentationPrice(aug),
-				repreq: aug_map[aug].repreq,
-			};
-		})
-		// Obviously filter out ones I own
-		.filter(aug => !ns.getOwnedAugmentations(true).includes(aug.name))
-		// Filter for ones I can afford via money and rep
-		.filter(aug => augCostAvailable(ns, aug.cost) && augRepAvailable(ns, aug.repreq, aug_map[aug.name].factions))
-		.filter(aug => augPreReqsAvailable(ns, aug_map[aug.name].prereqs).length == 0)
-		.reduce((a, b) => (a.cost > b.cost ? a : b), "Empty")
+	const filtered_list = await filterObtainableAugsPrimitive(ns, auglist);
+	const ideal_aug = filtered_list.reduce((a, b) => (a.cost > b.cost ? a : b), "Empty")
 	if (ideal_aug.name == "Empty") return
 	return ideal_aug.name
 }
 
 /**
- * Identify the cheapest aug we can reasonably buy
+ * Identify the cheapest aug out of the list
  * @param {import("../.").NS} ns 
  * @param {Array} auglist List of augs to consider for purchase
  * @returns The name of the cheapest aug
  */
- export async function findCheapestAug(ns, auglist) {
+export async function findCheapestAug(ns, auglist) {
 	let aug_map = await readAugMap(ns);
 	if (auglist.length == 0) return
 	const ideal_aug = auglist
@@ -278,10 +265,44 @@ export async function findIdealAugToBuy(ns, auglist) {
 		})
 		// Obviously filter out ones I own
 		.filter(aug => !ns.getOwnedAugmentations(true).includes(aug.name))
-		// Filter for ones I can afford via money and rep
-		.filter(aug => augCostAvailable(ns, aug.cost) && augRepAvailable(ns, aug.repreq, aug_map[aug.name].factions))
-		.filter(aug => augPreReqsAvailable(ns, aug_map[aug.name].prereqs).length == 0)
+		// Filter for ones I have the rep for
+		.filter(aug => augRepAvailable(ns, aug.repreq, aug_map[aug.name].factions))
 		.reduce((a, b) => (a.cost < b.cost ? a : b), "Empty")
 	if (ideal_aug.name == "Empty") return
 	return ideal_aug.name
+}
+
+/**
+ * Return an array of augs objects that are obtainable by rep, cost, and prereqs
+ * @param {import("../.").NS} ns 
+ * @param {Array} auglist List of augs to consider for purchase
+ * @returns List of objects containing name, cost, repreq
+ */
+export async function filterObtainableAugsPrimitive(ns, auglist) {
+	let aug_map = await readAugMap(ns);
+	if (auglist.length == 0) return
+	return auglist
+		.map(aug => {
+			return {
+				name: aug,
+				cost: ns.getAugmentationPrice(aug),
+				repreq: aug_map[aug].repreq,
+			};
+		})
+		// Obviously filter out ones I own
+		.filter(aug => !ns.getOwnedAugmentations(true).includes(aug.name))
+		// Filter for ones I can afford via money and rep
+		.filter(aug => augCostAvailable(ns, aug.cost) && augRepAvailable(ns, aug.repreq, aug_map[aug.name].factions))
+		.filter(aug => augPreReqsAvailable(ns, aug_map[aug.name].prereqs).length == 0)
+}
+
+/**
+ * Return an array of aug names that are obtainable by rep, cost, and prereqs
+ * @param {import("../.").NS} ns 
+ * @param {Array} auglist List of augs to consider for purchase
+ * @returns List of aug names we can afford to buy
+ */
+export async function filterObtainableAugs(ns, auglist) {
+	const filtered = await filterObtainableAugsPrimitive(ns, auglist);
+	return filtered.map(aug => aug.name);
 }

@@ -1,6 +1,6 @@
-import { buildAugMap, aug_bonus_types, findMyFactionsWithAug, getClosestNFFaction, NF, getPendingInstalls } from "utils/augs.js";
+import { buildAugMap, aug_bonus_types, findMyFactionsWithAug, getClosestNFFaction, NF, getPendingInstalls, readAugMap, augCostAvailable, augRepAvailable, augPreReqsAvailable } from "utils/augs.js";
 import { checkSForBN, output } from "utils/script_tools.js";
-import { readAugMap, augCostAvailable, augRepAvailable, augPreReqsAvailable } from "utils/augs";
+import { numFormat } from "utils/format.js";
 
 let TERMINAL = false;
 
@@ -138,13 +138,9 @@ function listAugsByTypesFilteredByStats(ns, aug_map, type, stat_filter) {
  */
 export async function promptForAugs(ns, aug_map, desired_augs, should_prompt) {
 	let purchased_augs = [];
-	let real_augs_to_buy = filterObtainableAugs(ns, desired_augs, aug_map);
-	for (const aug of real_augs_to_buy) {
-		// if (my_augs.includes(aug)) continue
-		// // Do I have a faction for whom satisifes the rep cost?
+	for (const aug of desired_augs) {
+		// Do I have a faction for whom satisifes the rep cost?
 		let satisfy_rep = augRepAvailable(ns, aug_map[aug]["repreq"], aug_map[aug]["factions"]);
-		// // Do I have the money?
-		// let rich_af = augCostAvailable(ns, aug_map[aug]["cost"]);
 		// Do I satisfy pre-reqs?
 		let needed_prereqs = augPreReqsAvailable(ns, aug_map[aug]["prereqs"]);
 		if (needed_prereqs.length > 0) {
@@ -322,26 +318,10 @@ async function purchaseAug(ns, aug, faction, should_prompt = true) {
 		await ns.sleep(5);
 		did_buy = ns.purchaseAugmentation(faction, aug);
 		if (did_buy) {
-			output(ns, TERMINAL, `Purchased ${aug}!`);
+			output(ns, TERMINAL, `Purchased ${aug} for $${numFormat(ns.getAugmentationPrice(aug))}!`);
 		}
 	} else ns.exit();
 	return did_buy
-}
-
-function filterObtainableAugs(ns, aug_list, aug_map) {
-	// Filter the list of augs to only ones we can buy right now
-	return aug_list
-		.filter(
-			// I shouldn't already own it/have it pending, I should afford it, and have the rep to buy it
-			aug =>
-				!ns.getOwnedAugmentations(true).includes(aug) &&
-				augCostAvailable(ns, ns.getAugmentationPrice(aug)) &&
-				augRepAvailable(ns, aug_map[aug]["repreq"], aug_map[aug]["factions"])
-		)
-		.sort(
-			// We want to buy the most expensive ones first
-			(a, b) => aug_map[b].cost - aug_map[a].cost
-		)
 }
 
 /**
