@@ -2,9 +2,8 @@ import { outputLog, isProcessRunning, HOME } from "utils/script_tools.js";
 import { newPreferredAugs, promptForAugs, handleNeuroflux } from "AugmentMe.js";
 import { upgradeHome, growHackingXP, joinFactions } from "utils/gameplan.js";
 import { hasStockAccess } from "stocks";
-import { buildAugMap, findCheapestAug, findIdealAugToBuy } from "utils/augs";
+import { buildAugMap, findCheapestAug, findIdealAugToBuy, getPendingInstalls } from "utils/augs";
 import { numFormat } from "utils/format.js";
-import { getPendingInstalls } from "./utils/augs";
 
 
 /**
@@ -23,8 +22,6 @@ import { getPendingInstalls } from "./utils/augs";
 
 /* TODOs:
 - Add income calculation to determine whether waiting for an aug is worthwhile or not
-- Add Sleeve support 
-- Add --wait options for all scripts to daemonize them so they can sit there waiting
 */
 
 export const MID_LOG = "midgameplan.log.txt";
@@ -40,7 +37,7 @@ export async function main(ns) {
 	await outputLog(ns, MID_LOG, "*** Beginning midgame loop!")
 	await buyAugmentLoop(ns, aug_map);
 	await outputLog(ns, MID_LOG, "*** Moving to endgame!");
-	if (getPendingInstalls(ns) > 0) ns.installAugmentations('endgameplan.js');
+	if (getPendingInstalls(ns).length > 0) ns.installAugmentations('endgameplan.js');
 	ns.spawn('endgameplan.js');
 }
 
