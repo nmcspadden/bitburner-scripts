@@ -147,21 +147,18 @@ export async function main(ns) {
       if (should_self_fund && player.money > 150e9) {
         ns.corporation.createCorporation(CORP_NAME, should_self_fund);
         ns.print("Created our corporation, now bootstrapping!");
-        ns.tail();
         await bootstrapCorp(ns);
       } else {
         ns.print("Waiting for enough money to bootstrap a corporation...");
         await ns.sleep(300000);
       }
     } else {
-      ns.tail();
       await bootstrapCorp(ns);
     }
   }
   // Now the corp loop
   // We are making the assumption right now that we're only developing Tobacco
   ns.print("We are public, managing the corporation...");
-  ns.tail();
   while (true) {
     await corpLoop(ns, SECOND_INDUSTRY);
   }
