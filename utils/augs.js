@@ -258,3 +258,30 @@ export async function findIdealAugToBuy(ns, auglist) {
 	if (ideal_aug.name == "Empty") return
 	return ideal_aug.name
 }
+
+/**
+ * Identify the cheapest aug we can reasonably buy
+ * @param {import("../.").NS} ns 
+ * @param {Array} auglist List of augs to consider for purchase
+ * @returns The name of the cheapest aug
+ */
+ export async function findCheapestAug(ns, auglist) {
+	let aug_map = await readAugMap(ns);
+	if (auglist.length == 0) return
+	const ideal_aug = auglist
+		.map(aug => {
+			return {
+				name: aug,
+				cost: ns.getAugmentationPrice(aug),
+				repreq: aug_map[aug].repreq,
+			};
+		})
+		// Obviously filter out ones I own
+		.filter(aug => !ns.getOwnedAugmentations(true).includes(aug.name))
+		// Filter for ones I can afford via money and rep
+		.filter(aug => augCostAvailable(ns, aug.cost) && augRepAvailable(ns, aug.repreq, aug_map[aug.name].factions))
+		.filter(aug => augPreReqsAvailable(ns, aug_map[aug.name].prereqs).length == 0)
+		.reduce((a, b) => (a.cost < b.cost ? a : b), "Empty")
+	if (ideal_aug.name == "Empty") return
+	return ideal_aug.name
+}
