@@ -1,6 +1,6 @@
 import { commitKarmaFocusedCrime, GANG_KARMA, workoutAllUntil } from "utils/crimes.js";
 import { isProcessRunning, checkSForBN, outputLog, HOME } from "utils/script_tools.js";
-import { upgradeHome, growHackingXP, MIN_STAT } from "utils/gameplan.js";
+import { upgradeHome, MIN_STAT } from "utils/gameplan.js";
 
 /**
  * Early Gameplan w/ Gangs (64+ GB RAM)
@@ -24,6 +24,11 @@ export async function main(ns) {
 		await outputLog(ns, EARLY_LOG, "Activating sleeves, if we have any");
 		ns.exec('sleeves.js', HOME);
 	}
+	// Use starting private hacknet server
+	if (!isProcessRunning(ns, HOME, "WIP/hacknet.js", "*")) {
+		await outputLog(ns, EARLY_LOG, "Activating Hacknet servers, if we have any");
+		ns.exec('WIP/hacknet.js', HOME, 1, "--noupgrade", "--focus", "money");
+	}
 	if (checkSForBN(ns, 2)) {
 		// Work out until we have the necessary stats to do homicide
 		await workoutAllUntil(ns, MIN_STAT);
@@ -36,10 +41,7 @@ export async function main(ns) {
 	await startAGang(ns);
 	// Join bladeburners, if possible
 	await joinBladeburners(ns);
-	// Evaluate hacking scripts again
 	// No point doing any hacking until after we move to midgame
-	// await outputLog(ns, EARLY_LOG, "Re-evaluating hacking scripts");
-	// growHackingXP(ns);
 	// Go into a waiting loop where we upgrade, buy programs, re-evaluate hacking XP
 	await outputLog(ns, EARLY_LOG, "Passive money and upgrade loop while managing gang");
 	await upgradingLoop(ns);
@@ -60,8 +62,6 @@ async function crimeWhileUpgradingLoop(ns) {
 		upgradeHome(ns);
 		// If we have lots of money, see if we can buy darkweb programs
 		ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
-		// Spin up hacking XP tools
-		growHackingXP(ns);
 		// Otherwise, commit crime!
 		commitKarmaFocusedCrime(ns);
 	}
@@ -124,12 +124,6 @@ async function upgradingLoop(ns) {
 		home_stats = upgradeHome(ns);
 		// If we have lots of money, see if we can buy darkweb programs
 		ns.exec("obtainPrograms.js", HOME, 1, "--quiet");
-		// Spin up hacking XP tools, only if we got more RAM
-		if (home_stats[0] > home_ram) {
-			ns.print("Re-evalauting hacking XP scripts");
-			home_ram = home_stats[0];
-			growHackingXP(ns);
-		}
 		// Run contract solver
 		ns.exec('contractSolver.js', HOME, 1, "--quiet");
 		// Sleep for 30 seconds
