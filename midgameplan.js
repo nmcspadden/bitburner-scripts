@@ -25,6 +25,8 @@ import { numFormat } from "utils/format.js";
 */
 
 export const MID_LOG = "midgameplan.log.txt";
+export const MIDGAME_FAIL_COUNTER = "midgame_fail_counter.txt";
+export const MIDGAME_COUNTER = "midgame_counter.txt";
 const BB = "Bladeburners";
 
 /** @param {import(".").NS} ns **/
@@ -47,14 +49,13 @@ export async function main(ns) {
  * @param {*} aug_map Map of objects from buildAugMap()
  */
 async function buyAugmentLoop(ns, aug_map) {
-	let home_ram = ns.getServerMaxRam(HOME);
-	let home_stats = [home_ram, 2]; // RAM, then Cores; the cores are actually irrelevant
 	let augs_to_buy = await newPreferredAugs(ns, true);
 	let original_aug_length = augs_to_buy.length;
 	let purchased_augs = 0;
 	let purchased_aug_list = [];
 	// await outputLog(ns, MID_LOG, `There are ${original_aug_length} augs to purchase`);
-	// We move to Endgame when there are no more augs left to buy, or we hit hacking 2500
+	// We move to Endgame when there are no more augs left to buy
+	let counter = readCounter(ns); // defaults to 0 if doesn't exist
 	while (augs_to_buy.length > 0) {
 		// Join Section-12 faction if it's waiting
 		await outputLog(ns, MID_LOG, "Joining pending factions");
@@ -64,6 +65,16 @@ async function buyAugmentLoop(ns, aug_map) {
 		ns.print("Augs we want to buy: " + augs_to_buy.join(", "));
 		await outputLog(ns, MID_LOG, "Checking for augmentations to buy");
 		let buyme = await findIdealAugToBuy(ns, augs_to_buy)
+		// If there are no augs we can buy, mark the 'fail counter'
+		// If the fail counter is > 10 from the counter, it's been
+		// 5 minutes since the last time we bought an aug; at that point,
+		// safe to assume we need to reset since we aren't making enough money
+		// to buy more
+		if (!buyme) {
+			ns.print("Nothing we can buy - setting fail counter");
+			await setFailCounter(ns, counter);
+			if ((counter - await readFailCounter(ns)) > 10) ns.installAugmentations('midgameplan.js');
+		} else clearFailCounter(ns);
 		while (buyme) {
 			purchased_aug_list.push(await promptForAugs(ns, aug_map, [buyme], false));
 			// Determine next ideal aug to buy
@@ -82,13 +93,7 @@ async function buyAugmentLoop(ns, aug_map) {
 
 		// See if we can upgrade our home
 		ns.print("Looking at home upgrades...");
-		home_stats = upgradeHome(ns);
-		// Spin up hacking XP tools, only if we got more RAM
-		if (home_stats[0] > home_ram) {
-			ns.print("Re-evalauting hacking XP scripts");
-			home_ram = home_stats[0];
-			growHackingXP(ns);
-		}
+		upgradeHome(ns);
 		// Make sure corporations are running
 		if (
 			!isProcessRunning(ns, HOME, "corporations.js") &&
@@ -102,6 +107,9 @@ async function buyAugmentLoop(ns, aug_map) {
 		// Run contract solver
 		await outputLog(ns, MID_LOG, "Checking for contracts...");
 		ns.exec("contractSolver.js", HOME, 1, "--quiet");
+		counter += 1;
+		// Write counter to disk
+		await setCounter(ns, counter);
 		// Sleep for 30 seconds
 		ns.print("Sleeping for 30 seconds");
 		await ns.sleep(30000);
@@ -136,7 +144,7 @@ async function setUpGame(ns) {
 	let aug_map = await buildAugMap(ns);
 	// Evaluate hacking scripts again
 	await outputLog(ns, MID_LOG, "Re-evaluating hacking scripts");
-	growHackingXP(ns);
+	// growHackingXP(ns);
 	// Make sure bladeburners is running
 	if (!isProcessRunning(ns, HOME, "bladeburners.js")) {
 		await outputLog(ns, MID_LOG, "Starting Bladeburners script...")
@@ -172,9 +180,9 @@ async function isCheapestAugReasonable(ns, auglist) {
 	// Except Q-Link, that shit's 25t to start with
 	if (
 		((cheapest_aug != "QLink") &&
-		(cheapest_cost >= 1e12) &&
-		(ns.getServerMoneyAvailable(HOME) < cheapest_cost) &&
-		(ns.getOwnedAugmentations(true).length - ns.getOwnedAugmentations(false).length) > 0) ||
+			(cheapest_cost >= 1e12) &&
+			(ns.getServerMoneyAvailable(HOME) < cheapest_cost) &&
+			(ns.getOwnedAugmentations(true).length - ns.getOwnedAugmentations(false).length) > 0) ||
 		// Or if the last one is Q-Link and we can't afford it
 		((cheapest_aug == "QLink") && (ns.getServerMoneyAvailable(HOME) < cheapest_cost))
 	) {
@@ -184,4 +192,59 @@ async function isCheapestAugReasonable(ns, auglist) {
 		ns.print("The cheapest aug costs more than $1t, and isn't QLink. You should reset.");
 		ns.installAugmentations('midgameplan.js');
 	}
+}
+
+/**
+ * Set the fail counter if doesn't already exist
+ * @param {import(".").NS} ns 
+ * @param {Number} counter 
+ */
+async function setFailCounter(ns, counter) {
+	// Only write the fail counter if it doesn't already exist
+	// If it does exist, we don't want to update the count
+	if (ns.ls(HOME, MIDGAME_FAIL_COUNTER).length > 0) {
+		ns.print("Fail counter already exists");
+		return
+	}
+	await ns.write(MIDGAME_FAIL_COUNTER, counter, 'w');
+}
+
+/**
+ * Read the fail counter's current value
+ * @param {import(".").NS} ns 
+ * @returns The current fail counter
+ */
+async function readFailCounter(ns) {
+	if (ns.ls(HOME, MIDGAME_FAIL_COUNTER).length > 0) return await ns.read(MIDGAME_FAIL_COUNTER)
+	ns.print("Did not find fail counter; returning 0");
+	return 0
+}
+
+/**
+ * Clear out the fail counter
+ * @param {import(".").NS} ns 
+ */
+function clearFailCounter(ns) {
+	ns.print("Clearing fail counter");
+	ns.rm(MIDGAME_FAIL_COUNTER, HOME);
+}
+
+/**
+ * Set the counter if doesn't already exist
+ * @param {import(".").NS} ns 
+ * @param {Number} counter 
+ */
+ async function setCounter(ns, counter) {
+	await ns.write(MIDGAME_COUNTER, counter, 'w');
+}
+
+/**
+ * Read the counter's current value
+ * @param {import(".").NS} ns 
+ * @returns The current fail counter
+ */
+function readCounter(ns) {
+	if (ns.ls(HOME, MIDGAME_COUNTER).length > 0) return Number(ns.read(MIDGAME_COUNTER))
+	ns.print("Did not find counter; returning 0");
+	return 0
 }
