@@ -1,7 +1,7 @@
 import { mapSourceFiles, HOME, SF_MAP } from "utils/script_tools.js";
 import { START_LOG } from "startinggameplan.js";
 import { EARLY_LOG } from "earlygameplan.js";
-import { MID_LOG } from "midgameplan.js";
+import { MID_LOG, MIDGAME_COUNTER, MIDGAME_FAIL_COUNTER } from "midgameplan.js";
 import { AUGMAP } from "utils/augs.js";
 import { NETWORK_MAP } from "utils/networkmap.js";
 import { SERVERGRADES } from "WIP/gradeservers.js";
@@ -19,6 +19,8 @@ export async function main(ns) {
     ns.rm(START_LOG);
     ns.rm(EARLY_LOG);
     ns.rm(MID_LOG);
+    ns.rm(MIDGAME_COUNTER);
+    ns.rm(MIDGAME_FAIL_COUNTER);
     // These are .txt files
     ns.rm(SF_MAP + ".txt");
     ns.rm(AUGMAP + ".txt");
