@@ -71,8 +71,8 @@ async function buyAugmentLoop(ns, aug_map) {
 		// safe to assume we need to reset since we aren't making enough money
 		// to buy more
 		if (!buyme) {
-			ns.print("Nothing we can buy - setting fail counter");
 			await setFailCounter(ns, counter);
+			ns.print("Nothing we can buy - setting fail counter. Current difference: " + (counter - await readFailCounter(ns)));
 			if ((counter - await readFailCounter(ns)) > 10) ns.installAugmentations('midgameplan.js');
 		} else clearFailCounter(ns);
 		while (buyme) {

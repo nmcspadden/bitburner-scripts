@@ -24,6 +24,7 @@ const TASK_CLASS = "Class";
 const GYM_POWERHOUSE = "Powerhouse Gym"; // location
 const FACTION_HACKING = "Hacking"; // factionWorkType
 const FACTION_FIELD = "Field"; // factionWorkType
+const FACTION_SECUITY = "Security"; // factionWorkType
 const UNI_ROTHMAN = "Rothman University";
 
 const STR_MIN = 80;
@@ -155,7 +156,7 @@ function sleeveTime(ns, index, buy_augs = false) {
         }
     }
     // Do we have a faction with NF, but we don't currently have enough rep to buy it?
-    else if (faction && (ns.getAugmentationRepReq(NF) < ns.getFactionRep(faction))) {
+    else if (faction && (ns.getAugmentationRepReq(NF) > ns.getFactionRep(faction))) {
         let tasks = [];
         for (let i = 0; i < readNumSleeves(ns); i++) {
             tasks.push(readSleeveTask(ns, i));
@@ -332,7 +333,7 @@ function shockRecovery(ns, index) {
 function workForNFFaction(ns, index, faction) {
     ns.print(`Sleeve ${index}: Working for ${faction}`);
     // TODO: Determine best rep/sec here
-    return ns.sleeve.setToFactionWork(index, faction, FACTION_FIELD);
+    return ns.sleeve.setToFactionWork(index, faction, FACTION_SECUITY);
 }
 
 /**
