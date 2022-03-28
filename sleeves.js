@@ -1,7 +1,6 @@
 import { checkSForBN, HOME } from "utils/script_tools.js";
 import { CRIMES } from "utils/crimes.js";
 import { getClosestNFFaction, NF } from "utils/augs.js";
-import { START_LOG } from "./startinggameplan";
 
 /*
 1. In Early game phase during karma grind, sleeves should be performing highest success % crime
@@ -10,10 +9,6 @@ import { START_LOG } from "./startinggameplan";
 4. If have factions < 150 Favor, work for them (starting with closest rep to favor amount)
 5. If I'm working out a gym or taking a course, do that instead
 */
-
-export const FILE_NUM_SLEEVES = "/sleeves/results/NumSleeves.txt";
-export const FILE_SLEEVE_STATS = (index) => `/sleeves/results/Sleeve${index}-stats.txt`;
-export const FILE_SLEEVE_TASK = (index) => `/sleeves/results/Sleeve${index}-task.txt`;
 
 const TASK_RECOVERY = "Recovery";
 const TASK_CRIME = "Crime";
@@ -35,6 +30,7 @@ const AGI_MIN = 40;
 
 const CRIME_HOMICIDE = "Homicide";
 const CRIME_MUG = "Mug";
+const CRIME_ACTION_MUG = "mug someone";
 
 const CLASS_ALGORITHMS = "Algorithms";
 
@@ -238,6 +234,7 @@ function calculateBestSleeveCrime(ns, index) {
         })
         .filter(crime => crime.chance > 0.7)
         .reduce((a, b) => (a.effective_gain > b.effective_gain ? a : b), CRIME_MUG);
+    if (!best_crime.name) return CRIME_ACTION_MUG;
     return best_crime.name
 }
 
