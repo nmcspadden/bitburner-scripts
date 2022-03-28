@@ -1,7 +1,6 @@
 import { checkSForBN, HOME } from "utils/script_tools.js";
 import { CRIMES } from "utils/crimes.js";
 import { getClosestNFFaction, NF } from "utils/augs.js";
-import { START_LOG } from "./startinggameplan";
 
 /*
 1. In Early game phase during karma grind, sleeves should be performing highest success % crime
