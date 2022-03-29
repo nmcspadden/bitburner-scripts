@@ -175,8 +175,9 @@ export async function handleNeuroflux(ns) {
 	let rep_req = ns.getAugmentationRepReq(NF);
 	// If we don't have enough rep to buy it, abort
 	if (rep_req > closest_faction_rep) {
-		output(ns, TERMINAL, `Current NF rep requirement: ${ns.nFormat(rep_req, '0.000a')}`);
-		output(ns, TERMINAL, `Closest faction is ${closest_faction} with rep ${ns.nFormat(closest_faction_rep, '0.000a')}`);
+		// output(ns, TERMINAL, `Current NF rep requirement: ${ns.nFormat(rep_req, '0.000a')}`);
+		// output(ns, TERMINAL, `Closest faction is ${closest_faction} with rep ${ns.nFormat(closest_faction_rep, '0.000a')}`);
+		output(ns, TERMINAL,  getNFCheckbox(ns, await readAugMap(ns)));
 		return
 	}
 	let didBuy = false;
