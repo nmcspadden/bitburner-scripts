@@ -28,6 +28,7 @@ export const MID_LOG = "midgameplan.log.txt";
 export const MIDGAME_FAIL_COUNTER = "midgame_fail_counter.txt";
 export const MIDGAME_COUNTER = "midgame_counter.txt";
 const BB = "Bladeburners";
+const TIME_LIMIT_FOR_RESET = 10; // 10 * 30 seconds = 5 minutes; this is how long we wait to try to buy the next aug
 
 /** @param {import(".").NS} ns **/
 export async function main(ns) {
@@ -74,8 +75,10 @@ async function buyAugmentLoop(ns, aug_map) {
 		if (!buyme) {
 			await setFailCounter(ns, counter);
 			ns.print("Nothing we can buy - setting fail counter. Current difference: " + (counter - await readFailCounter(ns)));
-			if (((counter - await readFailCounter(ns)) > 10) && ns.getOwnedAugmentations(true).some(aug => aug.includes(NF))) {
-				ns.installAugmentations('midgameplan.js');
+			if ((counter - await readFailCounter(ns)) > TIME_LIMIT_FOR_RESET) {
+				let pending = getPendingInstalls(ns);
+				// Don't reset if the only thing we've bought is NF
+				if (pending != [NF]) ns.installAugmentations('midgameplan.js');
 			}
 		} else clearFailCounter(ns);
 		while (buyme) {
