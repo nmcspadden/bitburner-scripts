@@ -1,8 +1,8 @@
 import { outputLog, isProcessRunning, HOME } from "utils/script_tools.js";
 import { newPreferredAugs, promptForAugs, handleNeuroflux } from "AugmentMe.js";
-import { upgradeHome, growHackingXP, joinFactions } from "utils/gameplan.js";
+import { upgradeHome, joinFactions } from "utils/gameplan.js";
 import { hasStockAccess } from "stocks";
-import { buildAugMap, findCheapestAug, findIdealAugToBuy, getPendingInstalls } from "utils/augs";
+import { buildAugMap, findCheapestAug, findIdealAugToBuy, getPendingInstalls, NF } from "utils/augs";
 import { numFormat } from "utils/format.js";
 
 
@@ -35,6 +35,7 @@ export async function main(ns) {
 	ns.toast("Starting mid game plan!", "info", null);
 	ns.disableLog("ALL"); // Disable the log
 	ns.tail(); // Open a window to view the status of the script
+	clearFailCounter(ns);
 	let aug_map = await setUpGame(ns);
 	await outputLog(ns, MID_LOG, "*** Beginning midgame loop!")
 	await buyAugmentLoop(ns, aug_map);
@@ -73,7 +74,9 @@ async function buyAugmentLoop(ns, aug_map) {
 		if (!buyme) {
 			await setFailCounter(ns, counter);
 			ns.print("Nothing we can buy - setting fail counter. Current difference: " + (counter - await readFailCounter(ns)));
-			if ((counter - await readFailCounter(ns)) > 10) ns.installAugmentations('midgameplan.js');
+			if (((counter - await readFailCounter(ns)) > 10) && ns.getOwnedAugmentations(true).some(aug => aug.includes(NF))) {
+				ns.installAugmentations('midgameplan.js');
+			}
 		} else clearFailCounter(ns);
 		while (buyme) {
 			purchased_aug_list.push(await promptForAugs(ns, aug_map, [buyme], false));
