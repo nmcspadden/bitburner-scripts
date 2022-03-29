@@ -20,7 +20,7 @@ const TASK_CLASS = "Class";
 const GYM_POWERHOUSE = "Powerhouse Gym"; // location
 const FACTION_HACKING = "Hacking"; // factionWorkType
 const FACTION_FIELD = "Field"; // factionWorkType
-const FACTION_SECUITY = "Security"; // factionWorkType
+const FACTION_SECURITY = "Security"; // factionWorkType
 const UNI_ROTHMAN = "Rothman University";
 
 const STR_MIN = 80;
@@ -331,7 +331,7 @@ function shockRecovery(ns, index) {
 function workForNFFaction(ns, index, faction) {
     ns.print(`Sleeve ${index}: Working for ${faction}`);
     // TODO: Determine best rep/sec here
-    return ns.sleeve.setToFactionWork(index, faction, FACTION_SECUITY);
+    return ns.sleeve.setToFactionWork(index, faction, FACTION_SECURITY);
 }
 
 /**
