@@ -272,6 +272,7 @@ function readNumSleeves(ns) {
  * Get sleeve stats
  * @param {import(".").NS} ns
  * @param {Number} index Index of sleeve
+ * @returns {import(".").SleeveStats} Stats of sleeve
  */
 function readSleeveStats(ns, index) {
     if (!Number.isInteger(index)) return {}
@@ -282,6 +283,7 @@ function readSleeveStats(ns, index) {
  * Get sleeve task
  * @param {import(".").NS} ns
  * @param {Number} index Index of sleeve
+ * @returns {import(".").SleeveTask} Sleeve's current task
  */
 function readSleeveTask(ns, index) {
     if (!Number.isInteger(index)) return {}
@@ -364,40 +366,128 @@ function augmentSleeve(ns, index) {
     })
 }
 
+/**
+ * Determine best type of work to earn rep for a faction
+ * @param {import(".").NS} ns 
+ * @param {Number} index sleeve index
+ * @param {String} faction Faction to check against
+ */
+function determineBestFactionWork(ns, index, faction) {
+    let types = [FACTION_HACKING, FACTION_FIELD, FACTION_SECURITY];
+    const best_type = types
+        .map(type => {
+            return {
+                name: type,
+                rate: getFactionRepRate(ns, index, type, faction)
+            }
+        })
+        .reduce((a, b) => (a.rate > b.rate ? a : b));
+    return best_type.name
+}
+
+/**
+ * Determine rep rate for a sleeve for a given work type and faction
+ * @param {import(".").NS} ns 
+ * @param {Number} index sleeve index
+ * @param {String} type Type of work ("Hacking", "Security", "Field")
+ * @param {String} faction Faction to check against
+ */
+function getFactionRepRate(ns, index, type, faction) {
+    let favorMult = 1;
+    let stats = ns.sleeve.getSleeveStats(index);
+    let info = ns.sleeve.getInformation(index);
+    let faction_favor = ns.getFactionFavor(faction);
+    favorMult = 1 + faction_favor / 100;
+    switch (type) {
+        case "Hacking":
+            return getFactionHackingWorkRepGain(stats, info) * ((100 - stats.shock) / 100) * favorMult;
+        case "Field":
+            return getFactionFieldWorkRepGain(stats, info) * ((100 - stats.shock) / 100) * favorMult;
+        case "Security":
+            return getFactionSecurityWorkRepGain(stats, info) * ((100 - stats.shock) / 100) * favorMult;
+    }
+}
+
+/**
+ * Get the rep gain rate of Field work for a sleeve
+ * @param {*} stats Sleeve stats
+ * @param {*} info Sleeve information
+ * @returns rate of field rep gain
+ */
+function getFactionFieldWorkRepGain(stats, info) {
+    const t =
+        (0.9 *
+            (stats.hacking / MaxSkillLevel +
+                stats.strength / MaxSkillLevel +
+                stats.defense / MaxSkillLevel +
+                stats.dexterity / MaxSkillLevel +
+                stats.agility / MaxSkillLevel +
+                stats.charisma / MaxSkillLevel)) /
+        5.5;
+    return t * info.mult.factionRep;
+}
+
+/**
+ * Get the rep gain rate of Hacking work for a sleeve
+ * @param {*} stats Sleeve stats
+ * @param {*} info Sleeve information
+ * @returns rate of hacking rep gain
+ */
+function getFactionHackingWorkRepGain(stats, info) {
+    return (stats.hacking / MaxSkillLevel) * info.mult.factionRep;
+}
+
+/**
+ * Get the rep gain rate of Security work for a sleeve
+ * @param {*} stats Sleeve stats
+ * @param {*} info Sleeve information
+ * @returns rate of security rep gain
+ */
+function getFactionSecurityWorkRepGain(stats, info) {
+    const t =
+        (0.9 *
+            (stats.hacking / MaxSkillLevel +
+                stats.strength / MaxSkillLevel +
+                stats.defense / MaxSkillLevel +
+                stats.dexterity / MaxSkillLevel +
+                stats.agility / MaxSkillLevel)) /
+        4.5;
+    return t * info.mult.factionRep;
+}
 /*
 What crimeStats looks like:
 {
-    "difficulty": 0.2,
-    "karma": 0.25,
-    "kills": 0,
-    "money": 36000,
-    "name": "Mug",
-    "time": 4000,
-    "type": "mug someone",
-    "hacking_success_weight": 0,
-    "strength_success_weight": 1.5,
-    "defense_success_weight": 0.5,
-    "dexterity_success_weight": 1.5,
-    "agility_success_weight": 0.5,
-    "charisma_success_weight": 0,
-    "hacking_exp": 0,
-    "strength_exp": 3,
-    "defense_exp": 3,
-    "dexterity_exp": 3,
-    "agility_exp": 3,
-    "charisma_exp": 0,
-    "intelligence_exp": 0
+"difficulty": 0.2,
+"karma": 0.25,
+"kills": 0,
+"money": 36000,
+"name": "Mug",
+"time": 4000,
+"type": "mug someone",
+"hacking_success_weight": 0,
+"strength_success_weight": 1.5,
+"defense_success_weight": 0.5,
+"dexterity_success_weight": 1.5,
+"agility_success_weight": 0.5,
+"charisma_success_weight": 0,
+"hacking_exp": 0,
+"strength_exp": 3,
+"defense_exp": 3,
+"dexterity_exp": 3,
+"agility_exp": 3,
+"charisma_exp": 0,
+"intelligence_exp": 0
 }
 
 What Sleeve Stats looks like:
 {
-    "shock": 0,
-    "sync": 77.96386375382257,
-    "hacking": 1,
-    "strength": 100,
-    "defense": 116,
-    "dexterity": 90,
-    "agility": 90,
-    "charisma": 1
+"shock": 0,
+"sync": 77.96386375382257,
+"hacking": 1,
+"strength": 100,
+"defense": 116,
+"dexterity": 90,
+"agility": 90,
+"charisma": 1
 }
 */
